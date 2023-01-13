@@ -18,4 +18,15 @@ public static class V1PatchType
     /// </summary>
     public const string StrategicMergePatch = "strategic";
 
+    /// <summary>
+    /// Gets an <see cref="IEnumerable{T}"/> containing all default <see cref="V1Patch"/> types
+    /// </summary>
+    /// <returns></returns>
+    public static IEnumerable<string> AsEnumerable()
+    {
+        yield return JsonPatch;
+        yield return JsonMergePatch;
+        yield return StrategicMergePatch;
+    }
+
 }

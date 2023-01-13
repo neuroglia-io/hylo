@@ -18,7 +18,7 @@ public class V1ResourceMetadata
     /// Gets the resource's name. Ending the name with a '-' character will have the same effect than setting 'namePrefix' property
     /// </summary>
     [DataMember(Name = "name", Order = 2), JsonPropertyName("name"), Required]
-    public virtual string? Name { get; set; } = null!;
+    public virtual string Name { get; set; } = null!;
 
     /// <summary>
     /// Gets the resource's generated name prefix. Setting this property will make Hylo generate the base-64 of a UUID prefixed by specified value

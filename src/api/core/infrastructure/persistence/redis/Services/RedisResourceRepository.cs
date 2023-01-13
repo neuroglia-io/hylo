@@ -6,6 +6,7 @@ using StackExchange.Redis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Xml.Linq;
 
 namespace Hylo.Api.Core.Infrastructure.Services;
 
@@ -49,7 +50,7 @@ public class RedisResourceRepository
     protected List<Transaction> PendingTransactions { get; } = new();
 
     /// <inheritdoc/>
-    public virtual async Task<object> AddAsync(string group, string version, string plural, object resource, CancellationToken cancellationToken = default)
+    public virtual async Task<object> AddResourceAsync(string group, string version, string plural, object resource, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(group)) throw new ArgumentNullException(nameof(group));
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
@@ -79,7 +80,7 @@ public class RedisResourceRepository
     }
 
     /// <inheritdoc/>
-    public virtual async Task<bool> ContainsAsync(string group, string version, string plural, string name, string? @namespace, CancellationToken cancellationToken = default)
+    public virtual async Task<bool> ContainsResourceAsync(string group, string version, string plural, string name, string? @namespace, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(group)) throw new ArgumentNullException(nameof(group));
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
@@ -91,7 +92,7 @@ public class RedisResourceRepository
     }
 
     /// <inheritdoc/>
-    public virtual async Task<V1ResourceDefinition?> GetDefinitionAsync(string group, string version, string plural, CancellationToken cancellationToken = default)
+    public virtual async Task<V1ResourceDefinition?> GetResourceDefinitionAsync(string group, string version, string plural, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(group)) throw new ArgumentNullException(nameof(group));
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
@@ -103,7 +104,7 @@ public class RedisResourceRepository
     }
 
     /// <inheritdoc/>
-    public virtual async Task<object?> FindAsync(string group, string version, string plural, string name, string? @namespace = null, CancellationToken cancellationToken = default)
+    public virtual async Task<object?> GetResourceAsync(string group, string version, string plural, string name, string? @namespace = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(group)) throw new ArgumentNullException(nameof(group));
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
@@ -116,7 +117,20 @@ public class RedisResourceRepository
     }
 
     /// <inheritdoc/>
-    public virtual async IAsyncEnumerable<object> ListAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<string>? labelSelectors = null,
+    public virtual async Task<TResource?> GetResourceAsync<TResource>(string group, string version, string plural, string name, string? @namespace = null, CancellationToken cancellationToken = default) 
+        where TResource : V1Resource
+    {
+        if (string.IsNullOrWhiteSpace(group)) throw new ArgumentNullException(nameof(group));
+        if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
+        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
+        var jsonObject = (JsonObject?)await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken);
+        if (jsonObject == null) return null;
+        return Serializer.Json.Deserialize<TResource>(jsonObject);
+    }
+
+    /// <inheritdoc/>
+    public virtual async IAsyncEnumerable<object> ListResourcesAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<string>? labelSelectors = null,
         int resultsPerPage = V1CoreApiDefaults.Paging.MaxResultsPerPage, string? orderBy = null, bool orderByDescending = false, int? pageIndex = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(group)) throw new ArgumentNullException(nameof(group));
@@ -176,7 +190,23 @@ public class RedisResourceRepository
     }
 
     /// <inheritdoc/>
-    public virtual async Task<object> UpdateAsync(string group, string version, string plural, string name, string? @namespace, object resource, CancellationToken cancellationToken = default)
+    public virtual async IAsyncEnumerable<TResource?> ListResourcesAsync<TResource>(string group, string version, string plural, string? @namespace = null, IEnumerable<string>? labelSelectors = null, 
+        int resultsPerPage = V1CoreApiDefaults.Paging.MaxResultsPerPage, string? orderBy = null, bool orderByDescending = false, int? pageIndex = null, [EnumeratorCancellation] CancellationToken cancellationToken = default) 
+        where TResource : V1Resource
+    {
+        if (string.IsNullOrWhiteSpace(group)) throw new ArgumentNullException(nameof(group));
+        if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
+        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
+        await foreach(var resource in this.ListResourcesAsync(group, version, plural, @namespace, labelSelectors, resultsPerPage, orderBy, orderByDescending, pageIndex, cancellationToken))
+        {
+            var jsonObject = (JsonObject)resource;
+            if (jsonObject == null) continue;
+            yield return Serializer.Json.Deserialize<TResource>(jsonObject);
+        }
+    }
+
+    /// <inheritdoc/>
+    public virtual async Task<object> UpdateResourceAsync(string group, string version, string plural, string name, string? @namespace, object resource, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(group)) throw new ArgumentNullException(nameof(group));
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
@@ -190,7 +220,7 @@ public class RedisResourceRepository
     }
 
     /// <inheritdoc/>
-    public virtual async Task<object> RemoveAsync(string group, string version, string plural, string name, string? @namespace, CancellationToken cancellationToken = default)
+    public virtual async Task<object> RemoveResourceAsync(string group, string version, string plural, string name, string? @namespace, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(group)) throw new ArgumentNullException(nameof(group));
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));

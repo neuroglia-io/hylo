@@ -15,7 +15,7 @@ public interface IResourceRepository
     /// <param name="resource">The resource to add</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>The newly added resource</returns>
-    Task<object> AddAsync(string group, string version, string plural, object resource, CancellationToken cancellationToken = default);
+    Task<object> AddResourceAsync(string group, string version, string plural, object resource, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks whether or not the resource with the specified name and namespace exists
@@ -27,7 +27,7 @@ public interface IResourceRepository
     /// <param name="namespace">The namespace the resource belongs to</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>A boolean indicating whether or not the resource exists</returns>
-    Task<bool> ContainsAsync(string group, string version, string plural, string name, string? @namespace, CancellationToken cancellationToken = default);
+    Task<bool> ContainsResourceAsync(string group, string version, string plural, string name, string? @namespace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the specified <see cref="V1ResourceDefinition"/>
@@ -37,7 +37,7 @@ public interface IResourceRepository
     /// <param name="plural">The plural form of the <see cref="V1Resource"/>'s type to get the <see cref="V1ResourceDefinition"/> for</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>The <see cref="V1ResourceDefinition"/> with the specified group, version and plural name</returns>
-    Task<V1ResourceDefinition?> GetDefinitionAsync(string group, string version, string plural, CancellationToken cancellationToken = default);
+    Task<V1ResourceDefinition?> GetResourceDefinitionAsync(string group, string version, string plural, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the resource with the specified name and namespace
@@ -49,7 +49,20 @@ public interface IResourceRepository
     /// <param name="namespace">The namespace the resource belongs to</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>The resource with the specified name and namespace, if any</returns>
-    Task<object?> FindAsync(string group, string version, string plural, string name, string? @namespace = null, CancellationToken cancellationToken = default);
+    Task<object?> GetResourceAsync(string group, string version, string plural, string name, string? @namespace = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the resource with the specified name and namespace
+    /// </summary>
+    /// <param name="group">The API group the resource to get belongs to</param>
+    /// <param name="version">The version of the API the resource to get belongs to</param>
+    /// <param name="plural">The plural name of the resource to get</param>
+    /// <param name="name">The name of the resource to get</param>
+    /// <param name="namespace">The namespace the resource belongs to</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    /// <returns>The resource with the specified name and namespace, if any</returns>
+    Task<TResource?> GetResourceAsync<TResource>(string group, string version, string plural, string name, string? @namespace = null, CancellationToken cancellationToken = default)
+        where TResource : V1Resource;
 
     /// <summary>
     /// Lists resources of the specified type
@@ -65,8 +78,22 @@ public interface IResourceRepository
     /// <param name="pageIndex">The current page index, if any</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>A new <see cref="IAsyncEnumerable{T}"/> containing matched resources</returns>
-    IAsyncEnumerable<object> ListAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<string>? labelSelectors = null,
+    IAsyncEnumerable<object> ListResourcesAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<string>? labelSelectors = null,
         int resultsPerPage = V1CoreApiDefaults.Paging.MaxResultsPerPage, string? orderBy = null, bool orderByDescending = false, int? pageIndex = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the resource with the specified name and namespace
+    /// </summary>
+    /// <param name="group">The API group the resource to get belongs to</param>
+    /// <param name="version">The version of the API the resource to get belongs to</param>
+    /// <param name="plural">The plural name of the resource to get</param>
+    /// <param name="name">The name of the resource to get</param>
+    /// <param name="namespace">The namespace the resource belongs to</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    /// <returns>The resource with the specified name and namespace, if any</returns>
+    IAsyncEnumerable<TResource> ListResourcesAsync<TResource>(string group, string version, string plural, string? @namespace = null, IEnumerable<string>? labelSelectors = null,
+        int resultsPerPage = V1CoreApiDefaults.Paging.MaxResultsPerPage, string? orderBy = null, bool orderByDescending = false, int? pageIndex = null, CancellationToken cancellationToken = default)
+        where TResource : V1Resource;
 
     /// <summary>
     /// Updates the specified resource
@@ -77,7 +104,7 @@ public interface IResourceRepository
     /// <param name="resource">The resource to update</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>The updated resource</returns>
-    Task<object> UpdateAsync(string group, string version, string plural, string name, string? @namespace, object resource, CancellationToken cancellationToken = default);
+    Task<object> UpdateResourceAsync(string group, string version, string plural, string name, string? @namespace, object resource, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes the specified resource
@@ -87,7 +114,7 @@ public interface IResourceRepository
     /// <param name="plural">The plural name of the resource to remove</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>The removed resource</returns>
-    Task<object> RemoveAsync(string group, string version, string plural, string name, string? @namespace, CancellationToken cancellationToken = default);
+    Task<object> RemoveResourceAsync(string group, string version, string plural, string name, string? @namespace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Saves all pending changes

@@ -3,24 +3,32 @@
     /// <summary>
     /// Represents a role that applies cluster-wide
     /// </summary>
-    [DataContract]
+    [Resource(HyloGroup, HyloApiVersion, HyloKind, HyloPluralName), DataContract]
     public class V1ClusterRole
         : V1Resource<V1RoleSpec>
     {
 
         /// <summary>
-        /// Gets the <see cref="V1ClusterRole"/> resource API version
+        /// Gets the resource API group
         /// </summary>
-        public const string ResourceApiVersion = V1CoreApiDefaults.Resources.ApiVersion;
+        public const string HyloGroup = V1CoreApiDefaults.Resources.ApiVersion;
         /// <summary>
-        /// Gets the <see cref="V1ClusterRole"/> resource kind
+        /// Gets the resource API version
         /// </summary>
-        public const string ResourceKind = "ClusterRole";
+        public const string HyloApiVersion = V1CoreApiDefaults.Resources.ApiVersion;
+        /// <summary>
+        /// Gets the resource kind
+        /// </summary>
+        public const string HyloKind = "ClusterRole";
+        /// <summary>
+        /// Gets the resource plural name
+        /// </summary>
+        public const string HyloPluralName = "cluster-roles";
 
         /// <summary>
         /// Initializes a new <see cref="V1ClusterRole"/>
         /// </summary>
-        public V1ClusterRole() { }
+        public V1ClusterRole() : base(HyloGroup, HyloApiVersion, HyloKind) { }
 
         /// <summary>
         /// Initializes a new <see cref="V1ClusterRole"/>

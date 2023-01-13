@@ -16,17 +16,6 @@ public class V1Resource
     /// <summary>
     /// Initializes a new <see cref="V1Resource"/>
     /// </summary>
-    /// <param name="apiVersion">The <see cref="V1Resource"/>'s API version</param>
-    /// <param name="kind">The <see cref="V1Resource"/>'s kind</param>
-    public V1Resource(string apiVersion, string kind)
-    {
-        this.ApiVersion = apiVersion;
-        this.Kind = kind;
-    }
-
-    /// <summary>
-    /// Initializes a new <see cref="V1Resource"/>
-    /// </summary>
     /// <param name="group">The API group the <see cref="V1Resource"/> belongs to</param>
     /// <param name="version">The version of the API the <see cref="V1Resource"/> belongs to</param>
     /// <param name="kind">The <see cref="V1Resource"/>'s kind</param>
@@ -81,13 +70,6 @@ public class V1Resource<TSpec>
     public V1Resource() { }
 
     /// <inheritdoc/>
-    public V1Resource(string apiVersion, string kind)
-    {
-        this.ApiVersion = apiVersion;
-        this.Kind = kind;
-    }
-
-    /// <inheritdoc/>
     public V1Resource(string group, string version, string kind) : base(group, version, kind) { }
 
     /// <inheritdoc/>
@@ -110,9 +92,6 @@ public class V1Resource<TSpec, TStatus>
     where TSpec : class, new()
     where TStatus : class, new()
 {
-
-    /// <inheritdoc/>
-    public V1Resource(string apiVersion, string kind) : base(apiVersion, kind) { }
 
     /// <inheritdoc/>
     public V1Resource(string group, string version, string kind) : base(group, version, kind) { }

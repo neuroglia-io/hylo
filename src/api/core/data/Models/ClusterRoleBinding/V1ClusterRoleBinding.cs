@@ -1,11 +1,11 @@
 ﻿namespace Hylo.Api.Core.Data.Models;
 
 /// <summary>
-/// Represents the definition of a resource
+/// Represents a resource used to configure bindings of subjects to a <see cref="V1ClusterRole"/>
 /// </summary>
-[Resource(HyloGroup, HyloApiVersion, HyloKind, HyloPluralName), DataContract]
-public class V1ResourceDefinition
-    : V1Resource<V1ResourceDefinitionSpec>
+[DataContract]
+public class V1ClusterRoleBinding
+    : V1Resource<V1RoleBindingSpec>
 {
 
     /// <summary>
@@ -19,22 +19,22 @@ public class V1ResourceDefinition
     /// <summary>
     /// Gets the resource kind
     /// </summary>
-    public const string HyloKind = "ResourceDefinition";
+    public const string HyloKind = "ClusterRoleBinding";
     /// <summary>
     /// Gets the resource plural name
     /// </summary>
-    public const string HyloPluralName = "resource-definitions";
+    public const string HyloPluralName = "cluster-role-bindings";
 
     /// <summary>
-    /// Initializes a new <see cref="V1ResourceDefinition"/>
+    /// Initializes a new <see cref="V1ClusterRoleBinding"/>
     /// </summary>
-    public V1ResourceDefinition() : base(HyloGroup, HyloApiVersion, HyloKind) { }
+    public V1ClusterRoleBinding() : base(HyloGroup, HyloApiVersion, HyloKind) { }
 
     /// <summary>
-    /// Initializes a new <see cref="V1ResourceDefinition"/>
+    /// Initializes a new <see cref="V1ClusterRoleBinding"/>
     /// </summary>
-    /// <param name="spec">The <see cref="V1ResourceDefinition"/>'s <see cref="V1ResourceDefinitionSpec"/></param>
-    public V1ResourceDefinition(V1ResourceMetadata metadata, V1ResourceDefinitionSpec spec)
+    /// <param name="spec">The <see cref="V1ClusterRoleBinding"/>'s <see cref="V1RoleBindingSpec"/></param>
+    public V1ClusterRoleBinding(V1ResourceMetadata metadata, V1RoleBindingSpec spec)
         : this()
     {
         this.Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));

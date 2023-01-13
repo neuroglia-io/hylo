@@ -3,6 +3,7 @@
 /// <summary>
 /// Represents a <see cref="V1ResourceDefinition"/>'s specification
 /// </summary>
+[DataContract]
 public class V1ResourceDefinitionSpec
 {
 
@@ -38,40 +39,39 @@ public class V1ResourceDefinitionSpec
     }
 
     /// <summary>
-    /// Gets an object used to configure the <see cref="V1ResourceDefinition"/>'s names
+    /// Gets an object used to configure the resource definition's names
     /// </summary>
-    [JsonPropertyName("names"), Required]
+    [DataMember(Name = "names", Order = 1), JsonPropertyName("names"), Required]
     public virtual V1ResourceDefinitionNames Names { get; set; } = null!;
 
     /// <summary>
-    /// Gets the API group the <see cref="V1ResourceDefinition"/> belongs to
+    /// Gets the API group the resource definition belongs to
     /// </summary>
-    [JsonPropertyName("group"), Required]
+    [DataMember(Name = "group", Order = 2), JsonPropertyName("group"), Required]
     public virtual string Group { get; set; } = null!;
 
     /// <summary>
-    /// Gets the version of the API the <see cref="V1ResourceDefinition"/> belongs to
+    /// Gets the version of the API the resource definition belongs to
     /// </summary>
-    [JsonPropertyName("version"), Required]
+    [DataMember(Name = "version", Order = 3), JsonPropertyName("version"), Required]
     public virtual string Version { get; set; } = null!;
 
     /// <summary>
-    /// Gets the scope of defined <see cref="V1Resource"/>s<para></para>
-    /// <see cref="V1ResourceScopes">See default resource scopes</see>
+    /// Gets the scope of defined resources
     /// </summary>
-    [JsonPropertyName("scope"), Required]
+    [DataMember(Name = "scope", Order = 4), JsonPropertyName("scope"), Required]
     public virtual string Scope { get; set; } = null!;
 
     /// <summary>
-    /// Gets an <see cref="IEnumerable{T}"/> containing the supported versions of the <see cref="V1ResourceDefinition"/>
+    /// Gets an <see cref="IEnumerable{T}"/> containing the supported versions of the resource definition
     /// </summary>
-    [JsonPropertyName("versions"), Required, MinLength(1)]
+    [DataMember(Name = "versions", Order = 5), JsonPropertyName("versions"), Required, MinLength(1)]
     public virtual List<V1ResourceDefinitionVersion> Versions { get; set; } = null!;
 
     /// <summary>
-    /// Gets an object used to configure the way versions of the <see cref="V1ResourceDefinition"/> should be converted
+    /// Gets an object used to configure the way versions of the resource definition should be converted
     /// </summary>
-    [JsonPropertyName("conversion")]
+    [DataMember(Name = "conversion", Order = 6), JsonPropertyName("conversion")]
     public virtual V1ResourceConversionSpec? Conversion { get; set; }
 
 }
