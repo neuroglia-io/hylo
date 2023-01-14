@@ -4,20 +4,20 @@
 /// Represents the object used to configure a Basic authentication
 /// </summary>
 [DataContract]
-public class V1BasicAuthenticationProperties
+public class V1BasicAuthenticationSpec
 {
 
     /// <summary>
-    /// Initializes a new <see cref="V1BasicAuthenticationProperties"/>
+    /// Initializes a new <see cref="V1BasicAuthenticationSpec"/>
     /// </summary>
-    public V1BasicAuthenticationProperties() { }
+    public V1BasicAuthenticationSpec() { }
 
     /// <summary>
-    /// Initializes a new <see cref="V1BasicAuthenticationProperties"/>
+    /// Initializes a new <see cref="V1BasicAuthenticationSpec"/>
     /// </summary>
     /// <param name="passwordHash">The base-64 hash of the user's password</param>
     /// <param name="passwordSalt">The base-64 salt used to generate the user password's hash</param>
-    public V1BasicAuthenticationProperties(string passwordHash, string passwordSalt)
+    public V1BasicAuthenticationSpec(string passwordHash, string passwordSalt)
     {
         if (string.IsNullOrWhiteSpace(passwordHash)) throw new ArgumentNullException(nameof(passwordHash));
         if (string.IsNullOrWhiteSpace(passwordSalt)) throw new ArgumentNullException(nameof(passwordSalt));

@@ -10,20 +10,20 @@ using System.Security.Claims;
 namespace Hylo.Api.Core.Infrastructure.Services;
 
 /// <summary>
-/// Represents the default implementation of the <see cref="IUserClaimsPrincipalFactory"/> interface
+/// Represents the default implementation of the <see cref="IIdentityClaimsPrincipalFactory"/> interface
 /// </summary>
-public class UserClaimsPrincipalFactory
-    : BackgroundService, IUserClaimsPrincipalFactory
+public class IdentityClaimsPrincipalFactory
+    : BackgroundService, IIdentityClaimsPrincipalFactory
 {
 
     /// <summary>
-    /// Initializes a new <see cref="UserClaimsPrincipalFactory"/>
+    /// Initializes a new <see cref="IdentityClaimsPrincipalFactory"/>
     /// </summary>
     /// <param name="serviceProvider">The current <see cref="IServiceProvider"/></param>
     /// <param name="loggerFactory">The service used to create <see cref="ILogger"/>s</param>
     /// <param name="resourceEventBus">The service used to publish and subscribe to <see cref="V1ResourceEvent"/></param>
     /// <param name="userRoleManager">The service used to manage roles</param>
-    public UserClaimsPrincipalFactory(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, IResourceEventBus resourceEventBus, IUserRoleManager userRoleManager)
+    public IdentityClaimsPrincipalFactory(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, IResourceEventBus resourceEventBus, IIdentityRoleManager userRoleManager)
     {
         this.ServiceProvider = serviceProvider;
         this.Logger = loggerFactory.CreateLogger(this.GetType());
@@ -49,7 +49,7 @@ public class UserClaimsPrincipalFactory
     /// <summary>
     /// Gets the service used to manage roles
     /// </summary>
-    protected IUserRoleManager UserRoleManager { get; }
+    protected IIdentityRoleManager UserRoleManager { get; }
 
     /// <summary>
     /// Gets a <see cref="ConcurrentDictionary{TKey, TValue}"/> used to map in memory subjects to their Hylo claims
@@ -67,7 +67,7 @@ public class UserClaimsPrincipalFactory
     protected CancellationTokenSource CancellationTokenSource { get; private set; } = null!;
 
     /// <summary>
-    /// Gets an <see cref="IDisposable"/> that represents the <see cref="UserClaimsPrincipalFactory"/>'s subscription to role binding-related <see cref="V1ResourceEvent"/>s
+    /// Gets an <see cref="IDisposable"/> that represents the <see cref="IdentityClaimsPrincipalFactory"/>'s subscription to role binding-related <see cref="V1ResourceEvent"/>s
     /// </summary>
     protected IDisposable RoleBindingEventSubscription { get; private set; } = null!;
 
@@ -80,7 +80,7 @@ public class UserClaimsPrincipalFactory
             .Where(e =>
                 (e?.Resource.ApiVersion == ApiVersion.Build(V1ClusterRoleBinding.HyloGroup, V1ClusterRoleBinding.HyloApiVersion) && e?.Resource.Kind == V1ClusterRoleBinding.HyloKind)
                 || (e?.Resource.ApiVersion == ApiVersion.Build(V1RoleBinding.HyloGroup, V1RoleBinding.HyloApiVersion) && e?.Resource.Kind == V1RoleBinding.HyloKind))
-            .SubscribeAsync(OnRoleBindingResourceEventAsync, this.CancellationTokenSource.Token);
+            .Subscribe(OnRoleBindingResourceEventAsync!);
     }
 
     /// <summary>
@@ -133,7 +133,7 @@ public class UserClaimsPrincipalFactory
     /// </summary>
     /// <param name="e">The <see cref="V1ResourceEvent"/> to handle</param>
     /// <returns>A new awaitable <see cref="Task"/></returns>
-    protected virtual async Task OnRoleBindingResourceEventAsync(V1ResourceEvent<V1Resource<V1RoleBindingSpec>> e)
+    protected virtual async void OnRoleBindingResourceEventAsync(V1ResourceEvent<V1Resource<V1RoleBindingSpec>> e)
     {
         try
         {

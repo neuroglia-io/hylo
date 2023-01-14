@@ -4,24 +4,23 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Reactive.Linq;
 using System.Security;
-using System.Security.Claims;
 
 namespace Hylo.Api.Core.Infrastructure.Services;
 
 /// <summary>
-/// Represents the default implementation of the <see cref="IUserRoleManager"/>
+/// Represents the default implementation of the <see cref="IIdentityRoleManager"/>
 /// </summary>
-public class UserRoleManager
-    : BackgroundService, IUserRoleManager
+public class IdentityRoleManager
+    : BackgroundService, IIdentityRoleManager
 {
 
     /// <summary>
-    /// Initializes a new <see cref="UserRoleManager"/>
+    /// Initializes a new <see cref="IdentityRoleManager"/>
     /// </summary>
     /// <param name="serviceProvider">The current <see cref="IServiceProvider"/></param>
     /// <param name="loggerFactory">The service used to create <see cref="ILogger"/>s</param>
     /// <param name="resourceEventBus">The service used to publish and subscribe to <see cref="V1ResourceEvent"/></param>
-    public UserRoleManager(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, IResourceEventBus resourceEventBus)
+    public IdentityRoleManager(IServiceProvider serviceProvider, ILoggerFactory loggerFactory, IResourceEventBus resourceEventBus)
     {
         this.ServiceProvider = serviceProvider;
         this.Logger = loggerFactory.CreateLogger(this.GetType());
@@ -159,7 +158,7 @@ public class UserRoleManager
                 }
                 break;
             case V1ResourceEventType.Delete:
-                foreach(var rolesPerSubject in this.SubjectRolesMap.ToList())
+                foreach (var rolesPerSubject in this.SubjectRolesMap.ToList())
                 {
                     rolesPerSubject.Value.Remove(bindingName);
                 }

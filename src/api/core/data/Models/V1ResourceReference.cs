@@ -49,7 +49,7 @@ public class V1ResourceReference
     /// <summary>
     /// Gets/sets the referenced resource's namespace
     /// </summary>
-    [DataMember(Name = "namespace", Order = 1), JsonPropertyName("namespace"))]
+    [DataMember(Name = "namespace", Order = 4), JsonPropertyName("namespace")]
     public virtual string? Namespace { get; set; }
 
     /// <inheritdoc/>

@@ -19,7 +19,14 @@ public class V1Resource
     /// <param name="group">The API group the <see cref="V1Resource"/> belongs to</param>
     /// <param name="version">The version of the API the <see cref="V1Resource"/> belongs to</param>
     /// <param name="kind">The <see cref="V1Resource"/>'s kind</param>
-    public V1Resource(string group, string version, string kind) : this(Api.ApiVersion.Build(group, version), kind) { }
+    public V1Resource(string group, string version, string kind)
+    {
+        if(string.IsNullOrWhiteSpace(group)) throw new ArgumentNullException(nameof(group));
+        if(string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
+        if(string.IsNullOrWhiteSpace(kind)) throw new ArgumentNullException(nameof(kind));
+        this.ApiVersion = Api.ApiVersion.Build(group, version);
+        this.Kind = kind;
+    }
 
     /// <summary>
     /// Initializes a new <see cref="V1Resource"/>

@@ -1,4 +1,6 @@
-﻿namespace Hylo.Api.Core.Data.Models;
+﻿using System.Security;
+
+namespace Hylo.Api.Core.Data.Models;
 
 /// <summary>
 /// Describes an error

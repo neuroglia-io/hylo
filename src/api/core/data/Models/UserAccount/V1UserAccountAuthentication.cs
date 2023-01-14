@@ -11,13 +11,13 @@ public class V1UserAccountAuthentication
     /// Gets/sets the object used to configure the user's Basic authentication
     /// </summary>
     [DataMember(Name = "basic", Order = 1), JsonPropertyName("basic"), Required, MinLength(1)]
-    public virtual V1BasicAuthenticationProperties? Basic { get; set; }
+    public virtual V1BasicAuthenticationSpec? Basic { get; set; }
 
     /// <summary>
     /// Gets/sets the object used to configure the user's certificate-based authentication
     /// </summary>
     [DataMember(Name = "certificate", Order = 2), JsonPropertyName("certificate"), Required, MinLength(1)]
-    public virtual V1BasicAuthenticationProperties? Certificate { get; set; }
+    public virtual V1ClientCertificateAuthenticationSpec? ClientCertificate { get; set; }
 
     /// <summary>
     /// Gets/sets the object used to configure the user's OpenID Connect authentication

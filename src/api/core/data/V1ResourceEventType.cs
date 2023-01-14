@@ -1,4 +1,6 @@
-﻿namespace Hylo.Api.Core.Data.Models;
+﻿using Hylo.Api.Core.Data.Models;
+
+namespace Hylo.Api.Core;
 
 /// <summary>
 /// Enumerates all default types of <see cref="V1ResourceEvent"/>s

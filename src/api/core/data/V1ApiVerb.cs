@@ -1,4 +1,4 @@
-﻿namespace Hylo.Api.Core.Data.Models;
+﻿namespace Hylo.Api.Core;
 
 /// <summary>
 /// Enumerates all default API verbs

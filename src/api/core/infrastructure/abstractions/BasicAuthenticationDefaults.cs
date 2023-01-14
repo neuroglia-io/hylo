@@ -9,6 +9,6 @@ public static class BasicAuthenticationDefaults
     /// <summary>
     /// Gets the name of the 'Basic' authentication scheme
     /// </summary>
-    public const string Scheme = "Basic";
+    public const string AuthenticationScheme = "Basic";
 
 }
