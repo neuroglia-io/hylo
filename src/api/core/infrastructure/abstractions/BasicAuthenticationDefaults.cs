@@ -1,4 +1,6 @@
-﻿namespace Hylo.Api.Core.Infrastructure;
+﻿using MessagePack;
+
+namespace Hylo.Api.Core.Infrastructure;
 
 /// <summary>
 /// Exposes the defaults of the 'Basic' authentication scheme

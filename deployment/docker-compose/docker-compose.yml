@@ -1,0 +1,17 @@
+version: '3.4'
+
+services:
+
+  redis:
+    image: redis
+    ports:
+      - 6373:6373
+
+  hylo.api.server:
+    image: ${DOCKER_REGISTRY-}hyloapiserver
+    build:
+      context: ../..
+      dockerfile: src/api/server/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      CONNECTIONSTRINGS__REDIS: redis

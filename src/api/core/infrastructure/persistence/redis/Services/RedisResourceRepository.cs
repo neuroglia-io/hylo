@@ -273,8 +273,8 @@ public class RedisResourceRepository
     protected virtual async Task<JsonObject> PersistResourceAsync(string group, string version, string plural, JsonObject resource, When when, CancellationToken cancellationToken)
     {
         if (resource == null) throw new ArgumentNullException(nameof(resource));
-        if (!resource.TryGetResourceMetadata(out var metadata) || metadata == null) throw ApiException.InvalidResourceFormat();
-        if (string.IsNullOrWhiteSpace(metadata.Name)) throw ApiException.InvalidResourceFormat();
+        if (!resource.TryGetResourceMetadata(out var metadata) || metadata == null) throw new Exception();//todo: replace ex
+        if (string.IsNullOrWhiteSpace(metadata.Name)) throw new Exception();//todo: replace ex
         var resourceKey = this.BuildResourceKey(group, version, plural, metadata.Name!, metadata.Namespace);
 
         this.PendingTransactions.Add(this.PersistResourceState(group, version, plural, resourceKey, metadata, resource, when, cancellationToken));
@@ -309,7 +309,7 @@ public class RedisResourceRepository
                 if (when == When.Exists)
                 {
                     var storedMetadata = Serializer.Json.Deserialize<V1ResourceMetadata>((await this.Database.HashGetAsync(resourceKey, ResourceHashFields.Metadata))!)!;
-                    if (metadata.StateVersion.HasValue && metadata.StateVersion.Value != storedMetadata.StateVersion) throw ApiException.OptimisticConcurrency(metadata.StateVersion.Value, storedMetadata.StateVersion!.Value);
+                    if (metadata.StateVersion.HasValue && metadata.StateVersion.Value != storedMetadata.StateVersion) throw new Exception(); //todo: replace ex
                     metadata.StateVersion = storedMetadata.StateVersion + 1;
                     transaction.AddCondition(Condition.HashEqual(resourceKey, ResourceHashFields.StateVersion, storedMetadata.StateVersion));
                 }
@@ -370,7 +370,7 @@ public class RedisResourceRepository
     /// <returns>A new <see cref="Transaction"/></returns>
     protected virtual Transaction PersistResourceDefinitionState(string group, string version, string plural, string resourceKey, V1ResourceMetadata metadata, JsonObject resource, When when, CancellationToken cancellationToken)
     {
-        if (!resource.TryGetPropertyValue<V1ResourceDefinitionSpec>(nameof(V1Resource<object>.Spec).ToCamelCase(), out var definitionSpec) || definitionSpec == null) throw ApiException.InvalidResourceFormat();
+        if (!resource.TryGetPropertyValue<V1ResourceDefinitionSpec>(nameof(V1Resource<object>.Spec).ToCamelCase(), out var definitionSpec) || definitionSpec == null) throw new Exception(); //todo: replace ex
         var definitionByQualifiedPluralNameIndexKey = this.BuildDefinitionByQualifiedPluralNameIndexKey(definitionSpec.Group, definitionSpec.Version, definitionSpec.Names.Plural);
         return new()
         {
