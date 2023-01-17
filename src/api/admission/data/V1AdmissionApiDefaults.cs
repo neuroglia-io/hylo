@@ -1,15 +1,13 @@
-﻿using Hylo.Api.Core.Data.Models;
-
-namespace Hylo.Api;
+﻿namespace Hylo.Api;
 
 /// <summary>
-/// Exposes constants about the Hylo v1 Core API
+/// Exposes constants about the Hylo v1 Admission API
 /// </summary>
-public static class V1CoreApiDefaults
+public static class V1AdmissionApiDefaults
 {
 
     /// <summary>
-    /// Exposes constants about paging on the Hylo v1 Core API
+    /// Exposes constants about paging on the Hylo v1 Admission API
     /// </summary>
     public static class Paging
     {
@@ -26,21 +24,21 @@ public static class V1CoreApiDefaults
     }
 
     /// <summary>
-    /// Exposes constants about Hylo v1 Core API resources
+    /// Exposes constants about Hylo v1 Admission API resources
     /// </summary>
     public static class Resources
     {
 
         /// <summary>
-        /// Gets the API group all Hylo v1 Core resources belongs to
+        /// Gets the API group all Hylo v1 Admission resources belongs to
         /// </summary>
-        public const string Group = "core.hylo.cloud";
+        public const string Group = "admission.hylo.cloud";
         /// <summary>
-        /// Gets the version of the API all Hylo v1 Core resources belongs to
+        /// Gets the version of the API all Hylo v1 Admission resources belongs to
         /// </summary>
         public const string Version = "v1";
         /// <summary>
-        /// Gets the version of the API all Hylo v1 Core resources belongs to
+        /// Gets the version of the API all Hylo v1 Admission resources belongs to
         /// </summary>
         public const string ApiVersion = Group + "/" + Version;
 
@@ -53,11 +51,11 @@ public static class V1CoreApiDefaults
             /// <summary>
             /// Gets the definitions of <see cref="V1ResourceDefinition"/>s
             /// </summary>
-            public static readonly V1ResourceDefinition ResourceDefinition = LoadDefinition(nameof(ResourceDefinition));
+            public static readonly V1ResourceDefinition MutatingWebhook = LoadDefinition(nameof(MutatingWebhook));
             /// <summary>
             /// Gets the definitions of <see cref="V1Namespace"/>s
             /// </summary>
-            public static readonly V1ResourceDefinition Namespace = LoadDefinition(nameof(Namespace));
+            public static readonly V1ResourceDefinition ValidatingWebhook = LoadDefinition(nameof(ValidatingWebhook));
 
             /// <summary>
             /// Gets an <see cref="IEnumerable{T}"/> containing all built-in <see cref="V1ResourceDefinition"/>s
@@ -65,15 +63,15 @@ public static class V1CoreApiDefaults
             /// <returns></returns>
             public static IEnumerable<V1ResourceDefinition> AsEnumerable()
             {
-                yield return ResourceDefinition;
-                yield return Namespace;
+                yield return MutatingWebhook;
+                yield return ValidatingWebhook;
             }
 
             static V1ResourceDefinition LoadDefinition(string name)
             {
                 if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
                 name = YamlDotNet.Serialization.NamingConventions.HyphenatedNamingConvention.Instance.Apply(name);
-                using var stream = typeof(V1CoreApiDefaults).Assembly.GetManifestResourceStream($"{typeof(V1CoreApiDefaults).Namespace}.Core.Data.Assets.Resources.Definitions.{name}.yaml");
+                using var stream = typeof(V1CoreApiDefaults).Assembly.GetManifestResourceStream($"{typeof(V1CoreApiDefaults).Namespace}.Admission.Data.Assets.Resources.Definitions.{name}.yaml");
                 if (stream == null) throw new NullReferenceException();
                 using var streamReader = new StreamReader(stream);
                 var yaml = streamReader.ReadToEnd();
@@ -86,5 +84,5 @@ public static class V1CoreApiDefaults
 
     }
 
-}
 
+}

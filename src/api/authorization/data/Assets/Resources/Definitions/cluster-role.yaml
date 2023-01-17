@@ -1,0 +1,50 @@
+﻿apiVersion: core.hylo.cloud/v1
+kind: ResourceDefinition
+metadata:
+  name: namespace
+spec:
+  names:
+    kind: ClusterRole
+    singular: cluster-role
+    plural: cluster-roles
+    shortNames:
+      - cr
+  group: authorization.hylo.cloud
+  version: v1
+  scope: cluster
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              rules:
+                type: array
+                minLength: 1
+                items:
+                  type: object
+                  properties:
+                    apiGroups:
+                      type: array
+                      items:
+                        type: string
+                    resources:
+                      type: array
+                      items:
+                        type: string
+                    verbs:
+                      type: array
+                      items:
+                        type: string
+                    resourceNames:
+                      type: array
+                      items:
+                        type: string
+            required:
+              - rules
+        required:
+         - spec

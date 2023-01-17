@@ -1,20 +1,37 @@
 ﻿namespace Hylo;
 
 /// <summary>
-/// Defines the fundamentals of a Hylo resource
+/// Defines the fundamentals of an Hylo resource
+/// </summary>
+public interface IResource
+{
+
+    /// <summary>
+    /// Gets the resource's API version
+    /// </summary>
+    string ApiVersion { get; }
+
+    /// <summary>
+    /// Gets the resource's kind
+    /// </summary>
+    string Kind { get; }
+
+}
+
+/// <summary>
+/// Defines the fundamentals of an Hylo resource
 /// </summary>
 /// <typeparam name="TMetadata">The type of the resource's metadata</typeparam>
 public interface IResource<TMetadata>
-    : IMetadata<TMetadata>
+    : IResource, IMetadata<TMetadata>
     where TMetadata : class, new()
 {
-
 
 
 }
 
 /// <summary>
-/// Defines the fundamentals of a Hylo resource
+/// Defines the fundamentals of an Hylo resource
 /// </summary>
 /// <typeparam name="TMetadata">The type of the object's metadata</typeparam>
 /// <typeparam name="TSpec">The type of the object's spec</typeparam>
@@ -29,7 +46,7 @@ public interface IResource<TMetadata, TSpec>
 }
 
 /// <summary>
-/// Defines the fundamentals of a Hylo resource
+/// Defines the fundamentals of an Hylo resource
 /// </summary>
 /// <typeparam name="TMetadata">The type of the object's metadata</typeparam>
 /// <typeparam name="TSpec">The type of the object's spec</typeparam>

@@ -1,0 +1,18 @@
+﻿apiVersion: core.hylo.cloud/v1
+kind: ResourceDefinition
+metadata:
+  name: namespace
+spec:
+  names:
+    kind: Namespace
+    singular: namespace
+    plural: namespaces
+    shortNames:
+      - ns
+  group: core.hylo.cloud
+  version: v1
+  scope: cluster
+  versions:
+    - name: v1
+      served: true
+      storage: true

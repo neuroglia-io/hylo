@@ -18,7 +18,7 @@ public class ResourceAttribute
     public ResourceAttribute(string group, string apiVersion, string kind, string pluralName)
     {
         this.Group = group;
-        this.ApiVersion = apiVersion;
+        this.Version = apiVersion;
         this.Kind = kind;
         this.PluralName = pluralName;
     }
@@ -31,7 +31,7 @@ public class ResourceAttribute
     /// <summary>
     /// Gets the version of the API the resource belongs to
     /// </summary>
-    public virtual string ApiVersion { get; }
+    public virtual string Version { get; }
 
     /// <summary>
     /// Gets the resource's kind

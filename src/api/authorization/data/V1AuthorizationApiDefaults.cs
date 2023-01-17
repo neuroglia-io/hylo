@@ -1,15 +1,15 @@
-﻿using Hylo.Api.Core.Data.Models;
+﻿using Hylo.Api.Authorization.Data.Models;
 
 namespace Hylo.Api;
 
 /// <summary>
-/// Exposes constants about the Hylo v1 Core API
+/// Exposes constants about the Hylo v1 Authorization API
 /// </summary>
-public static class V1CoreApiDefaults
+public static class V1AuthorizationApiDefaults
 {
 
     /// <summary>
-    /// Exposes constants about paging on the Hylo v1 Core API
+    /// Exposes constants about paging on the Hylo v1 Authorization API
     /// </summary>
     public static class Paging
     {
@@ -26,21 +26,21 @@ public static class V1CoreApiDefaults
     }
 
     /// <summary>
-    /// Exposes constants about Hylo v1 Core API resources
+    /// Exposes constants about Hylo v1 Authorization API resources
     /// </summary>
     public static class Resources
     {
 
         /// <summary>
-        /// Gets the API group all Hylo v1 Core resources belongs to
+        /// Gets the API group all Hylo v1 Authorization resources belongs to
         /// </summary>
-        public const string Group = "core.hylo.cloud";
+        public const string Group = "authorization.hylo.cloud";
         /// <summary>
-        /// Gets the version of the API all Hylo v1 Core resources belongs to
+        /// Gets the version of the API all Hylo v1 Authorization resources belongs to
         /// </summary>
         public const string Version = "v1";
         /// <summary>
-        /// Gets the version of the API all Hylo v1 Core resources belongs to
+        /// Gets the version of the API all Hylo v1 Authorization resources belongs to
         /// </summary>
         public const string ApiVersion = Group + "/" + Version;
 
@@ -51,13 +51,25 @@ public static class V1CoreApiDefaults
         {
 
             /// <summary>
-            /// Gets the definitions of <see cref="V1ResourceDefinition"/>s
+            /// Gets the definition of <see cref="V1ResourceDefinition"/>s
             /// </summary>
-            public static readonly V1ResourceDefinition ResourceDefinition = LoadDefinition(nameof(ResourceDefinition));
+            public static readonly V1ResourceDefinition ClusterRole = LoadDefinition(nameof(ClusterRole));
             /// <summary>
-            /// Gets the definitions of <see cref="V1Namespace"/>s
+            /// Gets the definition of <see cref="V1ClusterRoleBinding"/>s
             /// </summary>
-            public static readonly V1ResourceDefinition Namespace = LoadDefinition(nameof(Namespace));
+            public static readonly V1ResourceDefinition ClusterRoleBinding = LoadDefinition(nameof(ClusterRoleBinding));
+            /// <summary>
+            /// Gets the definition of <see cref="V1Role"/>s
+            /// </summary>
+            public static readonly V1ResourceDefinition Role = LoadDefinition(nameof(Role));
+            /// <summary>
+            /// Gets the definition of <see cref="V1RoleBinding"/>s
+            /// </summary>
+            public static readonly V1ResourceDefinition RoleBinding = LoadDefinition(nameof(RoleBinding));
+            /// <summary>
+            /// Gets the definition of <see cref="V1UserAccount"/>s 
+            /// </summary>
+            public static readonly V1ResourceDefinition UserAccount = LoadDefinition(nameof(UserAccount));
 
             /// <summary>
             /// Gets an <see cref="IEnumerable{T}"/> containing all built-in <see cref="V1ResourceDefinition"/>s
@@ -65,15 +77,18 @@ public static class V1CoreApiDefaults
             /// <returns></returns>
             public static IEnumerable<V1ResourceDefinition> AsEnumerable()
             {
-                yield return ResourceDefinition;
-                yield return Namespace;
+                yield return ClusterRole;
+                yield return ClusterRoleBinding;
+                yield return Role;
+                yield return RoleBinding;
+                yield return UserAccount;
             }
 
             static V1ResourceDefinition LoadDefinition(string name)
             {
                 if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
                 name = YamlDotNet.Serialization.NamingConventions.HyphenatedNamingConvention.Instance.Apply(name);
-                using var stream = typeof(V1CoreApiDefaults).Assembly.GetManifestResourceStream($"{typeof(V1CoreApiDefaults).Namespace}.Core.Data.Assets.Resources.Definitions.{name}.yaml");
+                using var stream = typeof(V1CoreApiDefaults).Assembly.GetManifestResourceStream($"{typeof(V1CoreApiDefaults).Namespace}.Authorization.Data.Assets.Resources.Definitions.{name}.yaml");
                 if (stream == null) throw new NullReferenceException();
                 using var streamReader = new StreamReader(stream);
                 var yaml = streamReader.ReadToEnd();
