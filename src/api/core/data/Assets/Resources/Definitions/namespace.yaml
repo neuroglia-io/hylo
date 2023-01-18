@@ -1,7 +1,7 @@
 ﻿apiVersion: core.hylo.cloud/v1
 kind: ResourceDefinition
 metadata:
-  name: namespace
+  name: namespaces.core.hylo.cloud
 spec:
   names:
     kind: Namespace

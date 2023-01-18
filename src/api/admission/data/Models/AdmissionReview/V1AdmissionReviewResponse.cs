@@ -4,22 +4,22 @@
 /// Represents the
 /// </summary>
 [DataContract]
-public class V1ResourceAdmissionReviewResponse
+public class V1AdmissionReviewResponse
 {
 
     /// <summary>
-    /// Initializes a new <see cref="V1ResourceAdmissionReviewResponse"/>
+    /// Initializes a new <see cref="V1AdmissionReviewResponse"/>
     /// </summary>
-    public V1ResourceAdmissionReviewResponse() { }
+    public V1AdmissionReviewResponse() { }
 
     /// <summary>
-    /// Initializes a new <see cref="V1ResourceAdmissionReviewResponse"/>
+    /// Initializes a new <see cref="V1AdmissionReviewResponse"/>
     /// </summary>
-    /// <param name="id">The id of the <see cref="V1ResourceAdmissionReviewRequest"/> answered to by the <see cref="V1ResourceAdmissionReviewResponse"/></param>
+    /// <param name="id">The id of the <see cref="V1AdmissionReviewRequest"/> answered to by the <see cref="V1AdmissionReviewResponse"/></param>
     /// <param name="succeeded">A boolean indicating whether or not the admission succeeded</param>
     /// <param name="patch">The <see cref="V1Patch"/> applied during the resource's admission, if any</param>
     /// <param name="errors">A <see cref="List{T}"/> containing the <see cref="V1Error"/>s that occured during the resource's admission</param>
-    public V1ResourceAdmissionReviewResponse(string id, bool succeeded, V1Patch? patch = null, IEnumerable<V1Error>? errors = null)
+    public V1AdmissionReviewResponse(string id, bool succeeded, V1Patch? patch = null, IEnumerable<V1Error>? errors = null)
     {
         if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id));
         this.Id = id;

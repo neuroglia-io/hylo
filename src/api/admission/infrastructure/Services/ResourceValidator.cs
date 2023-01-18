@@ -36,12 +36,12 @@ public abstract class ResourceValidator<TResource>
         return this.ResourceApiVersion == ApiVersion.Build(resourceDefinition.Spec.Group, resourceDefinition.Spec.Version) && this.ResourceKind == resourceDefinition.Spec.Names.Kind;
     }
 
-    async Task IResourceValidator.ValidateAsync(V1ResourceAdmissionReviewContext context, CancellationToken cancellationToken)
+    async Task IResourceValidator.ValidateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken)
     {
         if (context == null) throw new ArgumentNullException(nameof(context));
         await this.ValidateAsync(context.OfType<TResource>(), cancellationToken);
     }
 
-    public abstract Task<V1Patch> ValidateAsync(V1ResourceAdmissionReviewContext<TResource> context, CancellationToken cancellationToken);
+    public abstract Task<V1Patch> ValidateAsync(ResourceAdmissionReviewContext<TResource> context, CancellationToken cancellationToken);
 
 }

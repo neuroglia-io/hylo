@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" Version="7.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.2" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" />
@@ -18,6 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\admission\infrastructure\Hylo.Api.Admission.Infrastructure.csproj" />
+    <ProjectReference Include="..\application\Hylo.Api.Application.csproj" />
+    <ProjectReference Include="..\authorization\infrastructure\Hylo.Api.Authorization.Infrastructure.csproj" />
     <ProjectReference Include="..\core\infrastructure\persistence\redis\Hylo.Api.Core.Infrastructure.Persistence.Redis.csproj" />
     <ProjectReference Include="..\core\infrastructure\service-bus\redis\Hylo.Api.Core.Infrastructure.ServiceBus.Redis.csproj" />
   </ItemGroup>

@@ -11,6 +11,7 @@
     <None Remove="Assets\Resources\Definitions\cluster-role.yaml" />
     <None Remove="Assets\Resources\Definitions\role-binding.yaml" />
     <None Remove="Assets\Resources\Definitions\role.yaml" />
+    <None Remove="Assets\Resources\Definitions\user-account.yaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,6 +19,9 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Assets\Resources\Definitions\cluster-role-binding.yaml">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\Resources\Definitions\user-account.yaml">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Assets\Resources\Definitions\role-binding.yaml">

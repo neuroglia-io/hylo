@@ -16,11 +16,21 @@ public class V1ResourceEvent
     /// <summary>
     /// Initializes a new <see cref="V1ResourceEvent"/>
     /// </summary>
-    /// <param name="type">The event's type</param>
+    /// <param name="type">The <see cref="V1ResourceEvent"/>'s type</param>
+    /// <param name="group">The API group the resource that has produced the <see cref="V1ResourceEvent"/> belongs to</param>
+    /// <param name="version">The API version the resource that has produced the <see cref="V1ResourceEvent"/> belongs to</param>
+    /// <param name="plural">The plural form of the type of the resource that has produced the <see cref="V1ResourceEvent"/></param>
     /// <param name="resource">The resource the <see cref="V1ResourceEvent"/> has been produced for</param>
-    public V1ResourceEvent(string type, object resource)
+    public V1ResourceEvent(string type, string group, string version, string plural, object resource)
     {
-        this.Type = type ?? throw new ArgumentNullException(nameof(type));
+        if (string.IsNullOrWhiteSpace(type)) throw new ArgumentNullException(nameof(type));
+        if (string.IsNullOrWhiteSpace(group)) throw new ArgumentNullException(nameof(group));
+        if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
+        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
+        this.Type = type;
+        this.Group = group;
+        this.Version = version;
+        this.Plural = plural;
         this.Resource = resource ?? throw new ArgumentNullException(nameof(resource));
     }
 
@@ -29,7 +39,19 @@ public class V1ResourceEvent
     public virtual string Type { get; set; } = null!;
 
     /// <inheritdoc/>
-    [DataMember(Name = "resource", Order = 2), JsonPropertyName("resource"), Required]
+    [DataMember(Name = "group", Order = 2), JsonPropertyName("group"), Required, MinLength(1)]
+    public virtual string Group { get; set; } = null!;
+
+    /// <inheritdoc/>
+    [DataMember(Name = "version", Order = 3), JsonPropertyName("version"), Required, MinLength(1)]
+    public virtual string Version { get; set; } = null!;
+
+    /// <inheritdoc/>
+    [DataMember(Name = "plural", Order = 4), JsonPropertyName("plural"), Required, MinLength(1)]
+    public virtual string Plural { get; set; } = null!;
+
+    /// <inheritdoc/>
+    [DataMember(Name = "resource", Order = 5), JsonPropertyName("resource"), Required]
     public virtual object Resource { get; set; } = null!;
 
 }
@@ -53,10 +75,20 @@ public class V1ResourceEvent<TResource>
     /// Initializes a new <see cref="V1ResourceEvent"/>
     /// </summary>
     /// <param name="type">The event's type</param>
+    /// <param name="group">The API group the resource that has produced the <see cref="V1ResourceEvent"/> belongs to</param>
+    /// <param name="version">The API version the resource that has produced the <see cref="V1ResourceEvent"/> belongs to</param>
+    /// <param name="plural">The plural form of the type of the resource that has produced the <see cref="V1ResourceEvent"/></param>
     /// <param name="resource">The resource the <see cref="V1ResourceEvent"/> has been produced for</param>
-    public V1ResourceEvent(string type, TResource resource)
+    public V1ResourceEvent(string type, string group, string version, string plural, TResource resource)
     {
-        this.Type = type ?? throw new ArgumentNullException(nameof(type));
+        if (string.IsNullOrWhiteSpace(type)) throw new ArgumentNullException(nameof(type));
+        if (string.IsNullOrWhiteSpace(group)) throw new ArgumentNullException(nameof(group));
+        if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
+        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
+        this.Type = type;
+        this.Group = group;
+        this.Version = version;
+        this.Plural = plural;
         this.Resource = resource ?? throw new ArgumentNullException(nameof(resource));
     }
 
@@ -65,7 +97,19 @@ public class V1ResourceEvent<TResource>
     public virtual string Type { get; set; } = null!;
 
     /// <inheritdoc/>
-    [DataMember(Name = "resource", Order = 2), JsonPropertyName("resource"), Required]
+    [DataMember(Name = "group", Order = 2), JsonPropertyName("group"), Required, MinLength(1)]
+    public virtual string Group { get; set; } = null!;
+
+    /// <inheritdoc/>
+    [DataMember(Name = "version", Order = 3), JsonPropertyName("version"), Required, MinLength(1)]
+    public virtual string Version { get; set; } = null!;
+
+    /// <inheritdoc/>
+    [DataMember(Name = "plural", Order = 4), JsonPropertyName("plural"), Required, MinLength(1)]
+    public virtual string Plural { get; set; } = null!;
+
+    /// <inheritdoc/>
+    [DataMember(Name = "resource", Order = 5), JsonPropertyName("resource"), Required]
     public virtual TResource Resource { get; set; } = null!;
 
     object IResourceEvent.Resource => this.Resource;

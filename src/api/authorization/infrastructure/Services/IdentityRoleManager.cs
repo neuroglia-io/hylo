@@ -117,7 +117,7 @@ public class IdentityRoleManager
     protected virtual void OnUserAccountResourceEvent(V1ResourceEvent<V1UserAccount> e)
     {
         if (e == null) throw new ArgumentNullException(nameof(e));
-        if (e.Type != V1ResourceEventType.Delete) return;
+        if (e.Type != V1ResourceEventType.Deleted) return;
         this.SubjectRolesMap.Remove(e.Resource.Metadata.Name, out _);
     }
 
@@ -133,7 +133,7 @@ public class IdentityRoleManager
         var roleName = e.Resource.Metadata.GetNamespacedName();
         switch (e.Type)
         {
-            case V1ResourceEventType.Create:
+            case V1ResourceEventType.Created:
                 foreach (var subject in e.Resource.Spec.Subjects)
                 {
                     this.SubjectRolesMap.AddOrUpdate(subject.Name, new Dictionary<string, string>() { { bindingName, roleName } }, (key, existing) =>
@@ -143,7 +143,7 @@ public class IdentityRoleManager
                     });
                 }
                 break;
-            case V1ResourceEventType.Update:
+            case V1ResourceEventType.Updated:
                 foreach (var rolesPerSubject in this.SubjectRolesMap.ToList())
                 {
                     rolesPerSubject.Value.Remove(bindingName);
@@ -157,7 +157,7 @@ public class IdentityRoleManager
                     });
                 }
                 break;
-            case V1ResourceEventType.Delete:
+            case V1ResourceEventType.Deleted:
                 foreach (var rolesPerSubject in this.SubjectRolesMap.ToList())
                 {
                     rolesPerSubject.Value.Remove(bindingName);

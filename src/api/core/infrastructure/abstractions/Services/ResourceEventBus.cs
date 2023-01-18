@@ -69,7 +69,7 @@ public class ResourceEventBus
                 try
                 {
                     var content = Serializer.Json.SerializeToNode(e)?.AsObject();
-                    await ServiceBus.PublishAsync(new(V1ApiServerMessageType.ResourceEvent, Environment.MachineName, content), cancellationToken);
+                    await ServiceBus.PublishAsync(new(ApiServerMessageType.ResourceEvent, Environment.MachineName, content), cancellationToken);
                 }
                 catch (Exception ex)
                 {

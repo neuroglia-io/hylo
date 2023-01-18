@@ -45,18 +45,18 @@ public class V1WebhookResourceValidator
     public virtual bool SupportsResourceType(V1ResourceDefinition resourceDefinition) => this.Webhook.Spec.Resources?.Any(r => r.Matches(resourceDefinition.Spec.Group, resourceDefinition.Spec.Version, resourceDefinition.Spec.Names.Plural, r.Operations?.FirstOrDefault()!)) == true;
 
     /// <inheritdoc/>
-    public virtual async Task ValidateAsync(V1ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default)
+    public virtual async Task ValidateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default)
     {
         if (context == null) throw new ArgumentNullException(nameof(context)); Logger.LogDebug("Validating resource '{resource}' using dynamic admission webhook '{webhook}'...", context.ResourceReference, this.Webhook);
-        var admissionRequest = new V1ResourceAdmissionReviewRequest(context.Resource);
-        var admissionReview = new V1ResourceAdmissionReview(admissionRequest);
+        var admissionRequest = new V1AdmissionReviewRequest(context.Resource);
+        var admissionReview = new V1AdmissionReview(admissionRequest);
         var json = Serializer.Json.Serialize(admissionReview);
         using var request = new HttpRequestMessage(HttpMethod.Post, this.Webhook.Spec.Client.Uri) { Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json) };
         //todo: add payload signature: if (webhook.Spec.Client.Key != null) request.Headers.AddContentSignature();
         using var response = await HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         //todo: verify response payload signature
-        admissionReview = await response.Content.ReadFromJsonAsync<V1ResourceAdmissionReview>();
+        admissionReview = await response.Content.ReadFromJsonAsync<V1AdmissionReview>();
         if (admissionReview?.Response == null || !admissionReview.Response.Id.Equals(admissionRequest.Id, StringComparison.OrdinalIgnoreCase)) throw new Exception();
         if (admissionReview.Response.Succeeded) this.Logger.LogDebug("Resource '{resource}' succesfully validated by webhook '{webhook}'", context.ResourceReference, this.Webhook);
         else this.Logger.LogDebug("Dynamic admission webhook '{webhook}' failed to validate resource '{resource}'. Errors:/r/n{errors}", this.Webhook, context.ResourceReference, admissionReview.Response.Errors == null ? string.Empty : string.Join(Environment.NewLine, admissionReview.Response.Errors.Select(e => $"{e.Code}: {e.Message}")));

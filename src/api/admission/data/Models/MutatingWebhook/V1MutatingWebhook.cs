@@ -11,11 +11,11 @@ public class V1MutatingWebhook
     /// <summary>
     /// Gets the resource API group
     /// </summary>
-    public const string HyloGroup = V1AdmissionApiDefaults.Resources.ApiVersion;
+    public const string HyloGroup = V1AdmissionApiDefaults.Resources.Group;
     /// <summary>
     /// Gets the resource API version
     /// </summary>
-    public const string HyloApiVersion = V1AdmissionApiDefaults.Resources.ApiVersion;
+    public const string HyloApiVersion = V1AdmissionApiDefaults.Resources.Version;
     /// <summary>
     /// Gets the resource kind
     /// </summary>

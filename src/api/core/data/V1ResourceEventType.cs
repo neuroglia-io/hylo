@@ -11,15 +11,15 @@ public static class V1ResourceEventType
     /// <summary>
     /// Indicates an event that describes the creation of a <see cref="V1Resource"/>
     /// </summary>
-    public const string Create = "create";
+    public const string Created = "created";
     /// <summary>
     /// Indicates an event that describes the update of a <see cref="V1Resource"/>
     /// </summary>
-    public const string Update = "update";
+    public const string Updated = "updated";
     /// <summary>
     /// Indicates an event that describes the deletion of a <see cref="V1Resource"/>
     /// </summary>
-    public const string Delete = "delete";
+    public const string Deleted = "deleted";
 
     /// <summary>
     /// Enunmerates all default <see cref="V1ResourceEventType"/>s
@@ -27,9 +27,9 @@ public static class V1ResourceEventType
     /// <returns>A new <see cref="IEnumerable{T}"/> containing all default <see cref="V1ResourceEventType"/>s</returns>
     public static IEnumerable<string> AsEnumerable()
     {
-        yield return Create;
-        yield return Update;
-        yield return Delete;
+        yield return Created;
+        yield return Updated;
+        yield return Deleted;
     }
 
 }

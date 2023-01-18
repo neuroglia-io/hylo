@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents the definition of a resource
 /// </summary>
-[Resource(HyloGroup, HyloApiVersion, HyloKind, HyloPluralName), DataContract]
+[Resource(HyloGroup, HyloVersion, HyloKind, HyloPluralName), DataContract]
 public class V1ResourceDefinition
     : V1Resource<V1ResourceDefinitionSpec>
 {
@@ -11,11 +11,11 @@ public class V1ResourceDefinition
     /// <summary>
     /// Gets the resource API group
     /// </summary>
-    public const string HyloGroup = V1CoreApiDefaults.Resources.ApiVersion;
+    public const string HyloGroup = V1CoreApiDefaults.Resources.Group;
     /// <summary>
     /// Gets the resource API version
     /// </summary>
-    public const string HyloApiVersion = V1CoreApiDefaults.Resources.ApiVersion;
+    public const string HyloVersion = V1CoreApiDefaults.Resources.Version;
     /// <summary>
     /// Gets the resource kind
     /// </summary>
@@ -28,7 +28,7 @@ public class V1ResourceDefinition
     /// <summary>
     /// Initializes a new <see cref="V1ResourceDefinition"/>
     /// </summary>
-    public V1ResourceDefinition() : base(HyloGroup, HyloApiVersion, HyloKind) { }
+    public V1ResourceDefinition() : base(HyloGroup, HyloVersion, HyloKind) { }
 
     /// <summary>
     /// Initializes a new <see cref="V1ResourceDefinition"/>

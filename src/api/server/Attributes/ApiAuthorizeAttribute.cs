@@ -1,4 +1,4 @@
-﻿using Hylo.Api.Core.Infrastructure;
+﻿using Hylo.Api.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Authorization;
 

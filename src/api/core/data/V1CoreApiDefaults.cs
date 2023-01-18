@@ -65,7 +65,6 @@ public static class V1CoreApiDefaults
             /// <returns></returns>
             public static IEnumerable<V1ResourceDefinition> AsEnumerable()
             {
-                yield return ResourceDefinition;
                 yield return Namespace;
             }
 

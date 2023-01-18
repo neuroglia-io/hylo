@@ -1,7 +1,7 @@
 ﻿apiVersion: admission.hylo.cloud/v1
 kind: ResourceDefinition
 metadata:
-  name: validating-webhook
+  name: validating-webhooks.admission.hylo.cloud
 spec:
   names:
     kind: ValidatingWebhook

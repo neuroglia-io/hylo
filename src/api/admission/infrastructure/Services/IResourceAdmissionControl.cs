@@ -7,10 +7,10 @@ public interface IResourceAdmissionControl
 {
 
     /// <summary>
-    /// Evaluates the specified <see cref="V1ResourceAdmissionReviewRequest"/>
+    /// Evaluates the specified <see cref="V1AdmissionReviewRequest"/>
     /// </summary>
-    /// <param name="context">The <see cref="V1ResourceAdmissionReviewContext"/> of the admission evaluation to perform</param>
+    /// <param name="context">The <see cref="ResourceAdmissionReviewContext"/> of the admission evaluation to perform</param>
     /// <returns>A new awaitable <see cref="Task"/></returns>
-    Task EvaluateAsync(V1ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default);
+    Task EvaluateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default);
 
 }

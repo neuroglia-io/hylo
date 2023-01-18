@@ -125,13 +125,13 @@ public class AuthenticationManager
         if (e == null) throw new ArgumentNullException(nameof(e));
         switch (e.Type)
         {
-            case V1ResourceEventType.Create:
+            case V1ResourceEventType.Created:
                 this.UserAccountMap.AddOrUpdate(e.Resource.Metadata.Name, e.Resource, (key, existing) => e.Resource);
                 break;
-            case V1ResourceEventType.Update:
+            case V1ResourceEventType.Updated:
                 this.UserAccountMap.AddOrUpdate(e.Resource.Metadata.Name, e.Resource, (key, existing) => e.Resource);
                 break;
-            case V1ResourceEventType.Delete:
+            case V1ResourceEventType.Deleted:
                 this.UserAccountMap.Remove(e.Resource.Metadata.Name, out _);
                 break;
         }

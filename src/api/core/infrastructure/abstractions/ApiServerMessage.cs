@@ -4,25 +4,25 @@ using System.Text.Json.Serialization;
 namespace Hylo.Api.Core.Infrastructure;
 
 /// <summary>
-/// Represents a message exchanged between Synapse API server instances
+/// Represents a message exchanged between Hylo API server instances
 /// </summary>
 [DataContract]
-public class V1ApiServerMessage
+public class ApiServerMessage
     : IExtensible
 {
 
     /// <summary>
-    /// Initializes a new <see cref="V1ApiServerMessage"/>
+    /// Initializes a new <see cref="ApiServerMessage"/>
     /// </summary>
-    public V1ApiServerMessage() { }
+    public ApiServerMessage() { }
 
     /// <summary>
-    /// Initializes a new <see cref="V1ApiServerMessage"/>
+    /// Initializes a new <see cref="ApiServerMessage"/>
     /// </summary>
-    /// <param name="type">The <see cref="V1ApiServerMessage"/>'s type<para></para><see cref="V1ApiServerMessageType">View default API server message types</see></param>
-    /// <param name="sourceId">The unique identifier of the API server that has produced the <see cref="V1ApiServerMessage"/></param>
-    /// <param name="content">The <see cref="V1ApiServerMessage"/>'s content, if any</param>
-    public V1ApiServerMessage(string type, string sourceId, JsonObject? content = null)
+    /// <param name="type">The <see cref="ApiServerMessage"/>'s type<para></para><see cref="ApiServerMessageType">View default API server message types</see></param>
+    /// <param name="sourceId">The unique identifier of the API server that has produced the <see cref="ApiServerMessage"/></param>
+    /// <param name="content">The <see cref="ApiServerMessage"/>'s content, if any</param>
+    public ApiServerMessage(string type, string sourceId, JsonObject? content = null)
     {
         this.Id = Guid.NewGuid().ToString();
         this.Type = type;

@@ -71,7 +71,7 @@ public static class V1AdmissionApiDefaults
             {
                 if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
                 name = YamlDotNet.Serialization.NamingConventions.HyphenatedNamingConvention.Instance.Apply(name);
-                using var stream = typeof(V1CoreApiDefaults).Assembly.GetManifestResourceStream($"{typeof(V1CoreApiDefaults).Namespace}.Admission.Data.Assets.Resources.Definitions.{name}.yaml");
+                using var stream = typeof(V1AdmissionApiDefaults).Assembly.GetManifestResourceStream($"{typeof(V1AdmissionApiDefaults).Namespace}.Admission.Data.Assets.Resources.Definitions.{name}.yaml");
                 if (stream == null) throw new NullReferenceException();
                 using var streamReader = new StreamReader(stream);
                 var yaml = streamReader.ReadToEnd();

@@ -39,12 +39,12 @@ public abstract class ResourceMutator<TResource>
         return this.ResourceApiVersion == ApiVersion.Build(resourceDefinition.Spec.Group, resourceDefinition.Spec.Version) && this.ResourceKind == resourceDefinition.Spec.Names.Kind;
     }
 
-    async Task IResourceMutator.MutateAsync(V1ResourceAdmissionReviewContext context, CancellationToken cancellationToken)
+    async Task IResourceMutator.MutateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken)
     {
         if (context == null) throw new ArgumentNullException(nameof(context));
         await this.MutateAsync(context.OfType<TResource>(), cancellationToken);
     }
 
-    public abstract Task<V1Patch> MutateAsync(V1ResourceAdmissionReviewContext<TResource> context, CancellationToken cancellationToken);
+    public abstract Task<V1Patch> MutateAsync(ResourceAdmissionReviewContext<TResource> context, CancellationToken cancellationToken);
 
 }

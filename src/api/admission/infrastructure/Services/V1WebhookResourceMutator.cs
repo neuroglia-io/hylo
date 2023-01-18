@@ -43,14 +43,14 @@ public class V1WebhookResourceMutator
     public virtual bool SupportsResourceType(V1ResourceDefinition resourceDefinition) => this.Webhook.Spec.Resources?.Any(r => r.Matches(resourceDefinition.Spec.Group, resourceDefinition.Spec.Version, resourceDefinition.Spec.Names.Plural, r.Operations?.FirstOrDefault()!)) == true;
 
     /// <inheritdoc/>
-    public virtual async Task MutateAsync(V1ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default)
+    public virtual async Task MutateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default)
     {
         if(context == null) throw new ArgumentNullException(nameof(context));
         this.Logger.LogDebug("Mutating resource '{resource}' using webhook '{webhook}'...", context.ResourceReference, this.Webhook);
-        var admissionReview = new V1ResourceAdmissionReview(new V1ResourceAdmissionReviewRequest(context.Resource));
+        var admissionReview = new V1AdmissionReview(new V1AdmissionReviewRequest(context.Resource));
         using var response = await HttpClient.PostAsJsonAsync(this.Webhook.Spec.Client.Uri, admissionReview, cancellationToken);
         response.EnsureSuccessStatusCode();
-        admissionReview = await response.Content.ReadFromJsonAsync<V1ResourceAdmissionReview>(cancellationToken: cancellationToken);
+        admissionReview = await response.Content.ReadFromJsonAsync<V1AdmissionReview>(cancellationToken: cancellationToken);
         if (admissionReview?.Response == null || admissionReview.Response.Patch == null)
         {
             this.Logger.LogWarning("Mutating webhook {webhook} responded with a success status code '{statusCode}' but did not return a valid mutating admission response or did not define a valid resource patch", this.Webhook, response.StatusCode);

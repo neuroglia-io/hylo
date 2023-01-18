@@ -169,8 +169,8 @@ public static class JsonObjectExtensions
         if (!jsonObject.TryGetPropertyValue(nameof(V1Resource.Kind).ToCamelCase(), out string? kind) || string.IsNullOrWhiteSpace(kind)) return false;
         if (string.IsNullOrEmpty(apiVersion)) return false;
 
-        return apiVersion.Equals(ApiVersion.Build(V1ResourceDefinition.HyloGroup, V1ResourceDefinition.HyloApiVersion), StringComparison.InvariantCultureIgnoreCase)
-            && kind.Equals(V1ResourceDefinition.HyloKind, StringComparison.InvariantCultureIgnoreCase);
+        return apiVersion.Equals(ApiVersion.Build(V1ResourceDefinition.HyloGroup, V1ResourceDefinition.HyloVersion))
+            && kind.Equals(V1ResourceDefinition.HyloKind);
     }
 
     /// <summary>

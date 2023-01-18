@@ -9,12 +9,12 @@ public static class V1ResourceAdmissionReviewContextExtensions
 {
 
     /// <summary>
-    /// Converts the <see cref="V1ResourceAdmissionReviewContext"/> for a specific <see cref="V1Resource"/> type
+    /// Converts the <see cref="ResourceAdmissionReviewContext"/> for a specific <see cref="V1Resource"/> type
     /// </summary>
     /// <typeparam name="TResource">The type of <see cref="V1Resource"/> to admit</typeparam>
-    /// <param name="context">The <see cref="V1ResourceAdmissionReviewContext"/> to convert</param>
+    /// <param name="context">The <see cref="ResourceAdmissionReviewContext"/> to convert</param>
     /// <returns>A new generic version of the context</returns>
-    public static V1ResourceAdmissionReviewContext<TResource> OfType<TResource>(this V1ResourceAdmissionReviewContext context)
+    public static ResourceAdmissionReviewContext<TResource> OfType<TResource>(this ResourceAdmissionReviewContext context)
         where TResource : V1Resource, new()
     {
         return new(context);
@@ -35,9 +35,9 @@ public static class IHyloApiBuilderExtensions
     /// <returns>The configured <see cref="IHyloApiBuilder"/></returns>
     public static IHyloApiBuilder AddAdmissionApiV1(this IHyloApiBuilder api)
     {
-        foreach (var resource in V1AdmissionApiDefaults.Resources.BuiltInCollection)
+        foreach (var resource in V1AdmissionApiDefaults.Resources.BuiltInDefinitions.AsEnumerable())
         {
-            api.Resources.Register(resource);
+            api.Resources.RegisterResourceDefinition(resource);
         }
         return api;
     }

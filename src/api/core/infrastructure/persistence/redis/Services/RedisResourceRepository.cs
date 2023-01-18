@@ -190,7 +190,7 @@ public class RedisResourceRepository
     }
 
     /// <inheritdoc/>
-    public virtual async IAsyncEnumerable<TResource?> ListResourcesAsync<TResource>(string group, string version, string plural, string? @namespace = null, IEnumerable<string>? labelSelectors = null, 
+    public virtual async IAsyncEnumerable<TResource> ListResourcesAsync<TResource>(string group, string version, string plural, string? @namespace = null, IEnumerable<string>? labelSelectors = null, 
         int resultsPerPage = V1CoreApiDefaults.Paging.MaxResultsPerPage, string? orderBy = null, bool orderByDescending = false, int? pageIndex = null, [EnumeratorCancellation] CancellationToken cancellationToken = default) 
         where TResource : V1Resource
     {
@@ -201,7 +201,9 @@ public class RedisResourceRepository
         {
             var jsonObject = (JsonObject)resource;
             if (jsonObject == null) continue;
-            yield return Serializer.Json.Deserialize<TResource>(jsonObject);
+            var deserialized = Serializer.Json.Deserialize<TResource>(jsonObject);
+            if (jsonObject == null) continue;
+            yield return deserialized;
         }
     }
 

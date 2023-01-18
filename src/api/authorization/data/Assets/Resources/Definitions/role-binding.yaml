@@ -1,7 +1,7 @@
 ﻿apiVersion: core.hylo.cloud/v1
 kind: ResourceDefinition
 metadata:
-  name: namespace
+  name: role-bindings.authorization.hylo.cloud
 spec:
   names:
     kind: RoleBinding

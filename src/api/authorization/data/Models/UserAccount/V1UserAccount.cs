@@ -11,11 +11,11 @@ public class V1UserAccount
     /// <summary>
     /// Gets the resource API group
     /// </summary>
-    public const string HyloGroup = V1AuthorizationApiDefaults.Resources.ApiVersion;
+    public const string HyloGroup = V1AuthorizationApiDefaults.Resources.Group;
     /// <summary>
     /// Gets the resource API version
     /// </summary>
-    public const string HyloApiVersion = V1AuthorizationApiDefaults.Resources.ApiVersion;
+    public const string HyloApiVersion = V1AuthorizationApiDefaults.Resources.Version;
     /// <summary>
     /// Gets the resource kind
     /// </summary>

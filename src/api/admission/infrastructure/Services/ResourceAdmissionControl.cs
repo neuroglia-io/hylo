@@ -53,7 +53,7 @@ public class ResourceAdmissionControl
     protected IEnumerable<IResourceValidator> ResourceValidators { get; }
 
     /// <inheritdoc/>
-    public virtual async Task EvaluateAsync(V1ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default)
+    public virtual async Task EvaluateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default)
     {
         if (context == null) throw new ArgumentNullException(nameof(context));
         await this.MutateAsync(context, cancellationToken).ConfigureAwait(false);
@@ -63,10 +63,10 @@ public class ResourceAdmissionControl
     /// <summary>
     /// Mutates the specifed resource
     /// </summary>
-    /// <param name="context">The <see cref="V1ResourceAdmissionReviewContext"/> that describes the resource to mutate</param>
+    /// <param name="context">The <see cref="ResourceAdmissionReviewContext"/> that describes the resource to mutate</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>A new awaitable <see cref="Task"/></returns>
-    protected virtual async Task MutateAsync(V1ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default)
+    protected virtual async Task MutateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default)
     {
         if (context == null) throw new ArgumentNullException(nameof(context));
         var mutators = this.ResourceMutators.Where(m => m.SupportsResourceType(context.ResourceDefinition)).ToList();
@@ -80,7 +80,7 @@ public class ResourceAdmissionControl
         }
     }
 
-    protected virtual async Task ValidateAsync(V1ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default)
+    protected virtual async Task ValidateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default)
     {
         if (context == null) throw new ArgumentNullException(nameof(context));
         var validators = this.ResourceValidators.Where(m => m.SupportsResourceType(context.ResourceDefinition)).ToList();

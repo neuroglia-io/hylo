@@ -26,7 +26,7 @@ public static class V1ResourceEventExtensions
             else resource = Serializer.Json.Deserialize<TResource>(Serializer.Json.Serialize(resource));
             if (resource == null) return null;
         }
-        return new(e.Type, resource);
+        return new(e.Type, e.Group, e.Version, e.Plural, resource);
     }
 
 }

@@ -1,4 +1,4 @@
-﻿namespace Hylo.Api.Core.Data.Models
+﻿namespace Hylo.Api.Authorization.Data.Models
 {
 
     /// <summary>
@@ -12,11 +12,11 @@
         /// <summary>
         /// Gets the resource API group
         /// </summary>
-        public const string HyloGroup = V1AuthorizationApiDefaults.Resources.ApiVersion;
+        public const string HyloGroup = V1AuthorizationApiDefaults.Resources.Group;
         /// <summary>
         /// Gets the resource API version
         /// </summary>
-        public const string HyloApiVersion = V1AuthorizationApiDefaults.Resources.ApiVersion;
+        public const string HyloApiVersion = V1AuthorizationApiDefaults.Resources.Version;
         /// <summary>
         /// Gets the resource kind
         /// </summary>

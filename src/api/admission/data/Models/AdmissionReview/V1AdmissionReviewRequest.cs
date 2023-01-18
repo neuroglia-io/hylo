@@ -4,19 +4,19 @@
 /// Represents a <see cref="V1Resource"/> admission review request
 /// </summary>
 [DataContract]
-public class V1ResourceAdmissionReviewRequest
+public class V1AdmissionReviewRequest
 {
 
     /// <summary>
-    /// Initializes a new <see cref="V1ResourceAdmissionReviewRequest"/>
+    /// Initializes a new <see cref="V1AdmissionReviewRequest"/>
     /// </summary>
-    public V1ResourceAdmissionReviewRequest() { }
+    public V1AdmissionReviewRequest() { }
 
     /// <summary>
-    /// Initializes a new <see cref="V1ResourceAdmissionReviewRequest"/>
+    /// Initializes a new <see cref="V1AdmissionReviewRequest"/>
     /// </summary>
     /// <param name="resource">The resource to validate</param>
-    public V1ResourceAdmissionReviewRequest(object resource)
+    public V1AdmissionReviewRequest(object resource)
     {
         this.Id = Guid.NewGuid().ToString();
         this.Resource = resource;

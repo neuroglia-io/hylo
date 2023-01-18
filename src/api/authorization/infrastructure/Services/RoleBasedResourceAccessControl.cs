@@ -123,11 +123,11 @@ public class RoleBasedResourceAccessControl
         var role = new RoleDescriptor(roleScope, e.Resource.Metadata.Namespace, e.Resource.Spec);
         switch (e.Type)
         {
-            case V1ResourceEventType.Create:
-            case V1ResourceEventType.Update:
+            case V1ResourceEventType.Created:
+            case V1ResourceEventType.Updated:
                 this.RoleMap.AddOrUpdate(namespacedName, role, (key, existing) => role);
                 break;
-            case V1ResourceEventType.Delete:
+            case V1ResourceEventType.Deleted:
                 this.RoleMap.TryRemove(namespacedName, out _);
                 break;
         }

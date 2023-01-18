@@ -88,7 +88,7 @@ public static class V1AuthorizationApiDefaults
             {
                 if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
                 name = YamlDotNet.Serialization.NamingConventions.HyphenatedNamingConvention.Instance.Apply(name);
-                using var stream = typeof(V1CoreApiDefaults).Assembly.GetManifestResourceStream($"{typeof(V1CoreApiDefaults).Namespace}.Authorization.Data.Assets.Resources.Definitions.{name}.yaml");
+                using var stream = typeof(V1AuthorizationApiDefaults).Assembly.GetManifestResourceStream($"{typeof(V1AuthorizationApiDefaults).Namespace}.Authorization.Data.Assets.Resources.Definitions.{name}.yaml");
                 if (stream == null) throw new NullReferenceException();
                 using var streamReader = new StreamReader(stream);
                 var yaml = streamReader.ReadToEnd();

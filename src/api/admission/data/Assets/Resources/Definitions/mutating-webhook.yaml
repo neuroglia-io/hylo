@@ -1,7 +1,7 @@
 ﻿apiVersion: admission.hylo.cloud/v1
 kind: ResourceDefinition
 metadata:
-  name: mutating-webhook
+  name: mutating-webhooks.admission.hylo.cloud
 spec:
   names:
     kind: MutatingWebhook

@@ -1,4 +1,6 @@
-﻿namespace Hylo.Api.Core.Infrastructure.Services;
+﻿using Hylo.Api.Core.Infrastructure.Services;
+
+namespace Hylo.Api;
 
 /// <summary>
 /// Defines extensions for <see cref="IResourceRepository"/> instances
@@ -28,7 +30,7 @@ public static class IResourceRepositoryExtensions
     public static Task<bool> ContainsNamespaceAsync(this IResourceRepository resources, string @namespace, CancellationToken cancellationToken = default)
     {
         if(string.IsNullOrWhiteSpace(@namespace)) throw new ArgumentNullException(nameof(@namespace));
-        return resources.ContainsResourceAsync(V1Namespace.HyloApiVersion, V1Namespace.HyloApiVersion, V1Namespace.HyloPluralName, @namespace, null, cancellationToken);
+        return resources.ContainsResourceAsync(V1Namespace.HyloVersion, V1Namespace.HyloVersion, V1Namespace.HyloPluralName, @namespace, null, cancellationToken);
     }
 
     /// <summary>
@@ -41,7 +43,7 @@ public static class IResourceRepositoryExtensions
     public static async Task<V1Namespace?> GetNamespaceAsync(this IResourceRepository resources, string @namespace, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(@namespace)) throw new ArgumentNullException(nameof(@namespace));
-        var resource = await resources.GetResourceAsync(V1Namespace.HyloApiVersion, V1Namespace.HyloApiVersion, V1Namespace.HyloPluralName, @namespace, null, cancellationToken);
+        var resource = await resources.GetResourceAsync(V1Namespace.HyloVersion, V1Namespace.HyloVersion, V1Namespace.HyloPluralName, @namespace, null, cancellationToken);
         if (resource == null) return null;
         return Serializer.Json.Deserialize<V1Namespace>(Serializer.Json.SerializeToNode(resource)!);
     }

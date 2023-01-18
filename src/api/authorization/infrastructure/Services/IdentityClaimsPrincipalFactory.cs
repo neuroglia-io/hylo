@@ -142,7 +142,7 @@ public class IdentityClaimsPrincipalFactory
             var roleName = e.Resource.Metadata.GetNamespacedName();
             switch (e.Type)
             {
-                case V1ResourceEventType.Create:
+                case V1ResourceEventType.Created:
                     var subjects = e.Resource.Spec.Subjects.Select(s => s.Name).ToList();
                     this.RoleBindingSubjectMap.AddOrUpdate(bindingName, subjects, (key, existing) => subjects);
                     foreach (var subject in e.Resource.Spec.Subjects)
@@ -150,7 +150,7 @@ public class IdentityClaimsPrincipalFactory
                         this.SubjectClaimsMap[subject.Name] = await this.GenerateClaimsAsync(subject.Name, this.CancellationTokenSource.Token).ToListAsync(this.CancellationTokenSource.Token).ConfigureAwait(false);
                     }
                     break;
-                case V1ResourceEventType.Update:
+                case V1ResourceEventType.Updated:
                     var subjectsPerRoleBinding = e.Resource.Spec.Subjects.Select(s => s.Name).ToList();
                     if (this.RoleBindingSubjectMap.TryGetValue(bindingName, out var results)) subjectsPerRoleBinding.AddRange(results);
                     foreach (var subject in subjectsPerRoleBinding.Distinct().ToList())
@@ -159,7 +159,7 @@ public class IdentityClaimsPrincipalFactory
                     }
                     this.RoleBindingSubjectMap[bindingName] = e.Resource.Spec.Subjects.Select(s => s.Name).ToList();
                     break;
-                case V1ResourceEventType.Delete:
+                case V1ResourceEventType.Deleted:
                     subjectsPerRoleBinding = e.Resource.Spec.Subjects.Select(s => s.Name).ToList();
                     if (this.RoleBindingSubjectMap.TryGetValue(bindingName, out results)) subjectsPerRoleBinding.AddRange(results);
                     foreach (var subject in subjectsPerRoleBinding.Distinct().ToList())

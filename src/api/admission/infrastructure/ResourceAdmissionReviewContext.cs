@@ -1,19 +1,19 @@
 ﻿namespace Hylo.Api.Admission.Infrastructure.Services;
 
 /// <summary>
-/// Represents the context of a <see cref="V1ResourceAdmissionReview"/>
+/// Represents the context of a <see cref="V1AdmissionReview"/>
 /// </summary>
-public class V1ResourceAdmissionReviewContext
+public class ResourceAdmissionReviewContext
 {
 
     /// <summary>
-    /// Initializes a new <see cref="V1ResourceAdmissionReviewContext"/>
+    /// Initializes a new <see cref="ResourceAdmissionReviewContext"/>
     /// </summary>
     /// <param name="operation">The operation to perform on the specified resource</param>
     /// <param name="resourceDefinition">The definition of the resource to validate</param>
     /// <param name="resourceReference">A reference to the resource to validate</param>
     /// <param name="resource">The resource to validate</param>
-    public V1ResourceAdmissionReviewContext(string operation, V1ResourceDefinition resourceDefinition, V1ResourceReference resourceReference, object resource)
+    public ResourceAdmissionReviewContext(string operation, V1ResourceDefinition resourceDefinition, V1ResourceReference resourceReference, object resource)
     {
         if (string.IsNullOrWhiteSpace(operation)) throw new ArgumentNullException(nameof(operation));
         if (resourceDefinition == null) throw new ArgumentNullException(nameof(resourceDefinition));
@@ -46,9 +46,9 @@ public class V1ResourceAdmissionReviewContext
     public virtual object Resource { get; set; }
 
     /// <summary>
-    /// Gets a <see cref="List{T}"/> containing all the <see cref="V1ResourceAdmissionReview"/>s that have been performed
+    /// Gets a <see cref="List{T}"/> containing all the <see cref="V1AdmissionReview"/>s that have been performed
     /// </summary>
-    public virtual List<V1ResourceAdmissionReview> Reviews { get; } = new();
+    public virtual List<V1AdmissionReview> Reviews { get; } = new();
 
     /// <summary>
     /// Gets a boolean indicating whether or not the specified resource has been admitted
@@ -58,18 +58,18 @@ public class V1ResourceAdmissionReviewContext
 }
 
 /// <summary>
-/// Represents the context of a <see cref="V1ResourceAdmissionReview"/>
+/// Represents the context of a <see cref="V1AdmissionReview"/>
 /// </summary>
 /// <typeparam name="TResource">The type of <see cref="V1Resource"/> to admit</typeparam>
-public class V1ResourceAdmissionReviewContext<TResource>
+public class ResourceAdmissionReviewContext<TResource>
     where TResource : V1Resource, new()
 {
 
     /// <summary>
-    /// Initializes a new <see cref="V1ResourceAdmissionReviewContext{TResource}"/>
+    /// Initializes a new <see cref="ResourceAdmissionReviewContext{TResource}"/>
     /// </summary>
-    /// <param name="underlyingContext">The underlying <see cref="V1ResourceAdmissionReviewContext"/></param>
-    public V1ResourceAdmissionReviewContext(V1ResourceAdmissionReviewContext underlyingContext)
+    /// <param name="underlyingContext">The underlying <see cref="ResourceAdmissionReviewContext"/></param>
+    public ResourceAdmissionReviewContext(ResourceAdmissionReviewContext underlyingContext)
     {
         if (underlyingContext == null) throw new ArgumentNullException(nameof(underlyingContext));
         this.UnderlyingContext = underlyingContext;
@@ -77,9 +77,9 @@ public class V1ResourceAdmissionReviewContext<TResource>
     }
 
     /// <summary>
-    /// Gets the underlying <see cref="V1ResourceAdmissionReviewContext"/>
+    /// Gets the underlying <see cref="ResourceAdmissionReviewContext"/>
     /// </summary>
-    protected V1ResourceAdmissionReviewContext UnderlyingContext { get; }
+    protected ResourceAdmissionReviewContext UnderlyingContext { get; }
 
     /// <summary>
     /// Gets the operation to perform on the specified resource
@@ -102,9 +102,9 @@ public class V1ResourceAdmissionReviewContext<TResource>
     public virtual TResource Resource { get; set; }
 
     /// <summary>
-    /// Gets a <see cref="List{T}"/> containing all the <see cref="V1ResourceAdmissionReview"/>s that have been performed
+    /// Gets a <see cref="List{T}"/> containing all the <see cref="V1AdmissionReview"/>s that have been performed
     /// </summary>
-    public virtual List<V1ResourceAdmissionReview> Reviews => this.UnderlyingContext.Reviews;
+    public virtual List<V1AdmissionReview> Reviews => this.UnderlyingContext.Reviews;
 
     /// <summary>
     /// Gets a boolean indicating whether or not the specified resource has been admitted

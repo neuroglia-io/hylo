@@ -13,7 +13,7 @@ public class RedisServiceBus
 {
 
     /// <summary>
-    /// Gets the key of the channel used to publish and subscribe to <see cref="V1ApiServerMessage"/>s
+    /// Gets the key of the channel used to publish and subscribe to <see cref="ApiServerMessage"/>s
     /// </summary>
     public const string RedisChannelKey = "api-server-channel";
 
@@ -27,7 +27,7 @@ public class RedisServiceBus
         this.Logger = loggerFactory.CreateLogger(this.GetType());
         this.Redis = redis;
         this.RedisSubscriber = this.Redis.GetSubscriber();
-        this.Channel = System.Threading.Channels.Channel.CreateUnbounded<V1ApiServerMessage>();
+        this.Channel = System.Threading.Channels.Channel.CreateUnbounded<ApiServerMessage>();
     }
 
     /// <summary>
@@ -46,14 +46,14 @@ public class RedisServiceBus
     protected ISubscriber RedisSubscriber { get; }
 
     /// <summary>
-    /// Gets the service used to stream outbound <see cref="V1ApiServerMessage"/>s
+    /// Gets the service used to stream outbound <see cref="ApiServerMessage"/>s
     /// </summary>
-    protected Channel<V1ApiServerMessage> Channel { get; }
+    protected Channel<ApiServerMessage> Channel { get; }
 
     /// <summary>
-    /// Gets the service used to observe consumed <see cref="V1ApiServerMessage"/>s
+    /// Gets the service used to observe consumed <see cref="ApiServerMessage"/>s
     /// </summary>
-    protected ISubject<V1ApiServerMessage> MessageStream { get; } = new Subject<V1ApiServerMessage>();
+    protected ISubject<ApiServerMessage> MessageStream { get; } = new Subject<ApiServerMessage>();
 
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -63,7 +63,7 @@ public class RedisServiceBus
     }
 
     /// <summary>
-    /// Processes pending outbound <see cref="V1ApiServerMessage"/>s
+    /// Processes pending outbound <see cref="ApiServerMessage"/>s
     /// </summary>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>A new awaitable <see cref="Task"/></returns>
@@ -92,7 +92,7 @@ public class RedisServiceBus
     }
 
     /// <inheritdoc/>
-    public virtual async Task PublishAsync(V1ApiServerMessage message, CancellationToken cancellationToken = default)
+    public virtual async Task PublishAsync(ApiServerMessage message, CancellationToken cancellationToken = default)
     {
         await this.Channel.Writer.WriteAsync(message, cancellationToken);
     }
@@ -105,7 +105,7 @@ public class RedisServiceBus
             this.Logger.LogWarning("Received on empty message on the API server channel. Skipping.");
             return;
         }
-        var message = Serializer.Json.Deserialize<V1ApiServerMessage>(json);
+        var message = Serializer.Json.Deserialize<ApiServerMessage>(json);
         if(message == null)
         {
             this.Logger.LogWarning("Received on empty message on the API server channel. Skipping.");
@@ -121,7 +121,7 @@ public class RedisServiceBus
     }
 
     /// <inheritdoc/>
-    public virtual IDisposable Subscribe(IObserver<V1ApiServerMessage> observer)
+    public virtual IDisposable Subscribe(IObserver<ApiServerMessage> observer)
     {
         return this.MessageStream.Subscribe(observer);
     }

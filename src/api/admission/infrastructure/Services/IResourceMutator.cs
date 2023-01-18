@@ -24,7 +24,7 @@ public interface IResourceMutator
     /// <param name="context">The context in which to perform the resource's mutation</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>A new awaitable <see cref="Task"/></returns>
-    Task MutateAsync(V1ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default);
+    Task MutateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default);
 
 }
 

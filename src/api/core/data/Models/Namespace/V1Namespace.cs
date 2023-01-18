@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents a <see cref="V1Resource"/> namespace
 /// </summary>
-[Resource(HyloGroup, HyloApiVersion, HyloKind, HyloPluralName), DataContract]
+[Resource(HyloGroup, HyloVersion, HyloKind, HyloPluralName), DataContract]
 public class V1Namespace
     : V1Resource
 {
@@ -11,11 +11,11 @@ public class V1Namespace
     /// <summary>
     /// Gets the resource API group
     /// </summary>
-    public const string HyloGroup = V1CoreApiDefaults.Resources.ApiVersion;
+    public const string HyloGroup = V1CoreApiDefaults.Resources.Group;
     /// <summary>
     /// Gets the resource API version
     /// </summary>
-    public const string HyloApiVersion = V1CoreApiDefaults.Resources.ApiVersion;
+    public const string HyloVersion = V1CoreApiDefaults.Resources.Version;
     /// <summary>
     /// Gets the resource kind
     /// </summary>
@@ -37,7 +37,7 @@ public class V1Namespace
     /// <summary>
     /// Initializes a new <see cref="V1Namespace"/>
     /// </summary>
-    public V1Namespace() : base(HyloGroup, HyloApiVersion, HyloKind) { }
+    public V1Namespace() : base(HyloGroup, HyloVersion, HyloKind) { }
 
     /// <summary>
     /// Initializes a new <see cref="V1Namespace"/>
