@@ -7,8 +7,9 @@ public interface IExtensible
 {
 
     /// <summary>
-    /// Gets an <see cref="IDictionary{TKey, TValue}"/> containing the object's extensions
+    /// Gets an <see cref="IDictionary{TKey, TValue}"/> containing the object's extension data
     /// </summary>
-    IDictionary<string, object>? Extensions { get; set; }
+    [DataMember(Order = 999, Name = "extensionData"), JsonExtensionData]
+    IDictionary<string, object>? ExtensionData { get; }
 
 }

@@ -1,7 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Nodes;
-using YamlDotNet.Core;
-using YamlDotNet.Serialization;
+﻿using YamlDotNet.Core;
 
 namespace Hylo.Serialization.Yaml;
 
@@ -26,7 +23,8 @@ public class JsonObjectDeserializer
     /// </summary>
     protected INodeDeserializer Inner { get; }
 
-    public bool Deserialize(IParser reader, Type expectedType, Func<IParser, Type, object?> nestedObjectDeserializer, out object? value)
+    /// <inheritdoc/>
+    public virtual bool Deserialize(IParser reader, Type expectedType, Func<IParser, Type, object?> nestedObjectDeserializer, out object? value)
     {
         if (!typeof(JsonObject).IsAssignableFrom(expectedType)) return this.Inner.Deserialize(reader, expectedType, nestedObjectDeserializer, out value);
         if (!this.Inner.Deserialize(reader, typeof(Dictionary<object, object>), nestedObjectDeserializer, out value)) return false;

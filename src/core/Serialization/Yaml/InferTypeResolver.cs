@@ -1,5 +1,4 @@
 ﻿using YamlDotNet.Core.Events;
-using YamlDotNet.Serialization;
 
 namespace Hylo.Serialization.Yaml;
 
@@ -13,9 +12,13 @@ public class InferTypeResolver
     /// <inheritdoc/>
     public bool Resolve(NodeEvent? nodeEvent, ref Type currentType)
     {
-        var scalar = nodeEvent as Scalar;
-        if (scalar != null)
+        if (nodeEvent is Scalar scalar)
         {
+            if (scalar.IsQuotedImplicit)
+            {
+                currentType = typeof(string);
+                return true;
+            }
             if (bool.TryParse(scalar.Value, out _))
             {
                 currentType = typeof(bool);

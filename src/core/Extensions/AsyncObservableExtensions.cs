@@ -2,7 +2,6 @@
 
 namespace Hylo;
 
-
 /// <summary>
 /// Defines extensions for <see cref="IObservable{T}"/>
 /// </summary>
@@ -18,13 +17,10 @@ public static class AsyncObservableExtensions
     /// <param name="onNextAsync">Action to invoke for each element in the observable sequence.</param>
     /// <param name="onErrorAsync">Action to invoke upon exceptional termination of the observable sequence.</param>
     /// <param name="onCompletedAsync">Action to invoke upon graceful termination of the observable sequence.</param>
-    /// <returns><see cref="IDisposable"/> object used to unsubscribe from the observable sequence.</returns>
     public static IDisposable SubscribeAsync<T>(this IObservable<T> source, Func<T, Task> onNextAsync, Func<Exception, Task>? onErrorAsync = null, Func<Task>? onCompletedAsync = null)
     {
-        if (onErrorAsync == null)
-            onErrorAsync = _ => Task.CompletedTask;
-        if (onCompletedAsync == null)
-            onCompletedAsync = () => Task.CompletedTask;
+        onErrorAsync ??= _ => Task.CompletedTask;
+        onCompletedAsync ??= () => Task.CompletedTask;
         return source
             .Select(number => Observable.FromAsync(() => onNextAsync(number)))
             .Concat()
@@ -42,30 +38,13 @@ public static class AsyncObservableExtensions
     /// <typeparam name="T">The type of the elements in the source sequence.</typeparam>
     /// <param name="source">The source sequence.</param>
     /// <param name="onNextAsync">Action to invoke for each element in the observable sequence.</param>
-    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
-    public static void SubscribeAsync<T>(this IObservable<T> source, Func<T, Task> onNextAsync, CancellationToken cancellationToken)
-    {
-        source
-            .Select(number => Observable.FromAsync(() => onNextAsync(number)))
-            .Concat()
-            .Subscribe(cancellationToken);
-    }
-
-    /// <summary>
-    /// Subscribes to the specified <see cref="IObservable{T}"/>
-    /// </summary>
-    /// <typeparam name="T">The type of the elements in the source sequence.</typeparam>
-    /// <param name="source">The source sequence.</param>
-    /// <param name="onNextAsync">Action to invoke for each element in the observable sequence.</param>
     /// <param name="onErrorAsync">Action to invoke upon exceptional termination of the observable sequence.</param>
     /// <param name="onCompletedAsync">Action to invoke upon graceful termination of the observable sequence.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
-    public static void SubscribeAsync<T>(this IObservable<T> source, Func<T, Task> onNextAsync, Func<Exception, Task> onErrorAsync, Func<Task> onCompletedAsync, CancellationToken cancellationToken)
+    public static void SubscribeAsync<T>(this IObservable<T> source, Func<T, Task> onNextAsync, Func<Exception, Task>? onErrorAsync, Func<Task>? onCompletedAsync, CancellationToken cancellationToken = default)
     {
-        if (onErrorAsync == null)
-            onErrorAsync = _ => Task.CompletedTask;
-        if (onCompletedAsync == null)
-            onCompletedAsync = () => Task.CompletedTask;
+        onErrorAsync ??= _ => Task.CompletedTask;
+        onCompletedAsync ??= () => Task.CompletedTask;
         source
             .Select(number => Observable.FromAsync(() => onNextAsync(number)))
             .Concat()
@@ -76,6 +55,21 @@ public static class AsyncObservableExtensions
                 () => onCompletedAsync().GetAwaiter().GetResult(),
                 cancellationToken
             );
+    }
+
+    /// <summary>
+    /// Subscribes to the specified <see cref="IObservable{T}"/>
+    /// </summary>
+    /// <typeparam name="T">The type of the elements in the source sequence.</typeparam>
+    /// <param name="source">The source sequence.</param>
+    /// <param name="onNextAsync">Action to invoke for each element in the observable sequence.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    public static void SubscribeAsync<T>(this IObservable<T> source, Func<T, Task> onNextAsync, CancellationToken cancellationToken)
+    {
+        source
+            .Select(number => Observable.FromAsync(() => onNextAsync(number)))
+            .Concat()
+            .Subscribe(cancellationToken);
     }
 
     /// <summary>

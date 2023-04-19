@@ -1,0 +1,57 @@
+﻿namespace Hylo;
+
+/// <summary>
+/// Represents an object used to describe the response to a resource admission review request
+/// </summary>
+[DataContract]
+public class AdmissionReviewResponse
+{
+
+    /// <summary>
+    /// Initializes a new <see cref="AdmissionReviewResponse"/>
+    /// </summary>
+    public AdmissionReviewResponse() { }
+
+    /// <summary>
+    /// Initializes a new <see cref="AdmissionReviewResponse"/>
+    /// </summary>
+    /// <param name="uid">A string that uniquely and globally identifies the resource admission review request to respond to</param>
+    /// <param name="allowed">A boolean indicating whether or not the requested operation is allowed on the specified resource</param>
+    /// <param name="patch">The patch to apply, in case the resource is being mutated</param>
+    /// <param name="problem">An object used to describe the problem, if any, that has occured during the resource admission</param>
+    public AdmissionReviewResponse(string uid, bool allowed, Patch? patch = null, ProblemDetails? problem = null)
+    {
+        if (string.IsNullOrWhiteSpace(uid)) throw new ArgumentNullException(nameof(uid));
+        this.Uid = uid;
+        this.Allowed = allowed;
+        this.Patch = patch;
+        this.Problem = problem;
+    }
+
+    /// <summary>
+    /// Gets/sets a string that uniquely and globally identifies the resource admission review request to respond to
+    /// </summary>
+    [Required]
+    [DataMember(Order = 1, Name = "uid", IsRequired = true), JsonPropertyOrder(1), JsonPropertyName("uid"), YamlMember(Order = 1, Alias = "uid")]
+    public virtual string Uid { get; set; } = null!;
+
+    /// <summary>
+    /// Gets/sets a boolean indicating whether or not the requested operation is allowed on the specified resource
+    /// </summary>
+    [Required]
+    [DataMember(Order = 2, Name = "allowed", IsRequired = true), JsonPropertyOrder(2), JsonPropertyName("allowed"), YamlMember(Order = 2, Alias = "allowed")]
+    public virtual bool Allowed { get; set; }
+
+    /// <summary>
+    /// Gets/sets the patch to apply, in case the resource is being mutated
+    /// </summary>
+    [DataMember(Order = 3, Name = "patch", IsRequired = true), JsonPropertyOrder(3), JsonPropertyName("patch"), YamlMember(Order = 3, Alias = "patch")]
+    public virtual Patch? Patch { get; set; }
+
+    /// <summary>
+    /// Gets/sets an object used to describe the problem, if any, that has occured during the resource admission
+    /// </summary>
+    [DataMember(Order = 4, Name = "problem"), JsonPropertyOrder(4), JsonPropertyName("problem"), YamlMember(Order = 4, Alias = "problem")]
+    public virtual ProblemDetails? Problem { get; set; }
+
+}

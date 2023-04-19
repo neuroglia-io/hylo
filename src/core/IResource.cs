@@ -1,43 +1,26 @@
 ﻿namespace Hylo;
 
 /// <summary>
-/// Defines the fundamentals of an Hylo resource
+/// Defines the fundamentals of a resource
 /// </summary>
 public interface IResource
+    : IObject, IMetadata<ResourceMetadata>
 {
 
     /// <summary>
-    /// Gets the resource's API version
+    /// Gets an object used to describe the resource's type
     /// </summary>
-    string ApiVersion { get; }
-
-    /// <summary>
-    /// Gets the resource's kind
-    /// </summary>
-    string Kind { get; }
+    [IgnoreDataMember, JsonIgnore, YamlIgnore]
+    ResourceDefinitionInfo Definition { get; }
 
 }
 
 /// <summary>
-/// Defines the fundamentals of an Hylo resource
+/// Defines the fundamentals of a resource
 /// </summary>
-/// <typeparam name="TMetadata">The type of the resource's metadata</typeparam>
-public interface IResource<TMetadata>
-    : IResource, IMetadata<TMetadata>
-    where TMetadata : class, new()
-{
-
-
-}
-
-/// <summary>
-/// Defines the fundamentals of an Hylo resource
-/// </summary>
-/// <typeparam name="TMetadata">The type of the object's metadata</typeparam>
-/// <typeparam name="TSpec">The type of the object's spec</typeparam>
-public interface IResource<TMetadata, TSpec>
-    : IResource<TMetadata>, ISpec<TSpec>
-    where TMetadata : class, new()
+/// <typeparam name="TSpec">The type of the <see cref="IResource"/>'s spec</typeparam>
+public interface IResource<TSpec>
+    : IResource, ISpec<TSpec>
     where TSpec : class, new()
 {
 
@@ -46,14 +29,12 @@ public interface IResource<TMetadata, TSpec>
 }
 
 /// <summary>
-/// Defines the fundamentals of an Hylo resource
+/// Defines the fundamentals of a resource
 /// </summary>
-/// <typeparam name="TMetadata">The type of the object's metadata</typeparam>
-/// <typeparam name="TSpec">The type of the object's spec</typeparam>
-/// <typeparam name="TStatus">The type of the object's status</typeparam>
-public interface IResource<TMetadata, TSpec, TStatus>
-    : IResource<TMetadata, TSpec>, IStatus<TStatus>
-    where TMetadata : class, new()
+/// <typeparam name="TSpec">The type of the <see cref="IResource"/>'s spec</typeparam>
+/// <typeparam name="TStatus">The type of the <see cref="IResource"/>'s status</typeparam>
+public interface IResource<TSpec, TStatus>
+    : IResource<TSpec>, IStatus<TStatus>
     where TSpec : class, new()
     where TStatus : class, new()
 {

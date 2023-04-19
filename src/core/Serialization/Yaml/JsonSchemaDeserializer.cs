@@ -1,8 +1,4 @@
-﻿using System.Text.Json.Nodes;
-using System.Text.Json;
-using YamlDotNet.Core;
-using YamlDotNet.Serialization;
-using Json.Schema;
+﻿using YamlDotNet.Core;
 
 namespace Hylo.Serialization.Yaml;
 
@@ -33,7 +29,7 @@ public class JsonSchemaDeserializer
         if (!typeof(JsonSchema).IsAssignableFrom(expectedType)) return this.Inner.Deserialize(reader, expectedType, nestedObjectDeserializer, out value!);
         if (!this.Inner.Deserialize(reader, typeof(JsonObject), nestedObjectDeserializer, out value!)) return false;
         var jsonObject = (JsonObject)value;
-        var jschema = jsonObject.Deserialize<JsonSchema>()!;
+        var jschema = Serializer.Json.Deserialize<JsonSchema>(jsonObject)!;
         value = jschema;
         return true;
     }

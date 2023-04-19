@@ -1,12 +1,8 @@
-﻿using System.Text.Json;
-using System.Text.Json.Nodes;
-using YamlDotNet.Core;
+﻿using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
-using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
 namespace Hylo.Serialization.Yaml;
-
 
 /// <summary>
 /// Represents the <see cref="IYamlTypeConverter"/> used to convert <see cref="JsonNode"/>s
@@ -16,7 +12,7 @@ public class JsonNodeTypeConverter
 {
 
     /// <inheritdoc/>
-    public virtual bool Accepts(Type type) => typeof(JsonNode).IsAssignableFrom(type);
+    public virtual bool Accepts(Type type) => typeof(JsonElement).IsAssignableFrom(type) || typeof(JsonNode).IsAssignableFrom(type);
 
     /// <inheritdoc/>
     public virtual object? ReadYaml(IParser parser, Type type) => throw new NotSupportedException();
@@ -24,9 +20,15 @@ public class JsonNodeTypeConverter
     /// <inheritdoc/>
     public virtual void WriteYaml(IEmitter emitter, object? value, Type type)
     {
+        if (value is JsonElement jsonElement) value = Serializer.Json.SerializeToNode(jsonElement);
         this.WriteJsonNode(emitter, value as JsonNode);
     }
 
+    /// <summary>
+    /// Write the specified <see cref="JsonNode"/>
+    /// </summary>
+    /// <param name="emitter">The <see cref="IEmitter"/> to use</param>
+    /// <param name="jsonNode">The <see cref="JsonNode"/> to write</param>
     protected virtual void WriteJsonNode(IEmitter emitter, JsonNode? jsonNode)
     {
         if (jsonNode == null) return;
@@ -46,6 +48,11 @@ public class JsonNodeTypeConverter
         }
     }
 
+    /// <summary>
+    /// Write the specified <see cref="JsonArray"/>
+    /// </summary>
+    /// <param name="emitter">The <see cref="IEmitter"/> to use</param>
+    /// <param name="jsonArray">The <see cref="JsonArray"/> to write</param>
     protected virtual void WriteJsonArray(IEmitter emitter, JsonArray? jsonArray)
     {
         if (jsonArray == null) return;
@@ -57,6 +64,11 @@ public class JsonNodeTypeConverter
         emitter.Emit(new SequenceEnd());
     }
 
+    /// <summary>
+    /// Write the specified <see cref="JsonObject"/>
+    /// </summary>
+    /// <param name="emitter">The <see cref="IEmitter"/> to use</param>
+    /// <param name="jsonObject">The <see cref="JsonObject"/> to write</param>
     protected virtual void WriteJsonObject(IEmitter emitter, JsonObject? jsonObject)
     {
         if (jsonObject == null) return;
@@ -68,6 +80,11 @@ public class JsonNodeTypeConverter
         emitter.Emit(new MappingEnd());
     }
 
+    /// <summary>
+    /// Write the specified JSON property
+    /// </summary>
+    /// <param name="emitter">The <see cref="IEmitter"/> to use</param>
+    /// <param name="jsonProperty">The JSON property to write</param>
     protected virtual void WriteJsonObjectProperty(IEmitter emitter, KeyValuePair<string, JsonNode?> jsonProperty)
     {
         if (jsonProperty.Value == null) return;
@@ -75,11 +92,16 @@ public class JsonNodeTypeConverter
         this.WriteJsonNode(emitter, jsonProperty.Value);
     }
 
+    /// <summary>
+    /// Write the specified <see cref="JsonValue"/>
+    /// </summary>
+    /// <param name="emitter">The <see cref="IEmitter"/> to use</param>
+    /// <param name="jsonValue">The <see cref="JsonValue"/> to write</param>
     protected virtual void WriteJsonValue(IEmitter emitter, JsonValue? jsonValue)
     {
         if (jsonValue == null) return;
         var value = jsonValue.Deserialize<object>()?.ToString();
-        if(string.IsNullOrWhiteSpace(value)) return;
+        if (string.IsNullOrWhiteSpace(value)) return;
         emitter.Emit(new Scalar(value));
     }
 

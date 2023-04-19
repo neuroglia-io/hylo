@@ -1,0 +1,53 @@
+﻿namespace Hylo;
+
+/// <summary>
+/// Represents an object used to describe a version of a resource definition
+/// </summary>
+[DataContract]
+public class ResourceDefinitionVersion
+{
+
+    /// <summary>
+    /// Initializes a new <see cref="ResourceDefinitionVersion"/>
+    /// </summary>
+    public ResourceDefinitionVersion() { }
+
+    /// <summary>
+    /// Initializes a new <see cref="ResourceDefinitionVersion"/>
+    /// </summary>
+    /// <param name="name">The name of the described resource definition version</param>
+    /// <param name="schema">The schema to validate defined resources</param>
+    public ResourceDefinitionVersion(string name, ResourceDefinitionValidation schema)
+    {
+        if(string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
+        this.Name = name;
+        this.Schema = schema ?? throw new ArgumentNullException(nameof(schema));
+    }
+
+    /// <summary>
+    /// Gets/sets the name of the described resource definition version
+    /// </summary>
+    [Required]
+    [DataMember(Order = 1, Name = "name", IsRequired = true), JsonPropertyOrder(1), JsonPropertyName("name"), YamlMember(Order = 1, Alias = "name")]
+    public virtual string Name { get; set; } = null!;
+
+    /// <summary>
+    /// Gets/sets the schema to validate defined resources
+    /// </summary>
+    [Required]
+    [DataMember(Order = 2, Name = "schema", IsRequired = true), JsonPropertyOrder(2), JsonPropertyName("schema"), YamlMember(Order = 2, Alias = "schema")]
+    public virtual ResourceDefinitionValidation Schema { get; set; } = null!;
+
+    /// <summary>
+    /// Gets/sets a boolean indicating whether or not the version is served by the API
+    /// </summary>
+    [DataMember(Order = 3, Name = "served", IsRequired = true), JsonPropertyOrder(3), JsonPropertyName("served"), YamlMember(Order = 3, Alias = "served")]
+    public virtual bool Served { get; set; }
+
+    /// <summary>
+    /// Gets/sets a boolean indicating whether or not the version is the storage version
+    /// </summary>
+    [DataMember(Order = 4, Name = "storage", IsRequired = true), JsonPropertyOrder(4), JsonPropertyName("storage"), YamlMember(Order = 4, Alias = "storage")]
+    public virtual bool Storage { get; set; }
+
+}
