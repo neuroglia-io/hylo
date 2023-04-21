@@ -42,10 +42,10 @@ public class WebhookResourceMutator
     public virtual int Priority => this.Webhook.Spec.Priority ?? int.MaxValue;
 
     /// <inheritdoc/>
-    public virtual bool AppliesTo(ResourceOperation operation, string group, string version, string plural, string? @namespace = null) => this.Webhook.Spec.Resources?.Any(r => r.Matches(operation, group, version, plural, @namespace)) == true;
+    public virtual bool AppliesTo(Operation operation, string group, string version, string plural, string? @namespace = null) => this.Webhook.Spec.Resources?.Any(r => r.Matches(operation, group, version, plural, @namespace)) == true;
 
     /// <inheritdoc/>
-    public virtual async Task MutateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default)
+    public virtual async Task MutateAsync(AdmissionReviewContext context, CancellationToken cancellationToken = default)
     {
         if(context == null) throw new ArgumentNullException(nameof(context));
         this.Logger.LogDebug("Mutating resource '{resource}' using webhook '{webhook}'...", context.Resource, this.Webhook);

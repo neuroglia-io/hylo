@@ -13,9 +13,9 @@ public abstract class RepositoryTestsBase
 
     internal const string FakeNamespaceName = "fake-namespace";
     bool _disposed;
-    readonly ResourceRepositoryOptionsBuilder _builder;
+    readonly RepositoryOptionsBuilder _builder;
 
-    protected RepositoryTestsBase(Action<IResourceRepositoryOptionsBuilder> setup)
+    protected RepositoryTestsBase(Action<IRepositoryOptionsBuilder> setup)
     {
         var services = new ServiceCollection();
         var configuration = new ConfigurationBuilder()
@@ -301,7 +301,7 @@ public abstract class RepositoryTestsBase
         updatedResource.Status!.FakeProperty2 = 6;
 
         //act
-        var patchedResource = await resources.UpdateAsync(updatedResource).ConfigureAwait(false);
+        var patchedResource = await resources.ReplaceAsync(updatedResource).ConfigureAwait(false);
 
         //assert
         patchedResource.Should().NotBeNull();
@@ -362,7 +362,7 @@ public abstract class RepositoryTestsBase
         updatedResource.Status!.FakeProperty2 = 6;
 
         //act
-        var patchedResource = await resources.UpdateStatusAsync(updatedResource).ConfigureAwait(false);
+        var patchedResource = await resources.ReplaceStatusAsync(updatedResource).ConfigureAwait(false);
 
         //assert
         patchedResource.Should().NotBeNull();

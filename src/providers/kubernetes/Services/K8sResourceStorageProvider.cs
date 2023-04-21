@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace Hylo.Providers.Kubernetes.Services;
 
 /// <summary>
-/// Represents the <see href="https://kubernetes.io/">Kubernetes</see> implementation of the <see cref="IResourceRepository"/> interface
+/// Represents the <see href="https://kubernetes.io/">Kubernetes</see> implementation of the <see cref="IRepository"/> interface
 /// </summary>
 public class K8sResourceStorageProvider
     : IPlugin, IResourceStorageProvider

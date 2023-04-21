@@ -124,7 +124,7 @@ public class ProblemDetails
     /// <param name="resource">The resource that could not be admitted</param>
     /// <param name="errors">An array containing the errors that have occured during admission</param>
     /// <returns>A new <see cref="ProblemDetails"/></returns>
-    public static ProblemDetails ResourceAdmissionFailed(ResourceOperation operation, IResourceReference resource, params KeyValuePair<string, string[]>[] errors)
+    public static ProblemDetails ResourceAdmissionFailed(Operation operation, IResourceReference resource, params KeyValuePair<string, string[]>[] errors)
     {
         return new
         (

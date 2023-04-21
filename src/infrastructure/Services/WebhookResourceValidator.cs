@@ -42,10 +42,10 @@ public class WebhookResourceValidator
     public virtual MutatingWebhook Webhook { get; }
 
     /// <inheritdoc/>
-    public virtual bool AppliesTo(ResourceOperation operation, string group, string version, string plural, string? @namespace = null) => this.Webhook.Spec.Resources?.Any(r => r.Matches(operation, group, version, plural, @namespace)) == true;
+    public virtual bool AppliesTo(Operation operation, string group, string version, string plural, string? @namespace = null) => this.Webhook.Spec.Resources?.Any(r => r.Matches(operation, group, version, plural, @namespace)) == true;
 
     /// <inheritdoc/>
-    public virtual async Task ValidateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default)
+    public virtual async Task ValidateAsync(AdmissionReviewContext context, CancellationToken cancellationToken = default)
     {
         if (context == null) throw new ArgumentNullException(nameof(context)); Logger.LogDebug("Validating resource '{resource}' using dynamic admission webhook '{webhook}'...", context.Resource, this.Webhook);
         var admissionReview = context.ToAdmissionReview();

@@ -19,7 +19,7 @@ public static class RuleWithOperationExtensions
     /// <param name="namespace">The namespace the resource to operate on belongs to</param>
     /// <returns>A boolean indicating whether or not the <see cref="RuleWithOperation"/> matches the specified resource</returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public static bool Matches(this RuleWithOperation rule, ResourceOperation operation, string group, string version, string plural, string? @namespace = null)
+    public static bool Matches(this RuleWithOperation rule, Operation operation, string group, string version, string plural, string? @namespace = null)
     {
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));

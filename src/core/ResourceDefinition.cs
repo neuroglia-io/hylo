@@ -42,37 +42,3 @@ public class ResourceDefinition
     public ResourceDefinition(ResourceDefinitionSpec spec) : base(new(ResourceGroup, ResourceVersion, ResourcePlural, ResourceKind), new($"{spec.Names.Plural}.{spec.Group}"), spec) { }
 
 }
-
-public static class EmbeddedResources
-{
-
-    static readonly string Prefix = $"{typeof(EmbeddedResources).Namespace}.";
-
-    public static string ReadToEnd(string resourceName)
-    {
-        using var stream = typeof(EmbeddedResources).Assembly.GetManifestResourceStream(resourceName)!;
-        using var streamReader = new StreamReader(stream);
-        return streamReader.ReadToEnd();
-    }
-
-    public static class Assets
-    {
-
-        static readonly string Prefix = $"{EmbeddedResources.Prefix}Assets.";
-
-        public static class Definitions
-        {
-
-            static readonly string Prefix = $"{Assets.Prefix}Definitions.";
-
-            public static readonly string ResourceDefinition = $"{Prefix}resource-definition.yaml";
-
-            public static readonly string MutatingWebhook = $"{Prefix}mutating-webhook.yaml";
-
-            public static readonly string ValidatingWebhook = $"{Prefix}validating-webhook.yaml";
-
-        }
-
-    }
-
-}

@@ -9,7 +9,7 @@ internal static class IResourceRepositoryBuilderExtensions
 
     internal static ServiceProvider? ServiceProvider;
 
-    internal static async ValueTask<IResourceRepository> BuildAsync(this IResourceRepositoryOptionsBuilder builder, CancellationToken cancellationToken = default)
+    internal static async ValueTask<IRepository> BuildAsync(this IRepositoryOptionsBuilder builder, CancellationToken cancellationToken = default)
     {
         builder.Build();
         ServiceProvider = builder.Services.BuildServiceProvider();
@@ -17,7 +17,7 @@ internal static class IResourceRepositoryBuilderExtensions
         {
             await hostedService.StartAsync(cancellationToken).ConfigureAwait(false);
         }
-        return ServiceProvider.GetRequiredService<IResourceRepository>();
+        return ServiceProvider.GetRequiredService<IRepository>();
     }
 
 }

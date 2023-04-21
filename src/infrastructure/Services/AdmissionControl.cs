@@ -45,44 +45,31 @@ public class AdmissionControl
     protected IEnumerable<IResourceValidator> Validators { get; }
 
     /// <inheritdoc/>
-    public virtual async Task ReviewAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default)
+    public virtual async Task<AdmissionReviewResult> ReviewAsync(AdmissionReviewRequest request, CancellationToken cancellationToken = default)
     {
-        if (context == null) throw new ArgumentNullException(nameof(context));
+        if (request == null) throw new ArgumentNullException(nameof(request));
+        var context = new AdmissionReviewContext(request);
         await this.MutateAsync(context, cancellationToken).ConfigureAwait(false);
         if (context.Allowed) await this.ValidateAsync(context, cancellationToken).ConfigureAwait(false);
     }
 
-    /// <inheritdoc/>
-    public virtual async Task<ResourceAdmissionReviewResult> ReviewAsync(ResourceOperation operation, IResourceDefinition resourceDefinition, IResourceReference resource, string? subResource = null, IResource? updatedState = null, IResource? originalState = null, bool dryRun = false, CancellationToken cancellationToken = default)
-    {
-        var context = new ResourceAdmissionReviewContext(Guid.NewGuid().ToString(), operation, resourceDefinition, resource, subResource, updatedState, originalState, this.UserInfoProvider.GetCurrentUser(), dryRun);
-
-        await this.MutateAsync(context, cancellationToken).ConfigureAwait(false);
-
-        if (context.Allowed) await this.ValidateAsync(context, cancellationToken).ConfigureAwait(false);
-
-        if (context.Allowed) return new(operation == ResourceOperation.Delete ? context.OriginalState! : context.UpdatedState!);
-        else return new(context.Reviews.Where(r => r.Response != null && r.Response.Problem != null).SelectMany(r => r.Response!.Problem!.Errors!).ToArray());
-    }
 
     /// <summary>
     /// Mutates the specified <see cref="IResource"/> upon admission
     /// </summary>
-    /// <param name="context">The current <see cref="ResourceAdmissionReviewContext"/></param>
+    /// <param name="context">The current <see cref="AdmissionReviewContext"/></param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>A new awaitable <see cref="Task"/></returns>
-    protected virtual async Task MutateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken)
+    protected virtual async Task MutateAsync(AdmissionReviewContext context, CancellationToken cancellationToken)
     {
         if (context == null) throw new ArgumentNullException(nameof(context));
 
         var mutators = this.Mutators.Where(m => m.AppliesTo(context)).ToList();
-        try
-        {
-            mutators.AddRange(await this.ServiceProvider.GetRequiredService<IResourceRepository>().GetAllMutatingWebhooksFor(context.Operation, context.Resource, cancellationToken)
-                .Select(wh => ActivatorUtilities.CreateInstance<WebhookResourceMutator>(this.ServiceProvider, wh))
-                .ToListAsync(cancellationToken).ConfigureAwait(false));
-        }
-        catch { }
+
+        mutators.AddRange(await this.ServiceProvider.GetRequiredService<IRepository>()
+            .GetMutatingWebhooksFor(context.Request.Operation, context.Request.Resource, cancellationToken)
+            .Select(wh => ActivatorUtilities.CreateInstance<WebhookResourceMutator>(this.ServiceProvider, wh))
+            .ToListAsync(cancellationToken).ConfigureAwait(false));
 
         foreach (var mutator in mutators)
         {
@@ -94,21 +81,20 @@ public class AdmissionControl
     /// <summary>
     /// Validates the specified <see cref="IResource"/> upon admission
     /// </summary>
-    /// <param name="context">The current <see cref="ResourceAdmissionReviewContext"/></param>
+    /// <param name="context">The current <see cref="AdmissionReviewContext"/></param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>A new awaitable <see cref="Task"/></returns>
-    protected virtual async Task ValidateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken)
+    protected virtual async Task ValidateAsync(AdmissionReviewContext context, CancellationToken cancellationToken)
     {
         if(context == null) throw new ArgumentNullException(nameof(context));
 
         var validators = this.Validators.Where(m => m.AppliesTo(context)).ToList();
-        try
-        {
-            validators.AddRange(await this.ServiceProvider.GetRequiredService<IResourceRepository>().GetAllMutatingWebhooksFor(context.Operation, context.Resource, cancellationToken)
+        
+        validators.AddRange(await this.ServiceProvider.GetRequiredService<IRepository>()
+            .GetMutatingWebhooksFor(context.Request.Operation, context.Request.Resource, cancellationToken)
             .Select(wh => ActivatorUtilities.CreateInstance<WebhookResourceValidator>(this.ServiceProvider, wh))
             .ToListAsync(cancellationToken));
-        }
-        catch { }
+      
 
         var tasks = new List<Task>(validators.Count);
         foreach (var validator in validators)

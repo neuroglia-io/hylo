@@ -5,7 +5,7 @@
 /// </summary>
 [TypeConverter(typeof(StringEnumTypeConverter))]
 [JsonConverter(typeof(JsonStringEnumConverterFactory))]
-public enum ResourceOperation
+public enum Operation
 {
     /// <summary>
     /// Indicates the operation to create a new resource
@@ -13,13 +13,18 @@ public enum ResourceOperation
     [EnumMember(Value = "create")]
     Create = 1,
     /// <summary>
-    /// Indicates the operation to update an existing resource
+    /// Indicates the operation to replace an existing resource
     /// </summary>
-    [EnumMember(Value = "update")]
-    Update = 2,
+    [EnumMember(Value = "replace")]
+    Replace = 2,
+    /// <summary>
+    /// Indicates the operation to patch an existing resource
+    /// </summary>
+    [EnumMember(Value = "patch")]
+    Patch = 4,
     /// <summary>
     /// Indicates the operation to delete an existing resource
     /// </summary>
     [EnumMember(Value = "delete")]
-    Delete = 4
+    Delete = 8
 }

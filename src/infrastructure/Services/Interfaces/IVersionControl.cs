@@ -12,6 +12,6 @@ public interface IVersionControl
     /// <param name="context">The context of the version conversion to perform, if applicable</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>The storage compliant version of the converted resource</returns>
-    Task<IResource> ConvertToStorageVersionAsync(ResourceVersioningContext context, CancellationToken cancellationToken = default);
+    Task<IResource> ConvertToStorageVersionAsync(VersioningContext context, CancellationToken cancellationToken = default);
 
 }

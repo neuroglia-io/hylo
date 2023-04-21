@@ -43,17 +43,35 @@ public class K8sResourceStorage
     /// <inheritdoc/>
     public virtual async Task<IResource> WriteAsync(IResource resource, string group, string version, string plural, string? @namespace = null, string? subResource = null, bool ifNotExists = false, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(version)) throw new ArgumentNullException(nameof(version));
-        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
-        if (resource == null) throw new ArgumentNullException(nameof(resource));
+        try
+        {
 
-        object storedResource;
-        if (ResourceDefinition.ResourceGroup == group && ResourceDefinition.ResourceVersion == version && ResourceDefinition.ResourcePlural == plural)
-            storedResource = await this.Kubernetes.CreateCustomResourceDefinitionAsync(resource.ConvertTo<V1CustomResourceDefinition>(), cancellationToken: cancellationToken).ConfigureAwait(false);
-        else if (string.IsNullOrWhiteSpace(@namespace)) storedResource = await this.Kubernetes.CustomObjects.CreateClusterCustomObjectAsync(resource, group, version, plural, cancellationToken: cancellationToken).ConfigureAwait(false);
-        else storedResource = await this.Kubernetes.CustomObjects.CreateNamespacedCustomObjectAsync(resource, group, version, @namespace, plural, cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (string.IsNullOrEmpty(version)) throw new ArgumentNullException(nameof(version));
+            if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
+            if (resource == null) throw new ArgumentNullException(nameof(resource));
 
-        return storedResource.ConvertTo<Resource>()!;
+            object storedResource;
+            if (ifNotExists)
+            {
+                if (ResourceDefinition.ResourceGroup == group && ResourceDefinition.ResourceVersion == version && ResourceDefinition.ResourcePlural == plural)
+                    storedResource = await this.Kubernetes.CreateCustomResourceDefinitionAsync(resource.ConvertTo<V1CustomResourceDefinition>(), cancellationToken: cancellationToken).ConfigureAwait(false);
+                else if (string.IsNullOrWhiteSpace(@namespace)) storedResource = await this.Kubernetes.CustomObjects.CreateClusterCustomObjectAsync(resource, group, version, plural, cancellationToken: cancellationToken).ConfigureAwait(false);
+                else storedResource = await this.Kubernetes.CustomObjects.CreateNamespacedCustomObjectAsync(resource, group, version, @namespace, plural, cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                if (ResourceDefinition.ResourceGroup == group && ResourceDefinition.ResourceVersion == version && ResourceDefinition.ResourcePlural == plural)
+                    storedResource = await this.Kubernetes.ReplaceCustomResourceDefinitionAsync(resource.ConvertTo<V1CustomResourceDefinition>(), resource.GetName(), cancellationToken: cancellationToken).ConfigureAwait(false);
+                else if (string.IsNullOrWhiteSpace(@namespace)) storedResource = await this.Kubernetes.CustomObjects.ReplaceClusterCustomObjectAsync(resource, group, version, plural, resource.GetName(), cancellationToken: cancellationToken).ConfigureAwait(false);
+                else storedResource = await this.Kubernetes.CustomObjects.ReplaceNamespacedCustomObjectAsync(resource, group, version, @namespace, plural, resource.GetName(), cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+
+            return storedResource.ConvertTo<Resource>()!;
+        }
+        catch(Exception ex)
+        {
+            throw;
+        }
     }
 
     /// <inheritdoc/>
@@ -91,10 +109,10 @@ public class K8sResourceStorage
         if (string.IsNullOrEmpty(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
         HttpOperationResponse<object> response;
-        if (string.IsNullOrWhiteSpace(@namespace)) response = await this.Kubernetes.CustomObjects.ListClusterCustomObjectWithHttpMessagesAsync(group, version, plural, labelSelector: labelSelectors.ToExpression(), cancellationToken: cancellationToken).ConfigureAwait(false);
-        else response = await this.Kubernetes.CustomObjects.ListNamespacedCustomObjectWithHttpMessagesAsync(group, version, @namespace, plural, labelSelector: labelSelectors.ToExpression(), cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(@namespace)) response = await this.Kubernetes.CustomObjects.ListClusterCustomObjectWithHttpMessagesAsync(group, version, plural, labelSelector: labelSelectors.ToExpression(), watch: true, cancellationToken: cancellationToken).ConfigureAwait(false);
+        else response = await this.Kubernetes.CustomObjects.ListNamespacedCustomObjectWithHttpMessagesAsync(group, version, @namespace, plural, labelSelector: labelSelectors.ToExpression(), watch: true, cancellationToken: cancellationToken).ConfigureAwait(false);
         var subject = new Subject<IResourceWatchEvent>();
-        var watch = response.Watch((WatchEventType watchEventType, Resource resource) => subject.OnNext(new ResourceWatchEvent(watchEventType.ToHyloWatchEventType(), resource)));
+        var watch = response.Watch((WatchEventType watchEventType, object resource) => subject.OnNext(new ResourceWatchEvent(watchEventType.ToHyloWatchEventType(), resource.ConvertTo<Resource>()!)));
         return new ResourceWatch(Observable.Using(() => watch, _ => subject), true);
     }
 

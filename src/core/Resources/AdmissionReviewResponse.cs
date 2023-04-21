@@ -5,6 +5,7 @@
 /// </summary>
 [DataContract]
 public class AdmissionReviewResponse
+    : IExtensible
 {
 
     /// <summary>
@@ -53,5 +54,9 @@ public class AdmissionReviewResponse
     /// </summary>
     [DataMember(Order = 4, Name = "problem"), JsonPropertyOrder(4), JsonPropertyName("problem"), YamlMember(Order = 4, Alias = "problem")]
     public virtual ProblemDetails? Problem { get; set; }
+
+    /// <inheritdoc/>
+    [DataMember(Order = 999, Name = "extensionData"), JsonExtensionData]
+    public virtual IDictionary<string, object>? ExtensionData { get; set; }
 
 }

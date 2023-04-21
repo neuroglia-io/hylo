@@ -7,18 +7,18 @@ using Microsoft.Extensions.Options;
 namespace Hylo.Infrastructure.Services;
 
 /// <summary>
-/// Represents the default implementation of the <see cref="IResourceRepositoryOptionsBuilder"/> interface
+/// Represents the default implementation of the <see cref="IRepositoryOptionsBuilder"/> interface
 /// </summary>
-public class ResourceRepositoryOptionsBuilder
-    : IResourceRepositoryOptionsBuilder
+public class RepositoryOptionsBuilder
+    : IRepositoryOptionsBuilder
 {
 
     /// <summary>
-    /// Initializes a new <see cref="ResourceRepositoryOptionsBuilder"/>
+    /// Initializes a new <see cref="RepositoryOptionsBuilder"/>
     /// </summary>
     /// <param name="configuration">The current <see cref="IConfiguration"/></param>
     /// <param name="services">The <see cref="IServiceCollection"/> to configure</param>
-    public ResourceRepositoryOptionsBuilder(IConfiguration configuration, IServiceCollection services)
+    public RepositoryOptionsBuilder(IConfiguration configuration, IServiceCollection services)
     {
         this.Configuration = configuration;
         this.Services = services;
@@ -58,14 +58,14 @@ public class ResourceRepositoryOptionsBuilder
     protected Type VersionControlType { get; set; } = typeof(VersionControl);
 
     /// <summary>
-    /// Gets/sets the type of <see cref="IResourceStorageProvider"/> to use
+    /// Gets/sets the type of <see cref="IDatabaseProvider"/> to use
     /// </summary>
-    protected Type StorageProviderType { get; set; } = typeof(PluginResourceStorageProvider);
+    protected Type DatabaseProviderType { get; set; } = typeof(PluginDatabaseProvider);
 
     /// <summary>
-    /// Gets/sets the type of <see cref="IResourceRepository"/> to use
+    /// Gets/sets the type of <see cref="IRepository"/> to use
     /// </summary>
-    protected Type RepositoryType { get; set; } = typeof(ResourceRepository);
+    protected Type RepositoryType { get; set; } = typeof(Repository);
 
     /// <summary>
     /// Gets the <see cref="ResourceRepositoryOptions"/> to configure
@@ -73,7 +73,7 @@ public class ResourceRepositoryOptionsBuilder
     protected ResourceRepositoryOptions Options { get; } = new();
 
     /// <inheritdoc/>
-    public virtual IResourceRepositoryOptionsBuilder UseDefinitionsKind(string group, string version, string plural, string kind)
+    public virtual IRepositoryOptionsBuilder UseDefinitionsKind(string group, string version, string plural, string kind)
     {
         ObjectNamingConvention.Current.EnsureIsValidResourceGroup(group);
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
@@ -92,7 +92,7 @@ public class ResourceRepositoryOptionsBuilder
     }
 
     /// <inheritdoc/>
-    public virtual IResourceRepositoryOptionsBuilder UseNamespacesKind(string group, string version, string plural, string kind)
+    public virtual IRepositoryOptionsBuilder UseNamespacesKind(string group, string version, string plural, string kind)
     {
         ObjectNamingConvention.Current.EnsureIsValidResourceGroup(group);
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
@@ -111,7 +111,7 @@ public class ResourceRepositoryOptionsBuilder
     }
 
     /// <inheritdoc/>
-    public virtual IResourceRepositoryOptionsBuilder WithDefaultNamespace(string name)
+    public virtual IRepositoryOptionsBuilder WithDefaultNamespace(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
         ObjectNamingConvention.Current.EnsureIsValidResourceName(name);
@@ -122,7 +122,7 @@ public class ResourceRepositoryOptionsBuilder
     }
 
     /// <inheritdoc/>
-    public virtual IResourceRepositoryOptionsBuilder WithDefinition(IResourceDefinition definition)
+    public virtual IRepositoryOptionsBuilder WithDefinition(IResourceDefinition definition)
     {
         if (definition == null) throw new ArgumentNullException(nameof(definition));
 
@@ -132,7 +132,7 @@ public class ResourceRepositoryOptionsBuilder
     }
 
     /// <inheritdoc/>
-    public virtual IResourceRepositoryOptionsBuilder WithResource(IResource resource)
+    public virtual IRepositoryOptionsBuilder WithResource(IResource resource)
     {
         if (resource == null) throw new ArgumentNullException(nameof(resource));
 
@@ -141,43 +141,43 @@ public class ResourceRepositoryOptionsBuilder
         return this;
     }
 
-    IResourceRepositoryOptionsBuilder IResourceRepositoryOptionsBuilder.UseUserAccessor<TAccessor>()
+    IRepositoryOptionsBuilder IRepositoryOptionsBuilder.UseUserAccessor<TAccessor>()
     {
         this.UserAccessorType = typeof(TAccessor);
         return this;
     }
 
-    IResourceRepositoryOptionsBuilder IResourceRepositoryOptionsBuilder.UseUserInfoProvider<TProvider>()
+    IRepositoryOptionsBuilder IRepositoryOptionsBuilder.UseUserInfoProvider<TProvider>()
     {
         this.UserInfoProviderType = typeof(TProvider);
         return this;
     }
 
-    IResourceRepositoryOptionsBuilder IResourceRepositoryOptionsBuilder.UsePluginManager<TManager>()
+    IRepositoryOptionsBuilder IRepositoryOptionsBuilder.UsePluginManager<TManager>()
     {
         this.PluginManagerType = typeof(TManager);
         return this;
     }
 
-    IResourceRepositoryOptionsBuilder IResourceRepositoryOptionsBuilder.UseAdmissionControl<TControl>()
+    IRepositoryOptionsBuilder IRepositoryOptionsBuilder.UseAdmissionControl<TControl>()
     {
         this.AdmissionControlType = typeof(TControl);
         return this;
     }
 
-    IResourceRepositoryOptionsBuilder IResourceRepositoryOptionsBuilder.UseVersionControl<TControl>()
+    IRepositoryOptionsBuilder IRepositoryOptionsBuilder.UseVersionControl<TControl>()
     {
         this.VersionControlType = typeof(TControl);
         return this;
     }
 
-    IResourceRepositoryOptionsBuilder IResourceRepositoryOptionsBuilder.UseStorageProvider<TProvider>()
+    IRepositoryOptionsBuilder IRepositoryOptionsBuilder.UseDatabaseProvider<TProvider>()
     {
-        this.StorageProviderType = typeof(TProvider);
+        this.DatabaseProviderType = typeof(TProvider);
         return this;
     }
 
-    IResourceRepositoryOptionsBuilder IResourceRepositoryOptionsBuilder.UseRepository<TRepository>()
+    IRepositoryOptionsBuilder IRepositoryOptionsBuilder.UseRepository<TRepository>()
     {
         this.RepositoryType = typeof(TRepository);
         return this;
@@ -201,13 +201,13 @@ public class ResourceRepositoryOptionsBuilder
         this.Services.TryAddSingleton(typeof(IVersionControl), this.VersionControlType);
         if (typeof(IHostedService).IsAssignableFrom(this.VersionControlType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IVersionControl>());
 
-        this.Services.TryAddSingleton(typeof(IResourceStorageProvider), this.StorageProviderType);
-        if (typeof(IHostedService).IsAssignableFrom(this.StorageProviderType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IResourceStorageProvider>());
+        this.Services.TryAddSingleton(typeof(IDatabaseProvider), this.DatabaseProviderType);
+        if (typeof(IHostedService).IsAssignableFrom(this.DatabaseProviderType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IDatabaseProvider>());
 
-        this.Services.TryAddSingleton(typeof(IResourceRepository), this.RepositoryType);
-        if (typeof(IHostedService).IsAssignableFrom(this.RepositoryType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IResourceRepository>());
+        this.Services.TryAddSingleton(typeof(IRepository), this.RepositoryType);
+        if (typeof(IHostedService).IsAssignableFrom(this.RepositoryType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IRepository>());
 
-        this.Services.TryAddSingleton(provider => provider.GetRequiredService<IResourceStorageProvider>().GetResourceStorage());
+        this.Services.TryAddSingleton(provider => provider.GetRequiredService<IDatabaseProvider>().GetDatabase());
 
         this.Services.TryAddSingleton(Microsoft.Extensions.Options.Options.Create(this.Options));
     }

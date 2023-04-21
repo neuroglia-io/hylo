@@ -6,17 +6,17 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Hylo.Providers.Kubernetes;
 
 /// <summary>
-/// Defines extensions for <see cref="IResourceRepositoryOptionsBuilder"/>s
+/// Defines extensions for <see cref="IRepositoryOptionsBuilder"/>s
 /// </summary>
 public static class IResourceRepositoryOptionsBuilderExtensions
 {
 
     /// <summary>
-    /// Configures the <see cref="IResourceRepositoryOptionsBuilder"/> to use the <see cref="K8sResourceStorageProvider"/>
+    /// Configures the <see cref="IRepositoryOptionsBuilder"/> to use the <see cref="K8sResourceStorageProvider"/>
     /// </summary>
-    /// <param name="builder">The <see cref="IResourceRepositoryOptionsBuilder"/> to configure</param>
-    /// <returns>The configured <see cref="IResourceRepositoryOptionsBuilder"/></returns>
-    public static IResourceRepositoryOptionsBuilder UseKubernetes(this IResourceRepositoryOptionsBuilder builder)
+    /// <param name="builder">The <see cref="IRepositoryOptionsBuilder"/> to configure</param>
+    /// <returns>The configured <see cref="IRepositoryOptionsBuilder"/></returns>
+    public static IRepositoryOptionsBuilder UseKubernetes(this IRepositoryOptionsBuilder builder)
     {
         builder.Services.AddKubernetesClient();
         builder.Services.AddSingleton<K8sResourceStorage>();

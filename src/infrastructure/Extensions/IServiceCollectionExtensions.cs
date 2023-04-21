@@ -15,9 +15,9 @@ public static class IServiceCollectionExtensions
     /// <param name="configuration">The current <see cref="IConfiguration"/></param>
     /// <param name="setup">An <see cref="Action{T}"/> used to configure Hylo</param>
     /// <returns>The configured <see cref="IServiceCollection"/></returns>
-    public static IServiceCollection AddHylo(this IServiceCollection services, IConfiguration configuration, Action<IResourceRepositoryOptionsBuilder> setup)
+    public static IServiceCollection AddHylo(this IServiceCollection services, IConfiguration configuration, Action<IRepositoryOptionsBuilder> setup)
     {
-        var builder = new ResourceRepositoryOptionsBuilder(configuration, services);
+        var builder = new RepositoryOptionsBuilder(configuration, services);
         setup(builder);
         builder.Build();
         return services;
