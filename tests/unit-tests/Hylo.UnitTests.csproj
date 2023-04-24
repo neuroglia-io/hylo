@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
@@ -31,6 +31,7 @@
     <ProjectReference Include="..\..\src\providers\file-system\Hylo.Providers.FileSystem.csproj" />
     <ProjectReference Include="..\..\src\providers\kubernetes\Hylo.Providers.Kubernetes.csproj" />
     <ProjectReference Include="..\..\src\providers\mongo\Hylo.Providers.Mongo.csproj" />
+    <ProjectReference Include="..\..\src\providers\redis\Hylo.Providers.Redis.csproj" />
   </ItemGroup>
 
   <ItemGroup>

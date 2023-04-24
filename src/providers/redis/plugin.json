@@ -1,0 +1,11 @@
+﻿{
+  "name": "Redis",
+  "description": "The official StackExchange.Redis based Hylo database provider",
+  "tags": [ "persistence", "repository", "redis" ],
+  "authors": "The Hylo Authors",
+  "copyright": "Copyright © 2022-Present The Hylo Authors. All Rights Reserved.",
+  "licenseUri": "https://raw.githubusercontent.com/neuroglia-io/hylo/main/LICENSE",
+  "repositoryUri": "https://github.com/neuroglia-io/hylo",
+  "version": "0.1.0",
+  "assemblyFile": "Hylo.Providers.Redis.dll"
+}

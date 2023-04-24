@@ -1,24 +1,25 @@
-﻿using Hylo.Infrastructure.Services;
+﻿using Hylo.Infrastructure;
+using Hylo.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Hylo.Providers.Mongo.Services;
+namespace Hylo.Providers.Redis.Services;
 
 /// <summary>
-/// Represents a <see href="https://www.mongodb.com/">MongoDB</see> implementation of the <see cref="IDatabaseProvider"/> interface
+/// Represents a <see href="https://redis.io/">Redis</see> implementation of the <see cref="IDatabaseProvider"/> interface
 /// </summary>
-public class MongoDatabaseProvider
+public class RedisDatabaseProvider
     : IPlugin, IDatabaseProvider
 {
 
     private bool _disposed;
 
     /// <summary>
-    /// Initializes a new <see cref="MongoDatabaseProvider"/>
+    /// Initializes a new <see cref="RedisDatabaseProvider"/>
     /// </summary>
     /// <param name="applicationServices">The current application's services</param>
-    public MongoDatabaseProvider(IServiceProvider applicationServices)
+    public RedisDatabaseProvider(IServiceProvider applicationServices)
     {
         this.ApplicationServices = applicationServices;
     }
@@ -38,8 +39,8 @@ public class MongoDatabaseProvider
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddMongoClient(this.ApplicationServices.GetRequiredService<IConfiguration>().GetConnectionString(MongoDatabase.ConnectionStringName)!);
-        services.AddSingleton<MongoDatabase>();
+        services.AddStackExchangeRedis(this.ApplicationServices.GetRequiredService<IConfiguration>().GetConnectionString(RedisDatabase.ConnectionStringName)!);
+        services.AddSingleton<RedisDatabase>();
         this.PluginServices = services.BuildServiceProvider();
         foreach (var hostedService in this.PluginServices.GetServices<IHostedService>())
         {
@@ -50,14 +51,14 @@ public class MongoDatabaseProvider
     /// <inheritdoc/>
     public virtual IDatabase GetDatabase()
     {
-        if (this.PluginServices == null) return this.ApplicationServices.GetRequiredService<MongoDatabase>();
-        else return this.PluginServices.GetRequiredService<MongoDatabase>();
+        if (this.PluginServices == null) return this.ApplicationServices.GetRequiredService<RedisDatabase>();
+        else return this.PluginServices.GetRequiredService<RedisDatabase>();
     }
 
     /// <summary>
-    /// Disposes of the <see cref="MongoDatabaseProvider"/>
+    /// Disposes of the <see cref="RedisDatabaseProvider"/>
     /// </summary>
-    /// <param name="disposing">A boolean indicating whether or not the <see cref="MongoDatabaseProvider"/> is being disposed of</param>
+    /// <param name="disposing">A boolean indicating whether or not the <see cref="RedisDatabaseProvider"/> is being disposed of</param>
     /// <returns>A new awaitable <see cref="ValueTask"/></returns>
     protected virtual async ValueTask DisposeAsync(bool disposing)
     {
@@ -78,9 +79,9 @@ public class MongoDatabaseProvider
     }
 
     /// <summary>
-    /// Disposes of the <see cref="MongoDatabaseProvider"/>
+    /// Disposes of the <see cref="RedisDatabaseProvider"/>
     /// </summary>
-    /// <param name="disposing">A boolean indicating whether or not the <see cref="MongoDatabaseProvider"/> is being disposed of</param>
+    /// <param name="disposing">A boolean indicating whether or not the <see cref="RedisDatabaseProvider"/> is being disposed of</param>
     protected virtual void Dispose(bool disposing)
     {
         if (!disposing || this._disposed) return;

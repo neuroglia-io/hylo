@@ -1,14 +1,14 @@
-﻿using Hylo.Providers.Mongo;
+﻿using Hylo.Providers.Redis;
 using Hylo.UnitTests.Containers;
 
 namespace Hylo.UnitTests.Cases.Providers;
 
-public class MongoDatabaseProviderTests
+public class RedisDatabaseProviderTests
     : RepositoryTestsBase
 {
 
-    public MongoDatabaseProviderTests()
-        : base(builder => builder.UseMongo(MongoContainer.ConnectionString))
+    public RedisDatabaseProviderTests()
+        : base(builder => builder.UseRedis(RedisContainer.ConnectionString))
     {
 
     }
@@ -17,7 +17,7 @@ public class MongoDatabaseProviderTests
     {
         if (!disposing) return;
         base.Dispose(disposing);
-        MongoContainer.DisposeAsync().GetAwaiter().GetResult();
+        RedisContainer.DisposeAsync().GetAwaiter().GetResult();
     }
 
 }

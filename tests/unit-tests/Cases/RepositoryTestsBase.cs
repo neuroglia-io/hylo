@@ -157,7 +157,7 @@ public abstract class RepositoryTestsBase
     }
 
     [Fact, Priority(5)]
-    public async Task GetAll_Resources_Should_Work()
+    public async Task Get_Resources_Should_Work()
     {
         //arrange
         var resourceCount = 10;
