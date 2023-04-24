@@ -15,7 +15,7 @@ public interface IResourceMutator
     /// <param name="plural">The plural name of the kind of resource being mutated</param>
     /// <param name="namespace">The namespace the resource being mutated belongs to, if any</param>
     /// <returns>A boolean indicating wheter or not the <see cref="IResourceMutator"/> supports the specified resource kind</returns>
-    bool AppliesTo(ResourceOperation operation, string group, string version, string plural, string? @namespace = null);
+    bool AppliesTo(Operation operation, string group, string version, string plural, string? @namespace = null);
 
     /// <summary>
     /// Muatates the specified resource
@@ -23,6 +23,6 @@ public interface IResourceMutator
     /// <param name="context">The context in which to perform the resource's mutation</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>A new awaitable <see cref="Task"/></returns>
-    Task MutateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default);
+    Task<AdmissionReviewResponse> MutateAsync(AdmissionReviewRequest context, CancellationToken cancellationToken = default);
 
 }

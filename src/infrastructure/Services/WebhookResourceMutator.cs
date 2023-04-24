@@ -42,30 +42,21 @@ public class WebhookResourceMutator
     public virtual int Priority => this.Webhook.Spec.Priority ?? int.MaxValue;
 
     /// <inheritdoc/>
-    public virtual bool AppliesTo(ResourceOperation operation, string group, string version, string plural, string? @namespace = null) => this.Webhook.Spec.Resources?.Any(r => r.Matches(operation, group, version, plural, @namespace)) == true;
+    public virtual bool AppliesTo(Operation operation, string group, string version, string plural, string? @namespace = null) => this.Webhook.Spec.Resources?.Any(r => r.Matches(operation, group, version, plural, @namespace)) == true;
 
     /// <inheritdoc/>
-    public virtual async Task MutateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default)
+    public virtual async Task<AdmissionReviewResponse> MutateAsync(AdmissionReviewRequest request, CancellationToken cancellationToken = default)
     {
-        if(context == null) throw new ArgumentNullException(nameof(context));
-        this.Logger.LogDebug("Mutating resource '{resource}' using webhook '{webhook}'...", context.Resource, this.Webhook);
-        var admissionReview = context.ToAdmissionReview();
+        if(request == null) throw new ArgumentNullException(nameof(request));
+        var admissionReview = new AdmissionReview(request);
         using var response = await HttpClient.PostAsJsonAsync(this.Webhook.Spec.Client.Uri, admissionReview, cancellationToken);
         response.EnsureSuccessStatusCode();
         admissionReview = await response.Content.ReadFromJsonAsync<AdmissionReview>(cancellationToken: cancellationToken);
         if (admissionReview?.Response == null || admissionReview.Response.Patch == null)
         {
-            this.Logger.LogWarning("Mutating webhook {webhook} responded with a success status code '{statusCode}' but did not return a valid mutating admission response or did not define a valid resource patch", this.Webhook, response.StatusCode);
-            return;
+            return new(request.Uid, false, null, ProblemDetails.ResourceAdmissionFailed(request.Operation, request.Resource, new KeyValuePair<string, string[]>(this.Webhook.ToString(), new[] { $"Mutating webhook {this.Webhook} responded with a success status code '{response.StatusCode}' but did not return a valid mutating admission response or did not define a valid resource patch" })));
         }
-        context.Reviews.Add(admissionReview);
-        if (!admissionReview.Response.Allowed)
-        {
-            this.Logger.LogWarning("Mutating webhook {webhook} failed to mutate resource '{resource}':\r\n{errors}", this.Webhook, context.Resource, admissionReview.Response?.Problem);
-            return;
-        }
-        context.UpdatedState = Serializer.Json.Deserialize<IResource>(admissionReview.Response.Patch.ApplyTo(Serializer.Json.SerializeToNode(context.Resource)!.AsObject()!)!)!;
-        this.Logger.LogDebug("Resource '{resource}' succesfully mutated using webhook '{webhook}'", context.Resource, this.Webhook);
+        return admissionReview.Response;
     }
 
 }

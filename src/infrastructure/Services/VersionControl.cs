@@ -31,7 +31,7 @@ public class VersionControl
     protected HttpClient HttpClient { get; }
 
     /// <inheritdoc/>
-    public virtual async Task<IResource> ConvertToStorageVersionAsync(ResourceVersioningContext context, CancellationToken cancellationToken = default)
+    public virtual async Task<IResource> ConvertToStorageVersionAsync(VersioningContext context, CancellationToken cancellationToken = default)
     {
         if (context == null) throw new ArgumentNullException(nameof(context));
         if (context.ResourceDefinition.Spec.Conversion?.Strategy == ConversionStrategy.None) return context.Resource;
@@ -52,7 +52,7 @@ public class VersionControl
     /// Performs the conversion of the current resource to the specified version
     /// </summary>
     /// <returns></returns>
-    protected virtual async Task<IResource> PerformWebhookConversionAsync(ResourceVersioningContext context, WebhookClientConfiguration? webhook,
+    protected virtual async Task<IResource> PerformWebhookConversionAsync(VersioningContext context, WebhookClientConfiguration? webhook,
         ResourceDefinitionVersion fromVersion, ResourceDefinitionVersion toVersion, CancellationToken cancellationToken = default)
     {
         if (context == null) throw new ArgumentNullException(nameof(context));

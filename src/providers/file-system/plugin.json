@@ -2,7 +2,7 @@
   "name": "FileSystem",
   "description": "The official file system provider",
   "tags": [ "persistence", "repository", "file-system" ],
-  "authors": "The Synapse Authors",
+  "authors": "The Hylo Authors",
   "copyright": "Copyright © 2022-Present The Hylo Authors. All Rights Reserved.",
   "licenseUri": "https://raw.githubusercontent.com/neuroglia-io/hylo/main/LICENSE",
   "repositoryUri": "https://github.com/neuroglia-io/hylo",

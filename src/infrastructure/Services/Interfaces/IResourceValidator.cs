@@ -15,14 +15,14 @@ public interface IResourceValidator
     /// <param name="plural">The plural name of the kind of resource being admitted</param>
     /// <param name="namespace">The namespace the resource being admitted belongs to, if any</param>
     /// <returns>A boolean indicating wheter or not the <see cref="IResourceValidator"/> supports the specified resource kind</returns>
-    bool AppliesTo(ResourceOperation operation, string group, string version, string plural, string? @namespace = null);
+    bool AppliesTo(Operation operation, string group, string version, string plural, string? @namespace = null);
 
     /// <summary>
     /// Validates the specified resource
     /// </summary>
     /// <param name="context">The context in which to perform the resource's validation</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
-    /// <returns>A new awaitable <see cref="Task"/></returns>
-    Task ValidateAsync(ResourceAdmissionReviewContext context, CancellationToken cancellationToken = default);
+    /// <returns>A new <see cref="AdmissionReviewResponse"/> that describes the result of the operation</returns>
+    Task<AdmissionReviewResponse> ValidateAsync(AdmissionReviewRequest context, CancellationToken cancellationToken = default);
 
 }

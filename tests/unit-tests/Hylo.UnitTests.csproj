@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
@@ -15,6 +15,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
+    <PackageReference Include="Testcontainers" Version="3.0.0" />
     <PackageReference Include="xunit" Version="2.4.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -29,6 +30,21 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\providers\file-system\Hylo.Providers.FileSystem.csproj" />
     <ProjectReference Include="..\..\src\providers\kubernetes\Hylo.Providers.Kubernetes.csproj" />
+    <ProjectReference Include="..\..\src\providers\mongo\Hylo.Providers.Mongo.csproj" />
+    <ProjectReference Include="..\..\src\providers\redis\Hylo.Providers.Redis.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="assets\mongo\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="assets\mongo\mongo-init.sh">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="assets\mongo\replica.key">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

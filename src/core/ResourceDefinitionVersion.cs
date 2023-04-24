@@ -50,4 +50,10 @@ public class ResourceDefinitionVersion
     [DataMember(Order = 4, Name = "storage", IsRequired = true), JsonPropertyOrder(4), JsonPropertyName("storage"), YamlMember(Order = 4, Alias = "storage")]
     public virtual bool Storage { get; set; }
 
+    /// <summary>
+    /// Gets/sets a boolean indicating whether or not the version is the storage version
+    /// </summary>
+    [DataMember(Order = 5, Name = "subresources", IsRequired = true), JsonPropertyOrder(5), JsonPropertyName("subresources"), YamlMember(Order = 5, Alias = "subresources")]
+    public virtual IDictionary<string, object>? SubResources { get; set; }
+
 }

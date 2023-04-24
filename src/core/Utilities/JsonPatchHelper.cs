@@ -14,10 +14,10 @@ public static class JsonPatchHelper
     /// <param name="source">The source object</param>
     /// <param name="target">The target object</param>
     /// <returns>A new <see cref="JsonPatch"/> based on the differences between the specified values</returns>
-    public static JsonPatch CreateJsonPatchFromDiff(object source, object target)
+    public static JsonPatch CreateJsonPatchFromDiff(object? source, object? target)
     {
-        if (source == null) throw new ArgumentNullException(nameof(source));
-        if (target == null) throw new ArgumentNullException(nameof(target));
+        source ??= new();
+        target ??= new();
         var sourceToken = Serializer.Json.SerializeToElement(source)!.Value;
         var targetToken = Serializer.Json.SerializeToElement(target)!.Value;
         var patchDocument = JsonCons.Utilities.JsonPatch.FromDiff(sourceToken, targetToken);

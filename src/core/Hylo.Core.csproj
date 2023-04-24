@@ -53,11 +53,11 @@
 
   <ItemGroup>
     <EmbeddedResource Update="Properties\ProblemDescriptions.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
+      <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>ProblemDescriptions.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Update="Properties\ProblemTitles.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
+      <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>ProblemTitles.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>

@@ -1,5 +1,6 @@
 ﻿using Hylo.Properties;
 using System.Net;
+using static Hylo.ProblemTypes;
 
 namespace Hylo;
 
@@ -118,13 +119,45 @@ public class ProblemDetails
     }
 
     /// <summary>
+    /// Creates a new <see cref="ProblemDetails"/> that describes an error where a patch had no effect 
+    /// </summary>
+    /// <param name="resource">The resource that was not modified</param>
+    /// <returns>A new <see cref="ProblemDetails"/></returns>
+    public static ProblemDetails ResourceNotModified(IResourceReference resource)
+    {
+        return new
+        (
+            ProblemTypes.Resources.NotModified,
+            ProblemTitles.NotModified,
+            (int)HttpStatusCode.NotModified,
+            StringExtensions.Format(ProblemDescriptions.ResourceNotModified, resource)
+        );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ProblemDetails"/> that describes an error due to an unsupported sub resource 
+    /// </summary>
+    /// <param name="subResource">The unsupported sub resource</param>
+    /// <returns>A new <see cref="ProblemDetails"/></returns>
+    public static ProblemDetails UnsupportedSubResource(ISubResourceReference subResource)
+    {
+        return new
+        (
+            ProblemTypes.Resources.UnsupportedSubResource,
+            ProblemTitles.Unsupported,
+            (int)HttpStatusCode.BadRequest,
+            StringExtensions.Format(ProblemDescriptions.UnsupportedSubResource, subResource)
+        );
+    }
+
+    /// <summary>
     /// Creates a new <see cref="ProblemDetails"/> that describes failure to allow an operation on a resource
     /// </summary>
     /// <param name="operation">The operation that was rejected</param>
     /// <param name="resource">The resource that could not be admitted</param>
     /// <param name="errors">An array containing the errors that have occured during admission</param>
     /// <returns>A new <see cref="ProblemDetails"/></returns>
-    public static ProblemDetails ResourceAdmissionFailed(ResourceOperation operation, IResourceReference resource, params KeyValuePair<string, string[]>[] errors)
+    public static ProblemDetails ResourceAdmissionFailed(Operation operation, IResourceReference resource, params KeyValuePair<string, string[]>[] errors)
     {
         return new
         (
@@ -158,14 +191,14 @@ public class ProblemDetails
     /// </summary>
     /// <param name="resource">The invalid resource</param>
     /// <returns>A new <see cref="ProblemDetails"/></returns>
-    public static ProblemDetails ResourceDefinitionNotFound(IResourceReference resource)
+    public static ProblemDetails ResourceDefinitionNotFound(IResourceDefinitionReference resource)
     {
         return new
        (
            ProblemTypes.Resources.DefinitionNotFound,
            ProblemTitles.NotFound,
            (int)HttpStatusCode.NotFound,
-           StringExtensions.Format(ProblemDescriptions.ResourceDefinitionNotFound, resource.Definition.Group, resource.Definition.Version, resource.Definition.Plural)
+           StringExtensions.Format(ProblemDescriptions.ResourceDefinitionNotFound, resource.Group, resource.Version, resource.Plural)
        );
     }
 
@@ -201,4 +234,68 @@ public class ProblemDetails
         );
     }
     
+    /// <summary>
+    /// Creates a new <see cref="ProblemDetails"/> that describes an error due to the fact that the '.metadata.resourceVersion' has not been set in the context of a replace operation
+    /// </summary>
+    /// <param name="resourceReference">A reference to the resource that could not be replaced</param>
+    /// <returns>A new <see cref="ProblemDetails"/></returns>
+    public static ProblemDetails ResourceVersionRequired(IResourceReference resourceReference)
+    {
+        return new
+        (
+            ProblemTypes.Resources.ResourceVersionRequired,
+            ProblemTitles.ValidationFailed,
+            (int)HttpStatusCode.BadRequest,
+            StringExtensions.Format(ProblemDescriptions.ResourceVersionRequired, resourceReference)
+        );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ProblemDetails"/> that describes an error due to the fact that the '.metadata.resourceVersion' has not been set in the context of a sub resource replace operation
+    /// </summary>
+    /// <param name="subResourceReference">A reference to the sub resource that could not be replaced</param>
+    /// <returns>A new <see cref="ProblemDetails"/></returns>
+    public static ProblemDetails SubResourceVersionRequired(ISubResourceReference subResourceReference)
+    {
+        return new
+        (
+            ProblemTypes.Resources.ResourceVersionRequired,
+            ProblemTitles.ValidationFailed,
+            (int)HttpStatusCode.BadRequest,
+            StringExtensions.Format(ProblemDescriptions.ResourceVersionRequired, subResourceReference)
+        );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ProblemDetails"/> that describes an error due to an invalid resource patch
+    /// </summary>
+    /// <param name="resourceReference">The <see cref="IResource"/> that could not be patched</param>
+    /// <returns>A new <see cref="ProblemDetails"/></returns>
+    public static ProblemDetails InvalidResourcePatch(IResourceReference resourceReference)
+    {
+        return new
+        (
+            ProblemTypes.Resources.InvalidPatch,
+            ProblemTitles.ValidationFailed,
+            (int)HttpStatusCode.BadRequest,
+            StringExtensions.Format(ProblemDescriptions.InvalidResourcePatch, resourceReference)
+        );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ProblemDetails"/> that describes an error due to an invalid sub resource patch
+    /// </summary>
+    /// <param name="subResourceReference">A reference to the sub resource that could not be patched</param>
+    /// <returns>A new <see cref="ProblemDetails"/></returns>
+    public static ProblemDetails InvalidSubResourcePatch(IResourceReference subResourceReference)
+    {
+        return new
+        (
+            ProblemTypes.Resources.InvalidPatch,
+            ProblemTitles.ValidationFailed,
+            (int)HttpStatusCode.BadRequest,
+            StringExtensions.Format(ProblemDescriptions.InvalidResourcePatch, subResourceReference)
+        );
+    }
+
 }

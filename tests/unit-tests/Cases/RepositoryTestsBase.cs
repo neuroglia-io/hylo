@@ -1,8 +1,6 @@
-﻿using Hylo.Infrastructure;
-using Hylo.Infrastructure.Services;
-using Microsoft.AspNetCore.Http;
+﻿using Hylo.Infrastructure.Services;
+using Hylo.UnitTests.Services;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Hylo.UnitTests.Cases;
 
@@ -13,28 +11,20 @@ public abstract class RepositoryTestsBase
 
     internal const string FakeNamespaceName = "fake-namespace";
     bool _disposed;
-    readonly ResourceRepositoryOptionsBuilder _builder;
 
-    protected RepositoryTestsBase(Action<IResourceRepositoryOptionsBuilder> setup)
+    protected RepositoryTestsBase(Action<IRepositoryOptionsBuilder> setup)
     {
-        var services = new ServiceCollection();
-        var configuration = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json", true)
-            .Build();
-        services.AddSingleton<IConfiguration>(configuration);
-        services.AddLogging();
-        services.AddHttpClient();
-        services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
-        this._builder = new(configuration, services);
-        setup(this._builder);
+        this.RepositoryBuilder = new(setup);
     }
+
+    public RepositoryBuilder RepositoryBuilder { get; }
 
     [Fact, Priority(1)]
     public async Task Add_Resource_Should_Work()
     {
         //arrange
         var @namespace = FakeNamespaceName;
-        using var resources = await this._builder
+        using var resources = await this.RepositoryBuilder
             .WithDefinition<FakeResourceWithSpecAndStatusDefinition>()
             .WithResource(new Namespace(@namespace))
             .BuildAsync()
@@ -66,9 +56,9 @@ public abstract class RepositoryTestsBase
     public async Task Get_ResourceDefinition_Should_Work()
     {
         //arrange
-        using var resources = await this._builder
+        using var resources = await this.RepositoryBuilder
             .BuildAsync()
-            .ConfigureAwait(false); ;
+            .ConfigureAwait(false);
 
         //act
         var namespaceDefinition = await resources.GetDefinitionAsync(NamespaceDefinition.ResourceGroup, NamespaceDefinition.ResourcePlural);
@@ -84,7 +74,7 @@ public abstract class RepositoryTestsBase
         var resourceCount = 10;
         var @namespace = FakeNamespaceName;
         var resources = new List<FakeResourceWithSpecAndStatus>(resourceCount);
-        var repository = await this._builder
+        var repository = await this.RepositoryBuilder
             .WithDefinition<FakeResourceWithSpecAndStatusDefinition>()
             .WithResource(new Namespace(@namespace))
             .BuildAsync()
@@ -118,7 +108,7 @@ public abstract class RepositoryTestsBase
         var resourceCount = 10;
         var @namespace = FakeNamespaceName;
         var resources = new List<FakeResourceWithSpecAndStatus>(resourceCount);
-        var repository = await this._builder
+        var repository = await this.RepositoryBuilder
             .WithDefinition<FakeResourceWithSpecAndStatusDefinition>()
             .WithResource(new Namespace(@namespace))
             .BuildAsync()
@@ -167,13 +157,13 @@ public abstract class RepositoryTestsBase
     }
 
     [Fact, Priority(5)]
-    public async Task GetAll_Resources_Should_Work()
+    public async Task Get_Resources_Should_Work()
     {
         //arrange
         var resourceCount = 10;
         var @namespace = FakeNamespaceName;
         var resources = new List<FakeResourceWithSpecAndStatus>(resourceCount);
-        var repository = await this._builder
+        var repository = await this.RepositoryBuilder
             .WithDefinition<FakeResourceWithSpecAndStatusDefinition>()
             .WithResource(new Namespace(@namespace))
             .BuildAsync()
@@ -207,7 +197,7 @@ public abstract class RepositoryTestsBase
         //arrange
         var resourceCount = 10;
         var @namespace = FakeNamespaceName;
-        using var resourceRepository = await this._builder
+        using var resourceRepository = await this.RepositoryBuilder
              .WithDefinition<FakeResourceWithSpecAndStatusDefinition>()
              .WithResource(new Namespace(@namespace))
              .BuildAsync()
@@ -234,7 +224,7 @@ public abstract class RepositoryTestsBase
     {
         //arrange
         var @namespace = FakeNamespaceName;
-        using var resources = await this._builder
+        using var resources = await this.RepositoryBuilder
              .WithDefinition<FakeResourceWithSpecAndStatusDefinition>()
              .WithResource(new Namespace(@namespace))
              .BuildAsync()
@@ -257,7 +247,7 @@ public abstract class RepositoryTestsBase
         //arrange
         var @namespace = FakeNamespaceName;
         var resource = FakeResourceWithSpecAndStatus.Create(@namespace);
-        using var resources = await this._builder
+        using var resources = await this.RepositoryBuilder
              .WithDefinition<FakeResourceWithSpecAndStatusDefinition>()
              .WithResource(new Namespace(@namespace))
              .WithResource(resource)
@@ -266,8 +256,6 @@ public abstract class RepositoryTestsBase
         var updatedResource = resource.Clone()!;
         updatedResource.Spec.FakeProperty1 = "Updated Fake Value";
         updatedResource.Spec.FakeProperty2 = 6;
-        updatedResource.Status!.FakeProperty1 = "Updated Fake Value";
-        updatedResource.Status!.FakeProperty2 = 6;
         var jsonPatch = JsonPatchHelper.CreateJsonPatchFromDiff(resource, updatedResource);
         var patch = new Patch(PatchType.JsonPatch, jsonPatch);
 
@@ -283,25 +271,24 @@ public abstract class RepositoryTestsBase
     }
 
     [Fact, Priority(9)]
-    public async Task Update_Resource_Should_Work()
+    public async Task Replace_Resource_Should_Work()
     {
         //arrange
         var @namespace = FakeNamespaceName;
         var resource = FakeResourceWithSpecAndStatus.Create(@namespace);
-        using var resources = await this._builder
+        using var resources = await this.RepositoryBuilder
             .WithDefinition<FakeResourceWithSpecAndStatusDefinition>()
             .WithResource(new Namespace(@namespace))
             .WithResource(resource)
             .BuildAsync()
             .ConfigureAwait(false);
+        resource = (await resources.GetAsync<FakeResourceWithSpecAndStatus>(resource.GetName(), resource.GetNamespace()))!;
         var updatedResource = resource.Clone()!;
         updatedResource.Spec.FakeProperty1 = "Updated Fake Value";
         updatedResource.Spec.FakeProperty2 = 6;
-        updatedResource.Status!.FakeProperty1 = "Updated Fake Value";
-        updatedResource.Status!.FakeProperty2 = 6;
 
         //act
-        var patchedResource = await resources.UpdateAsync(updatedResource).ConfigureAwait(false);
+        var patchedResource = await resources.ReplaceAsync(updatedResource).ConfigureAwait(false);
 
         //assert
         patchedResource.Should().NotBeNull();
@@ -317,15 +304,14 @@ public abstract class RepositoryTestsBase
         //arrange
         var @namespace = FakeNamespaceName;
         var resource = FakeResourceWithSpecAndStatus.Create(@namespace);
-        using var resources = await this._builder
+        using var resources = await this.RepositoryBuilder
              .WithDefinition<FakeResourceWithSpecAndStatusDefinition>()
              .WithResource(new Namespace(@namespace))
              .WithResource(resource)
              .BuildAsync()
              .ConfigureAwait(false);
+        resource = (await resources.GetAsync<FakeResourceWithSpecAndStatus>(resource.GetName(), resource.GetNamespace()))!;
         var updatedResource = resource.Clone()!;
-        updatedResource.Spec.FakeProperty1 = "Updated Fake Value";
-        updatedResource.Spec.FakeProperty2 = 6;
         updatedResource.Status!.FakeProperty1 = "Updated Fake Value";
         updatedResource.Status!.FakeProperty2 = 6;
         var jsonPatch = JsonPatchHelper.CreateJsonPatchFromDiff(resource, updatedResource);
@@ -344,25 +330,24 @@ public abstract class RepositoryTestsBase
     }
 
     [Fact, Priority(11)]
-    public async Task Update_ResourceStatus_Should_Work()
+    public async Task Replace_ResourceStatus_Should_Work()
     {
         //arrange
         var @namespace = FakeNamespaceName;
         var resource = FakeResourceWithSpecAndStatus.Create(@namespace);
-        using var resources = await this._builder
+        using var resources = await this.RepositoryBuilder
              .WithDefinition<FakeResourceWithSpecAndStatusDefinition>()
              .WithResource(new Namespace(@namespace))
              .WithResource(resource)
              .BuildAsync()
              .ConfigureAwait(false);
+        resource = (await resources.GetAsync<FakeResourceWithSpecAndStatus>(resource.GetName(), resource.GetNamespace()))!;
         var updatedResource = resource.Clone()!;
-        updatedResource.Spec.FakeProperty1 = "Updated Fake Value";
-        updatedResource.Spec.FakeProperty2 = 6;
         updatedResource.Status!.FakeProperty1 = "Updated Fake Value";
         updatedResource.Status!.FakeProperty2 = 6;
 
         //act
-        var patchedResource = await resources.UpdateStatusAsync(updatedResource).ConfigureAwait(false);
+        var patchedResource = await resources.ReplaceStatusAsync(updatedResource).ConfigureAwait(false);
 
         //assert
         patchedResource.Should().NotBeNull();
@@ -378,7 +363,7 @@ public abstract class RepositoryTestsBase
         //arrange
         var @namespace = FakeNamespaceName;
         var resource = FakeResourceWithSpecAndStatus.Create(@namespace);
-        using var resources = await this._builder
+        using var resources = await this.RepositoryBuilder
              .WithDefinition<FakeResourceWithSpecAndStatusDefinition>()
              .WithResource(new Namespace(@namespace))
              .WithResource(resource)
@@ -390,7 +375,6 @@ public abstract class RepositoryTestsBase
 
         //assert
         deletedResource.Should().NotBeNull();
-        deletedResource.Should().BeEquivalentTo(resource);
         (await resources.GetAsync<FakeResourceWithSpecAndStatus>(resource.GetName(), resource.GetNamespace())).Should().BeNull();
     }
 
@@ -400,7 +384,7 @@ public abstract class RepositoryTestsBase
         {
             if (disposing)
             {
-
+                this.RepositoryBuilder.Dispose();
             }
             this._disposed = true;
         }

@@ -7,6 +7,7 @@ namespace Hylo;
 /// </summary>
 [DataContract]
 public class AdmissionReviewRequest
+    : IExtensible
 {
 
     /// <summary>
@@ -20,20 +21,25 @@ public class AdmissionReviewRequest
     /// <param name="uid">A string that uniquely and globally identifies the resource admission review request</param>
     /// <param name="operation">The operation to perform on the specified resource</param>
     /// <param name="resourceReference">A reference to the resource to perform the admission review for</param>
-    /// <param name="subResourceReference">The sub resource the operation to review applies to, if any</param>
-    /// <param name="actualState">The actual state of the (sub)resource being admitted. Null if operation has been set to 'delete'</param>
+    /// <param name="subResource">The sub resource the operation to review applies to, if any</param>
+    /// <param name="patch">The patch to apply to the (sub)resource being admitted. Null if operation is not 'patch'</param>
+    /// <param name="updatedState">The updated state of the (sub)resource being admitted. Null if operation has been set to 'patch' or 'deleted'</param>
     /// <param name="originalState">The original state of the (sub)resource being admitted. Null if operation has been set to 'create'</param>
     /// <param name="user">The information about the authenticated user that has performed the operation that is being admitted</param>
-    public AdmissionReviewRequest(string uid, ResourceOperation operation, ResourceReference resourceReference, string? subResourceReference = null, object? actualState = null, object? originalState = null, UserInfo? user = null)
+    /// <param name="dryRun">A boolean indicating whether or not admission side effects should be actuated</param>
+    public AdmissionReviewRequest(string uid, Operation operation, ResourceReference resourceReference, string? subResource = null, Patch? patch = null, IResource? updatedState = null, IResource? originalState = null, UserInfo? user = null, bool dryRun = false)
     {
-        if(string.IsNullOrWhiteSpace(uid)) throw new ArgumentNullException(nameof(uid));
+        if (string.IsNullOrWhiteSpace(uid)) throw new ArgumentNullException(nameof(uid));
         this.Uid = uid;
         this.Operation = operation;
-        this.ResourceReference = resourceReference ?? throw new ArgumentNullException(nameof(resourceReference));
-        this.SubResource = subResourceReference;
-        this.ActualState = actualState;
-        this.OriginalState = originalState;
+        this.Resource = resourceReference ?? throw new ArgumentNullException(nameof(resourceReference));
+        this.SubResource = subResource;
+        this.Patch = patch ?? (operation == Operation.Patch ? throw new ArgumentNullException(nameof(patch)) : null);
+        this.UpdatedState = updatedState ?? (operation == Operation.Create || operation == Operation.Replace ? throw new ArgumentNullException(nameof(updatedState)) : null);
+        this.OriginalState = originalState ?? (operation != Operation.Create ? throw new ArgumentNullException(nameof(originalState)) : null);
         this.User = user;
+        this.DryRun = dryRun;
+        DryRun = dryRun;
     }
 
     /// <summary>
@@ -48,14 +54,14 @@ public class AdmissionReviewRequest
     /// </summary>
     [Required]
     [DataMember(Order = 2, Name = "operation", IsRequired = true), JsonPropertyOrder(2), JsonPropertyName("operation"), YamlMember(Order = 2, Alias = "operation")]
-    public virtual ResourceOperation Operation { get; set; }
+    public virtual Operation Operation { get; set; }
 
     /// <summary>
     /// Gets/sets a reference to the resource to perform the admission review for
     /// </summary>
     [Required]
     [DataMember(Order = 3, Name = "resource", IsRequired = true), JsonPropertyOrder(3), JsonPropertyName("resource"), YamlMember(Order = 3, Alias = "resource")]
-    public virtual ResourceReference ResourceReference { get; set; } = null!;
+    public virtual ResourceReference Resource { get; set; } = null!;
 
     /// <summary>
     /// Gets/sets the sub resource the operation to review applies to, if any
@@ -64,21 +70,37 @@ public class AdmissionReviewRequest
     public virtual string? SubResource { get; set; }
 
     /// <summary>
-    /// Gets/sets the actual state of the (sub)resource being admitted. Null if operation has been set to 'delete'
+    /// Gets/sets the patch to apply to the (sub)resource being admitted. Null if operation is not 'patch'
     /// </summary>
-    [DataMember(Order = 5, Name = "actualState"), JsonPropertyOrder(5), JsonPropertyName("actualState"), YamlMember(Order = 5, Alias = "actualState")]
-    public virtual object? ActualState { get; set; }
+    [DataMember(Order = 5, Name = "patch"), JsonPropertyOrder(5), JsonPropertyName("patch"), YamlMember(Order = 5, Alias = "patch")]
+    public virtual Patch? Patch { get; set; }
 
     /// <summary>
-    /// Gets/sets the original state of the (sub)resource being admitted. Null if operation has been set to 'create'
+    /// Gets/sets the updated state of the (sub)resource being admitted. Null if operation has been set to 'patch' or 'delete'
     /// </summary>
-    [DataMember(Order = 6, Name = "originalState"), JsonPropertyOrder(6), JsonPropertyName("originalState"), YamlMember(Order = 6, Alias = "originalState")]
-    public virtual object? OriginalState { get; set; }
+    [DataMember(Order = 6, Name = "updatedState"), JsonPropertyOrder(6), JsonPropertyName("updatedState"), YamlMember(Order = 6, Alias = "updatedState")]
+    public virtual object? UpdatedState { get; set; }
+
+    /// <summary>
+    /// Gets/sets the original, unmodified state of the (sub)resource being admitted. Null if operation has been set to 'create'
+    /// </summary>
+    [DataMember(Order = 7, Name = "originalState"), JsonPropertyOrder(7), JsonPropertyName("originalState"), YamlMember(Order = 7, Alias = "originalState")]
+    public virtual IResource? OriginalState { get; set; }
 
     /// <summary>
     /// Gets/sets information about the authenticated user that has performed the operation that is being admitted
     /// </summary>
-    [DataMember(Order = 7, Name = "user"), JsonPropertyOrder(7), JsonPropertyName("user"), YamlMember(Order = 7, Alias = "user")]
+    [DataMember(Order = 8, Name = "user"), JsonPropertyOrder(8), JsonPropertyName("user"), YamlMember(Order = 8, Alias = "user")]
     public virtual UserInfo? User { get; set; }
+
+    /// <summary>
+    /// Gets/sets a boolean indicating whether or not admission side effects should be actuated
+    /// </summary>
+    [DataMember(Order = 9, Name = "dryRun"), JsonPropertyOrder(9), JsonPropertyName("dryRun"), YamlMember(Order = 9, Alias = "dryRun")]
+    public virtual bool DryRun { get; set; }
+
+    /// <inheritdoc/>
+    [DataMember(Order = 999, Name = "extensionData"), JsonExtensionData]
+    public virtual IDictionary<string, object>? ExtensionData { get; set; }
 
 }
