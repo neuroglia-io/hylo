@@ -122,4 +122,4 @@ Hylo is an open-source project, and contributions are always welcome! If you wan
 
 ## License
 
-Hylo is licensed under [Apache 2.0](LICENSE.MD).
+Hylo is licensed under [Apache 2.0](LICENSE).
