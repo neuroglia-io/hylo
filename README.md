@@ -31,7 +31,6 @@ To use Hylo in your application, you must first add the `Hylo.Infrastructure` nu
 dotnet add package Hylo.Infrastructure
 ```
 
-
 Then, you must set the [database provider](#database-providers) you want to use by using one of the following strategies:
 - Configure the `IDatabaseProvider` to use by calling the `IRepositoryOptionsBuilder.UseDatabaseProvider<TProvider>` method
 - Downloading a [database provider](#database-providers) implementation in the `plugins` folder of your application's output directory
@@ -43,6 +42,95 @@ Finally, you must add and configure Hylo services:
   {
     builder.UsePluginBasedProvider();
   });
+```
+
+You can now start using the `Hylo.Infrastructure.IRepository` service to:
+
+*Create a new resource:*
+
+```c#
+var metadata = new ResourceMetadata()
+{
+  Name = "belgian-shepherd",
+  Namespace = "dogs",
+  Labels = new Dictionary<string, string>[{ "petstore.swagger.io/category": "shepherd" }]
+};
+var spec = new()
+{
+  category = new PetCategory("shepherd"),
+  photoUrls = new List<Uri>(){ new Uri("https://t3.gstatic.com/licensed-image?q=tbn:ANd9GcQF1CVgqJEqPH68s2Ml0y2ERG_Amu2eubjWg-Vpm0Ok5wXP5mu6cxh8BmPwsoDahreS26s-2pOwhdvmf1w") }
+};
+var status = new()
+{
+  status = "available"
+};
+var pet = new Pet(metadata, spec, status);
+await repository.CreateResourceAsync(pet);
+```
+
+*Get a resource:*
+
+```c#
+var pet = await repository.GetResourceAsync<Pet>("belgian-shepherd", "dogs");
+```
+
+*Enumerate resources:*
+
+```c#
+await foreach(var pet in await repository.GetResourcesAsync<Pet>("dogs"))
+{
+  ...
+}
+```
+
+*List resources:*
+
+```c#
+var list = await repository.ListResourcesAsync<Pet>("dogs");
+```
+
+*Watch resources:*
+
+```c#
+using var watch = await repository.WatchResourcesAsync<Pet>("dogs");
+watch.Subscribe(e => 
+{
+  Console.WriteLine($"Event of type {e.Type} received for resource {e.Resource}");
+});
+```
+
+*Replace resource:*
+
+```c#
+await repository.ReplaceResourceAsync(updatedPet);
+```
+
+*Replace subresource:*
+
+```c#
+await repository.ReplaceSubResourceAsync(updatedPet, "status");
+```
+
+*Patch resource:*
+
+```c#
+var jsonPatch = ...;
+var patch = new Patch(PatchType.JsonPatch, jsonPatch);
+await repository.PatchResourceAsync<Pet>(patch, "belgian-shepherd", "dogs");
+```
+
+*Patch subresource:*
+
+```c#
+var jsonPatch = ...;
+var patch = new Patch(PatchType.JsonPatch, jsonPatch);
+await repository.PatchSubResourceAsync<Pet>(patch, "belgian-shepherd", "status", "dogs");
+```
+
+*Delete resource:*
+
+```c#
+await respository.DeleteResourceAsync<Pet>("belgian-shepherd", "dogs");
 ```
 
 ## Usage
@@ -76,8 +164,6 @@ spec:
             spec:
               type: object
               properties:
-                id:
-                  type: integer
                 category:
                   type: object
                   properties:
@@ -87,8 +173,6 @@ spec:
                       type: string
                   required:
                     - name
-                name:
-                  type: string
                 photoUrls:
                   type: array
                   items:
