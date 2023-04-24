@@ -2,6 +2,8 @@
 
 Hylo is a free, vendor-agnostic, open-source solution for resource-oriented architecture management. It is designed to help users manage resources in a database by providing a hybrid solution that combines different database technologies and approaches.
 
+One of the main goals of Hylo is to provide a high-level abstraction for Kubernetes resource management. While Kubernetes provides powerful primitives for deploying and managing containerized applications, it can be challenging to work with for simple use cases or in lean or legacy environments.
+
 ## Features
 
 - Support for multiple database technologies
