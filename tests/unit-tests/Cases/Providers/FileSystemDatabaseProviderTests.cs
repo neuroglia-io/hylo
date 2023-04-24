@@ -2,13 +2,13 @@
 
 namespace Hylo.UnitTests.Cases.Providers;
 
-public class FileSystemProviderTests
+public class FileSystemDatabaseProviderTests
     : RepositoryTestsBase
 {
 
     static readonly string ConnectionString = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToShortString());
 
-    public FileSystemProviderTests() 
+    public FileSystemDatabaseProviderTests() 
         : base(builder => builder.UseFileSystem(ConnectionString))
     {
 

@@ -191,14 +191,14 @@ public class ProblemDetails
     /// </summary>
     /// <param name="resource">The invalid resource</param>
     /// <returns>A new <see cref="ProblemDetails"/></returns>
-    public static ProblemDetails ResourceDefinitionNotFound(IResourceReference resource)
+    public static ProblemDetails ResourceDefinitionNotFound(IResourceDefinitionReference resource)
     {
         return new
        (
            ProblemTypes.Resources.DefinitionNotFound,
            ProblemTitles.NotFound,
            (int)HttpStatusCode.NotFound,
-           StringExtensions.Format(ProblemDescriptions.ResourceDefinitionNotFound, resource.Definition.Group, resource.Definition.Version, resource.Definition.Plural)
+           StringExtensions.Format(ProblemDescriptions.ResourceDefinitionNotFound, resource.Group, resource.Version, resource.Plural)
        );
     }
 

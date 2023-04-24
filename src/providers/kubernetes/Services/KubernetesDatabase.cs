@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace Hylo.Providers.Kubernetes.Services;
 
@@ -220,18 +219,11 @@ public class KubernetesDatabase
         if (string.IsNullOrWhiteSpace(subResource)) throw new ArgumentNullException(nameof(subResource));
         if (subResource != "status") throw new HyloException(ProblemDetails.UnsupportedSubResource(new SubResourceReference(new(group, version, plural), name, subResource, @namespace)));
 
-        try
-        {
-            object storageResource;
-            if (resource.IsNamespaced()) storageResource = await this.Kubernetes.ReplaceNamespacedCustomObjectStatusAsync(resource, group, version, @namespace, plural, name, dryRun: dryRun ? "All" : null, cancellationToken: cancellationToken).ConfigureAwait(false);
-            else storageResource = await this.Kubernetes.ReplaceClusterCustomObjectStatusAsync(resource, group, version, plural, name, dryRun: dryRun ? "All" : null, cancellationToken: cancellationToken).ConfigureAwait(false);
+        object storageResource;
+        if (resource.IsNamespaced()) storageResource = await this.Kubernetes.ReplaceNamespacedCustomObjectStatusAsync(resource, group, version, @namespace, plural, name, dryRun: dryRun ? "All" : null, cancellationToken: cancellationToken).ConfigureAwait(false);
+        else storageResource = await this.Kubernetes.ReplaceClusterCustomObjectStatusAsync(resource, group, version, plural, name, dryRun: dryRun ? "All" : null, cancellationToken: cancellationToken).ConfigureAwait(false);
 
-            return storageResource.ConvertTo<Resource>()!;
-        }
-        catch(Exception ex)
-        {
-            throw;
-        }
+        return storageResource.ConvertTo<Resource>()!;
     }
 
     /// <inheritdoc/>

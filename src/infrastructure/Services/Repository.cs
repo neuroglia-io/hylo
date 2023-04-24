@@ -76,7 +76,7 @@ public class Repository
         else
         {
             var resourceReference = new ResourceReference(new(group, version, plural), resource.GetName(), @namespace);
-            var resourceDefinition = await this.GetDefinitionAsync(group, plural, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceDefinitionNotFound(resourceReference));
+            var resourceDefinition = await this.GetDefinitionAsync(group, plural, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceDefinitionNotFound(resourceReference.Definition));
             var result = await this.AdmissionControl.ReviewAsync(new(Guid.NewGuid().ToShortString(), Operation.Create, resourceReference, null, null, resource, null, this.UserInfoProvider.GetCurrentUser(), dryRun), cancellationToken).ConfigureAwait(false);
             if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Create, resourceReference, result.Problem?.Errors?.ToArray()!));
             storageResource = result.Patch!.ApplyTo(resource)!;

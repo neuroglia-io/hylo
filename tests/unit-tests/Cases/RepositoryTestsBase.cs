@@ -58,7 +58,7 @@ public abstract class RepositoryTestsBase
         //arrange
         using var resources = await this.RepositoryBuilder
             .BuildAsync()
-            .ConfigureAwait(false); ;
+            .ConfigureAwait(false);
 
         //act
         var namespaceDefinition = await resources.GetDefinitionAsync(NamespaceDefinition.ResourceGroup, NamespaceDefinition.ResourcePlural);
@@ -191,7 +191,7 @@ public abstract class RepositoryTestsBase
         }).Should().BeEquivalentTo(resources);
     }
 
-    [Fact(Skip = "Watch request blocks until the first resource of a specific kind is created"), Priority(6)]
+    [Fact, Priority(6)]
     public async Task Watch_Resources_Should_Work()
     {
         //arrange
@@ -282,7 +282,7 @@ public abstract class RepositoryTestsBase
             .WithResource(resource)
             .BuildAsync()
             .ConfigureAwait(false);
-        resource = await resources.GetAsync<FakeResourceWithSpecAndStatus>(resource.GetName(), resource.GetNamespace())!;
+        resource = (await resources.GetAsync<FakeResourceWithSpecAndStatus>(resource.GetName(), resource.GetNamespace()))!;
         var updatedResource = resource.Clone()!;
         updatedResource.Spec.FakeProperty1 = "Updated Fake Value";
         updatedResource.Spec.FakeProperty2 = 6;
@@ -310,7 +310,7 @@ public abstract class RepositoryTestsBase
              .WithResource(resource)
              .BuildAsync()
              .ConfigureAwait(false);
-        resource = await resources.GetAsync<FakeResourceWithSpecAndStatus>(resource.GetName(), resource.GetNamespace())!;
+        resource = (await resources.GetAsync<FakeResourceWithSpecAndStatus>(resource.GetName(), resource.GetNamespace()))!;
         var updatedResource = resource.Clone()!;
         updatedResource.Status!.FakeProperty1 = "Updated Fake Value";
         updatedResource.Status!.FakeProperty2 = 6;
@@ -341,7 +341,7 @@ public abstract class RepositoryTestsBase
              .WithResource(resource)
              .BuildAsync()
              .ConfigureAwait(false);
-        resource = await resources.GetAsync<FakeResourceWithSpecAndStatus>(resource.GetName(), resource.GetNamespace())!;
+        resource = (await resources.GetAsync<FakeResourceWithSpecAndStatus>(resource.GetName(), resource.GetNamespace()))!;
         var updatedResource = resource.Clone()!;
         updatedResource.Status!.FakeProperty1 = "Updated Fake Value";
         updatedResource.Status!.FakeProperty2 = 6;

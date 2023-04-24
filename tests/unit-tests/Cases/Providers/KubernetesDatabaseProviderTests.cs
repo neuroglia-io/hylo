@@ -7,11 +7,11 @@
 
 //namespace Hylo.UnitTests.Cases.Providers;
 
-//public class KubernetesProviderTests
+//public class KubernetesDatabaseProviderTests
 //    : RepositoryTestsBase
 //{
 
-//    public KubernetesProviderTests() 
+//    public KubernetesDatabaseProviderTests() 
 //        : base(builder => builder.UseKubernetes())
 //    {
 //        ResourceDefinition.ResourceGroup = V1CustomResourceDefinition.KubeGroup; 

@@ -1,11 +1,11 @@
 ﻿{
-  "name": "FileSystem",
-  "description": "The official file system provider",
-  "tags": [ "persistence", "repository", "file-system" ],
+  "name": "Kubernetes",
+  "description": "The official Kubernetes provider",
+  "tags": [ "persistence", "repository", "kubernetes", "k8s" ],
   "authors": "The Hylo Authors",
   "copyright": "Copyright © 2022-Present The Hylo Authors. All Rights Reserved.",
   "licenseUri": "https://raw.githubusercontent.com/neuroglia-io/hylo/main/LICENSE",
   "repositoryUri": "https://github.com/neuroglia-io/hylo",
   "version": "0.1.0",
-  "assemblyFile": "Hylo.Providers.FileSystem.dll"
+  "assemblyFile": "Hylo.Providers.Kubernetes.dll"
 }
