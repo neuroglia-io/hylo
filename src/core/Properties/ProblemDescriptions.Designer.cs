@@ -22,7 +22,7 @@ namespace Hylo.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class ProblemDescriptions {
+    public class ProblemDescriptions {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace Hylo.Properties {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Hylo.Properties.ProblemDescriptions", typeof(ProblemDescriptions).Assembly);
@@ -51,7 +51,7 @@ namespace Hylo.Properties {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -61,9 +61,27 @@ namespace Hylo.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to apply the specified patch to resource &apos;{resource}&apos;: the patch document is invalid and/or includes operations that target properties that do not belong to the &apos;spec&apos; root element..
+        /// </summary>
+        public static string InvalidResourcePatch {
+            get {
+                return ResourceManager.GetString("InvalidResourcePatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to apply the specified patch to resource &apos;{resource}&apos;: the patch document is invalid and/or includes operations that target properties that do not belong to the sub resource&apos;s root element..
+        /// </summary>
+        public static string InvalidSubResourcePatch {
+            get {
+                return ResourceManager.GetString("InvalidSubResourcePatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to admit operation &apos;{operation}&apos; the specified resource &apos;{resource}&apos;:\n{errors}.
         /// </summary>
-        internal static string ResourceAdmissionFailed {
+        public static string ResourceAdmissionFailed {
             get {
                 return ResourceManager.GetString("ResourceAdmissionFailed", resourceCulture);
             }
@@ -72,7 +90,7 @@ namespace Hylo.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Failed to convert resource &apos;{resource}&apos; to version &apos;{version}&apos;:\n{errors}.
         /// </summary>
-        internal static string ResourceConversionFailed {
+        public static string ResourceConversionFailed {
             get {
                 return ResourceManager.GetString("ResourceConversionFailed", resourceCulture);
             }
@@ -81,7 +99,7 @@ namespace Hylo.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Failed to find the specified resource definition &apos;{group}/{version}/{plural}&apos;..
         /// </summary>
-        internal static string ResourceDefinitionNotFound {
+        public static string ResourceDefinitionNotFound {
             get {
                 return ResourceManager.GetString("ResourceDefinitionNotFound", resourceCulture);
             }
@@ -90,16 +108,25 @@ namespace Hylo.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Failed to find the specified resource &apos;{resource}&apos;..
         /// </summary>
-        internal static string ResourceNotFound {
+        public static string ResourceNotFound {
             get {
                 return ResourceManager.GetString("ResourceNotFound", resourceCulture);
             }
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The specified patch or update had no effect on resource &apos;{resource}&apos;..
+        /// </summary>
+        public static string ResourceNotModified {
+            get {
+                return ResourceManager.GetString("ResourceNotModified", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to validate the resource against schema &apos;{group}/{version}/{plural}&apos;. Please check errors for further details..
         /// </summary>
-        internal static string ResourceSchemaValidationFailed {
+        public static string ResourceSchemaValidationFailed {
             get {
                 return ResourceManager.GetString("ResourceSchemaValidationFailed", resourceCulture);
             }
@@ -108,7 +135,7 @@ namespace Hylo.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Failed to find the storage version of the resource definition &apos;{plural}.{group}&apos;.
         /// </summary>
-        internal static string ResourceStorageVersionNotFound {
+        public static string ResourceStorageVersionNotFound {
             get {
                 return ResourceManager.GetString("ResourceStorageVersionNotFound", resourceCulture);
             }
@@ -117,9 +144,27 @@ namespace Hylo.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Failed to find the specified version &apos;{version}&apos; of the resource definition &apos;{plural}.{group}&apos;.
         /// </summary>
-        internal static string ResourceVersionNotFound {
+        public static string ResourceVersionNotFound {
             get {
                 return ResourceManager.GetString("ResourceVersionNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to replace (sub)resource &apos;{resource}&apos;: the &apos;.metadata.resourceVersion&apos; property is required for optimistic concurrency checks when performing replace operations.
+        /// </summary>
+        public static string ResourceVersionRequired {
+            get {
+                return ResourceManager.GetString("ResourceVersionRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified sub resource &apos;{subResource}&apos; is not supported.
+        /// </summary>
+        public static string UnsupportedSubResource {
+            get {
+                return ResourceManager.GetString("UnsupportedSubResource", resourceCulture);
             }
         }
     }

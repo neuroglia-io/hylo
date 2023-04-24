@@ -9,19 +9,22 @@ namespace Hylo.Infrastructure.Services;
 public class Repository
     : IRepository
 {
+
     private bool _disposed;
 
     /// <summary>
     /// Initializes a new <see cref="Repository"/>
     /// </summary>
     /// <param name="loggerFactory">The service used to create <see cref="ILogger"/>s</param>
+    /// <param name="userInfoProvider">The service used to provide information about users</param>
     /// <param name="admissionControl">The service used to control admission of resource operations</param>
     /// <param name="versionControl">The service used to control versioning of admitted resources</param>
     /// <param name="database">The service used to read and write the resource</param>
     /// <param name="options">The service used to access the current <see cref="ResourceRepositoryOptions"/></param>
-    public Repository(ILoggerFactory loggerFactory, IAdmissionControl admissionControl, IVersionControl versionControl, IDatabase database, IOptions<ResourceRepositoryOptions> options)
+    public Repository(ILoggerFactory loggerFactory, IUserInfoProvider userInfoProvider, IAdmissionControl admissionControl, IVersionControl versionControl, IDatabase database, IOptions<ResourceRepositoryOptions> options)
     {
         this.Logger = loggerFactory.CreateLogger(this.GetType());
+        this.UserInfoProvider = userInfoProvider;
         this.AdmissionControl = admissionControl;
         this.VersionControl = versionControl;
         this.Database = database;
@@ -32,6 +35,11 @@ public class Repository
     /// Gets the service used to perform logging
     /// </summary>
     protected ILogger Logger { get; }
+
+    /// <summary>
+    /// Gets the service used to provide information about users
+    /// </summary>
+    protected IUserInfoProvider UserInfoProvider { get; }
 
     /// <summary>
     /// Gets the service used to control admission of resource operations
@@ -69,9 +77,9 @@ public class Repository
         {
             var resourceReference = new ResourceReference(new(group, version, plural), resource.GetName(), @namespace);
             var resourceDefinition = await this.GetDefinitionAsync(group, plural, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceDefinitionNotFound(resourceReference));
-            var result = await this.AdmissionControl.ReviewAsync(Operation.Create, resourceDefinition, resourceReference, null, resource, null, dryRun, cancellationToken).ConfigureAwait(false);
-            if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Create, resourceReference, result.Errors?.ToArray()!));
-            storageResource = result.Resource!;
+            var result = await this.AdmissionControl.ReviewAsync(new(Guid.NewGuid().ToShortString(), Operation.Create, resourceReference, null, null, resource, null, this.UserInfoProvider.GetCurrentUser(), dryRun), cancellationToken).ConfigureAwait(false);
+            if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Create, resourceReference, result.Problem?.Errors?.ToArray()!));
+            storageResource = result.Patch!.ApplyTo(resource)!;
 
             var storageVersion = resourceDefinition.GetStorageVersion();
             if (resource.ApiVersion != storageVersion.Name) storageResource = await this.VersionControl.ConvertToStorageVersionAsync(new(resourceReference, resourceDefinition, storageResource), cancellationToken).ConfigureAwait(false);
@@ -90,7 +98,7 @@ public class Repository
     /// <inheritdoc/>
     public virtual IAsyncEnumerable<IResource> GetAllAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, CancellationToken cancellationToken = default)
     {
-        return this.Database.GetAllResourcesAsync(group, version, plural, @namespace, labelSelectors, cancellationToken);
+        return this.Database.GetResourcesAsync(group, version, plural, @namespace, labelSelectors, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -113,16 +121,19 @@ public class Repository
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
 
-        var originalResource = await this.GetAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false);
         var resourceReference = new ResourceReference(new(group, version, plural), name, @namespace);
+        if (string.IsNullOrWhiteSpace(resource.Metadata.ResourceVersion)) throw new HyloException(ProblemDetails.ResourceVersionRequired(resourceReference));
+
+        var originalResource = await this.GetAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false);
         var resourceDefinition = (await this.GetDefinitionAsync(group, plural, cancellationToken).ConfigureAwait(false))!;
 
-        var result = await this.AdmissionControl.ReviewAsync(Operation.Replace, resourceDefinition, resourceReference, null, resource, originalResource, dryRun, cancellationToken).ConfigureAwait(false);
-        if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Replace, resourceReference, result.Errors?.ToArray()!));
+        var result = await this.AdmissionControl.ReviewAsync(new(Guid.NewGuid().ToShortString(), Operation.Replace, resourceReference, null, null, resource, originalResource, this.UserInfoProvider.GetCurrentUser(), dryRun), cancellationToken).ConfigureAwait(false);
+        if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Replace, resourceReference, result.Problem?.Errors?.ToArray()!));
 
-        var storageResource = result.Resource!;
+        var storageResource = result.Patch == null ? resource : result.Patch!.ApplyTo(originalResource)!;
         var storageVersion = resourceDefinition.GetStorageVersion();
         if (storageResource.ApiVersion != storageVersion.Name) storageResource = await this.VersionControl.ConvertToStorageVersionAsync(new(resourceReference, resourceDefinition, storageResource), cancellationToken).ConfigureAwait(false);
+        storageResource.Metadata.ResourceVersion = resource.Metadata.ResourceVersion;
 
         storageResource = await this.Database.ReplaceResourceAsync(storageResource, group, version, plural, name, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
 
@@ -139,13 +150,16 @@ public class Repository
 
         var originalResource = await this.GetAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false);
         var resourceReference = new ResourceReference(new(group, version, plural), name, @namespace);
-        var resourceDefinition = (await this.GetDefinitionAsync(group, plural, cancellationToken).ConfigureAwait(false))!;
 
-        var patchedResource = patch.ApplyTo(originalResource.ConvertTo<Resource>());
+        var result = await this.AdmissionControl.ReviewAsync(new(Guid.NewGuid().ToShortString(), Operation.Patch, resourceReference, null, patch, null, originalResource, this.UserInfoProvider.GetCurrentUser(), dryRun), cancellationToken).ConfigureAwait(false);
+        if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Patch, resourceReference, result.Problem?.Errors?.ToArray()!));
 
-        var result = await this.AdmissionControl.ReviewAsync(Operation.Patch, resourceDefinition, resourceReference, null, patchedResource, originalResource, dryRun, cancellationToken).ConfigureAwait(false);
-        if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Patch, resourceReference, result.Errors?.ToArray()!));
-        return await this.Database.PatchResourceAsync(result.Patch!, group, version, plural,  name, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
+        var patchToApply = result.Patch ?? patch;
+        var patchedResource = patchToApply.ApplyTo(originalResource.ConvertTo<Resource>())!;
+        var diffPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalResource, patchedResource);
+        if (diffPatch.Operations.Any(o => o.Path.Segments.First() != "spec")) throw new HyloException(ProblemDetails.InvalidResourcePatch(resourceReference));
+
+        return await this.Database.PatchResourceAsync(patchToApply, group, version, plural,  name, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -156,16 +170,19 @@ public class Repository
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
 
+        var resourceReference = new SubResourceReference(new(group, version, plural), name, subResource, @namespace);
+        if (string.IsNullOrWhiteSpace(resource.Metadata.ResourceVersion)) throw new HyloException(ProblemDetails.ResourceVersionRequired(resourceReference));
+
         var originalResource = await this.GetAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false);
-        var resourceReference = new ResourceReference(new(group, version, plural), name, @namespace);
         var resourceDefinition = (await this.GetDefinitionAsync(group, plural, cancellationToken).ConfigureAwait(false))!;
 
-        var result = await this.AdmissionControl.ReviewAsync(Operation.Replace, resourceDefinition, resourceReference, subResource, resource, originalResource, dryRun, cancellationToken).ConfigureAwait(false);
-        if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Replace, resourceReference, result.Errors?.ToArray()!));
+        var result = await this.AdmissionControl.ReviewAsync(new(Guid.NewGuid().ToShortString(), Operation.Replace, resourceReference, subResource, null, resource, originalResource, this.UserInfoProvider.GetCurrentUser(), dryRun), cancellationToken).ConfigureAwait(false);
+        if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Replace, resourceReference, result.Problem?.Errors?.ToArray()!));
 
-        var storageResource = result.Resource!;
+        var storageResource = result.Patch == null ? resource : result.Patch.ApplyTo(originalResource)!;
         var storageVersion = resourceDefinition.GetStorageVersion();
         if (storageResource.ApiVersion != storageVersion.Name) storageResource = await this.VersionControl.ConvertToStorageVersionAsync(new(resourceReference, resourceDefinition, storageResource), cancellationToken).ConfigureAwait(false);
+        storageResource.Metadata.ResourceVersion = resource.Metadata.ResourceVersion;
 
         storageResource = await this.Database.ReplaceSubResourceAsync(storageResource, group, version, plural, name, subResource, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
 
@@ -182,13 +199,16 @@ public class Repository
 
         var originalResource = await this.GetAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false);
         var resourceReference = new ResourceReference(new(group, version, plural), name, @namespace);
-        var resourceDefinition = (await this.GetDefinitionAsync(group, plural, cancellationToken).ConfigureAwait(false))!;
 
-        var patchedResource = patch.ApplyTo(originalResource.ConvertTo<Resource>());
+        var result = await this.AdmissionControl.ReviewAsync(new(Guid.NewGuid().ToShortString(), Operation.Patch, resourceReference, subResource, patch, null, originalResource, this.UserInfoProvider.GetCurrentUser(), dryRun), cancellationToken).ConfigureAwait(false);
+        if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Patch, resourceReference, result.Problem?.Errors?.ToArray()!));
 
-        var result = await this.AdmissionControl.ReviewAsync(Operation.Patch, resourceDefinition, resourceReference, null, patchedResource, originalResource, dryRun, cancellationToken).ConfigureAwait(false);
-        if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Patch, resourceReference, result.Errors?.ToArray()!));
-        return await this.Database.PatchSubResourceAsync(result.Patch!, group, version, plural, subResource, name, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
+        var patchToApply = result.Patch ?? patch;
+        var patchedResource = patchToApply.ApplyTo(originalResource.ConvertTo<Resource>())!;
+        var diffPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalResource, patchedResource);
+        if (diffPatch.Operations.Any(o => o.Path.Segments.First() != subResource)) throw new HyloException(ProblemDetails.InvalidSubResourcePatch(resourceReference));
+
+        return await this.Database.PatchSubResourceAsync(patchToApply, group, version, plural, name, subResource, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -198,17 +218,15 @@ public class Repository
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
 
-        var originalResource = await this.GetAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false);
+        var originalResource = await this.GetAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(new ResourceReference(new(group, version, plural), name, @namespace)));
         var resourceReference = new ResourceReference(new(group, version, plural), name, @namespace);
-        var resourceDefinition = (await this.GetDefinitionAsync(group, plural, cancellationToken).ConfigureAwait(false))!;
 
-        var result = await this.AdmissionControl.ReviewAsync(Operation.Delete, resourceDefinition, resourceReference, null, null, originalResource, dryRun, cancellationToken).ConfigureAwait(false);
-        if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Delete, resourceReference, result.Errors?.ToArray()!));
+        var result = await this.AdmissionControl.ReviewAsync(new(Guid.NewGuid().ToShortString(), Operation.Delete, resourceReference, null, null, null, originalResource, this.UserInfoProvider.GetCurrentUser(), dryRun), cancellationToken).ConfigureAwait(false);
+        if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Delete, resourceReference, result.Problem?.Errors?.ToArray()!));
 
-        var storageResource = result.Resource!;
         await this.Database.DeleteResourceAsync(group, version, plural, name, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
 
-        return storageResource;
+        return originalResource;
     }
 
     /// <summary>

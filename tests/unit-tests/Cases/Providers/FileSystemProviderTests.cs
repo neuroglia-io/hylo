@@ -17,7 +17,7 @@ public class FileSystemProviderTests
     protected override void Dispose(bool disposing)
     {
         if (!disposing) return;
-        IResourceRepositoryBuilderExtensions.ServiceProvider.Dispose();
+        base.Dispose(disposing);
         Task.Delay(10).GetAwaiter().GetResult();
         Directory.Delete(ConnectionString, true);
     }

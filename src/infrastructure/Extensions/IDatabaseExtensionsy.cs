@@ -68,6 +68,18 @@ public static class IDatabaseExtensions
     }
 
     /// <summary>
+    /// Gets all <see cref="IResourceDefinition"/>s
+    /// </summary>
+    /// <param name="database">The extended <see cref="IRepository"/></param>
+    /// <param name="labelSelectors">A collection of objects used to configure the labels to filter the <see cref="IResourceDefinition"/>s to list by</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    /// <returns>A new <see cref="IAsyncEnumerable{T}"/> used to asynchronously enumerate <see cref="IResourceDefinition"/>s</returns>
+    public static IAsyncEnumerable<IResourceDefinition> GetDefinitionsAsync(this IDatabase database, IEnumerable<LabelSelector>? labelSelectors = null, CancellationToken cancellationToken = default)
+    {
+        return database.GetResourcesAsync<ResourceDefinition>(null, labelSelectors, cancellationToken).OfType<IResourceDefinition>();
+    }
+
+    /// <summary>
     /// Lists <see cref="IResourceDefinition"/>s
     /// </summary>
     /// <param name="database">The extended <see cref="IRepository"/></param>
@@ -127,11 +139,11 @@ public static class IDatabaseExtensions
     /// <param name="labelSelectors">A collection of objects used to configure the labels to filter the <see cref="IResource"/>s to stream by</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>A new <see cref="IAsyncEnumerable{T}"/> used to stream all matching <see cref="IResource"/>s of type specified type</returns>
-    public static IAsyncEnumerable<TResource> GetAllResourcesAsync<TResource>(this IDatabase database, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, CancellationToken cancellationToken = default)
+    public static IAsyncEnumerable<TResource> GetResourcesAsync<TResource>(this IDatabase database, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, CancellationToken cancellationToken = default)
         where TResource : class, IResource, new()
     {
         var resource = new TResource();
-        var stream = database.GetAllResourcesAsync(resource.Definition.Group, resource.Definition.Version, resource.Definition.Plural, @namespace, labelSelectors, cancellationToken);
+        var stream = database.GetResourcesAsync(resource.Definition.Group, resource.Definition.Version, resource.Definition.Plural, @namespace, labelSelectors, cancellationToken);
         return stream.Select(r => r.ConvertTo<TResource>()!);
     }
 

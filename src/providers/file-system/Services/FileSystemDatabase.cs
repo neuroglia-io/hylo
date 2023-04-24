@@ -11,30 +11,29 @@ using System.Runtime.CompilerServices;
 namespace Hylo.Providers.FileSystem.Services;
 
 /// <summary>
-/// Represents a file system based implementation of the <see cref="IResourceStorage"/> interface.
+/// Represents the file system implementation of an Hylo resource database
 /// </summary>
-/// <remarks>Should only be used for test purposes</remarks>
-public class FileSystemResourceStorage
-    : BackgroundService, IResourceStorage
+public class FileSystemDatabase
+    : BackgroundService, IDatabase
 {
 
     /// <summary>
-    /// Gets the <see cref="FileSystemResourceStorage"/>'s connection string, that is the path to the root storage directory
+    /// Gets the <see cref="FileSystemDatabase"/>'s connection string, that is the path to the root storage directory
     /// </summary>
     public const string ConnectionStringName = "FileSystem";
     /// <summary>
-    /// Gets the <see cref="FileSystemResourceStorage"/>'s default connection string
+    /// Gets the <see cref="FileSystemDatabase"/>'s default connection string
     /// </summary>
     public static string DefaultConnectionString { get; } = Path.Combine(AppContext.BaseDirectory, "data");
 
     bool _disposed;
 
     /// <summary>
-    /// Initializes a new <see cref="FileSystemResourceStorage"/>
+    /// Initializes a new <see cref="FileSystemDatabase"/>
     /// </summary>
     /// <param name="loggerFactory">The service used to create <see cref="ILogger"/>s</param>
     /// <param name="configuration">The current <see cref="IConfiguration"/></param>
-    public FileSystemResourceStorage(ILoggerFactory loggerFactory, IConfiguration configuration)
+    public FileSystemDatabase(ILoggerFactory loggerFactory, IConfiguration configuration)
     {
         this.Logger = loggerFactory.CreateLogger(this.GetType());
         this.ConnectionString = configuration.GetConnectionString(ConnectionStringName) ?? DefaultConnectionString;
@@ -47,7 +46,7 @@ public class FileSystemResourceStorage
     protected ILogger Logger { get; }
 
     /// <summary>
-    /// Gets the <see cref="FileSystemResourceStorage"/>'s connection string
+    /// Gets the <see cref="FileSystemDatabase"/>'s connection string
     /// </summary>
     protected string ConnectionString { get; }
 
@@ -67,7 +66,7 @@ public class FileSystemResourceStorage
     protected ConcurrentDictionary<string, string> PluralKindMap { get; } = new();
 
     /// <summary>
-    /// Gets the <see cref="FileSystemResourceStorage"/>'s <see cref="System.Threading.CancellationTokenSource"/>
+    /// Gets the <see cref="FileSystemDatabase"/>'s <see cref="System.Threading.CancellationTokenSource"/>
     /// </summary>
     protected CancellationTokenSource? CancellationTokenSource { get; private set; }
 
@@ -89,17 +88,17 @@ public class FileSystemResourceStorage
         if (!directory.Exists) directory.Create();
 
         this.PluralKindMap.TryAdd($"{ResourceDefinition.ResourcePlural}.{ResourceDefinition.ResourceGroup}", ResourceDefinition.ResourceKind);
-        foreach (var definition in (await this.ReadDefinitionsAsync(cancellationToken: stoppingToken).ConfigureAwait(false)).Items!)
+        await foreach (var definition in this.GetDefinitionsAsync(cancellationToken: stoppingToken))
         {
             this.MapDefinitionKind(definition);
         }
 
-        if ((await this.ReadOneDefinitionAsync<Namespace>(this.CancellationTokenSource.Token).ConfigureAwait(false)) == null)
+        if ((await this.GetDefinitionAsync<Namespace>(this.CancellationTokenSource.Token).ConfigureAwait(false)) == null)
         {
-            await this.WriteAsync(new NamespaceDefinition(), null, true, this.CancellationTokenSource.Token).ConfigureAwait(false);
-            await this.WriteNamespaceAsync(Namespace.DefaultNamespaceName, this.CancellationTokenSource.Token).ConfigureAwait(false);
-            await this.WriteAsync(MutatingWebhook.ResourceDefinition, null, true, this.CancellationTokenSource.Token).ConfigureAwait(false);
-            await this.WriteAsync(ValidatingWebhook.ResourceDefinition, null, true, this.CancellationTokenSource.Token).ConfigureAwait(false);
+            await this.CreateResourceAsync(new NamespaceDefinition(), false, this.CancellationTokenSource.Token).ConfigureAwait(false);
+            await this.CreateNamespaceAsync(Namespace.DefaultNamespaceName, false, this.CancellationTokenSource.Token).ConfigureAwait(false);
+            await this.CreateResourceAsync(MutatingWebhook.ResourceDefinition, false, this.CancellationTokenSource.Token).ConfigureAwait(false);
+            await this.CreateResourceAsync(ValidatingWebhook.ResourceDefinition, false, this.CancellationTokenSource.Token).ConfigureAwait(false);
         }
 
         this.FileSystemWatcher.Path = Path.Combine(this.ConnectionString, FileSystem.ResourcesDirectory);
@@ -113,34 +112,39 @@ public class FileSystemResourceStorage
     }
 
     /// <inheritdoc/>
-    public virtual async Task<IResource> WriteAsync(IResource resource, string group, string version, string plural, string? @namespace = null, string? subResource = null, bool ifNotExists = false, CancellationToken cancellationToken = default)
+    public virtual Task<IResource> CreateResourceAsync(IResource resource, string group, string version, string plural, string? @namespace = null, bool dryRun = false, CancellationToken cancellationToken = default)
     {
         if (resource == null) throw new ArgumentNullException(nameof(resource));
-        if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
-        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
+        if(string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
+        if(string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
 
-        if (resource.IsResourceDefinition()) this.MapDefinitionKind(resource.ConvertTo<IResourceDefinition>()!);
-
-        var path = this.ResolveResourcePath(group, version, plural, resource.GetNamespace(), resource.GetName());
-        var file = new FileInfo(path);
-        if (!file.Directory!.Exists) file.Directory!.Create();
-
-        var resourceNode = Serializer.Json.SerializeToNode<object>(resource)!.AsObject();
-        resourceNode.Remove(nameof(IMetadata.Metadata).ToCamelCase());
-        resource.Metadata.ResourceVersion = string.Format("{0:X}", Serializer.Json.Serialize(resourceNode).GetHashCode());
-
-        if (string.IsNullOrWhiteSpace(subResource)) resource.Metadata.Generation++;
-
-        using var stream = await file.OpenWriteAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-        stream.SetLength(0);
-        await Serializer.Json.SerializeAsync(stream, resource, typeof(object), true, cancellationToken).ConfigureAwait(false);
-        await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
-
-        return resource;
+        return this.WriteResourceToFileAsync(resource, group, version, plural, @namespace, null, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public virtual Task<IResource?> ReadOneAsync(string group, string version, string plural, string name, string? @namespace = null, CancellationToken cancellationToken = default)
+    public virtual async IAsyncEnumerable<IResource> GetResourcesAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
+        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
+
+        if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
+        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
+
+        var directory = new DirectoryInfo(this.ResolveResourcePath(group, version, plural, @namespace));
+        var kind = this.ResolveResourceKind(group, plural);
+
+        if (!directory.Exists) yield break;
+
+        foreach (var file in directory.GetFiles("*.json", SearchOption.AllDirectories))
+        {
+            var resource = await this.ReadResourceFromFileAsync(file, cancellationToken).ConfigureAwait(false);
+            if (labelSelectors?.Any() == true && !labelSelectors.All(l => l.Selects(resource))) continue;
+            yield return resource;
+        }
+    }
+
+    /// <inheritdoc/>
+    public virtual Task<IResource?> GetResourceAsync(string group, string version, string plural, string name, string? @namespace = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
@@ -148,12 +152,12 @@ public class FileSystemResourceStorage
 
         var path = this.ResolveResourcePath(group, version, plural, @namespace, name);
         var file = new FileInfo(path);
-        if (file.Exists) return this.ReadOneAsync(file, cancellationToken)!;
+        if (file.Exists) return this.ReadResourceFromFileAsync(file, cancellationToken)!;
         else return Task.FromResult(null as IResource);
     }
 
     /// <inheritdoc/>
-    public virtual async Task<ICollection> ReadAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, ulong? maxResults = null, string? continuationToken = null, CancellationToken cancellationToken = default)
+    public virtual async Task<ICollection> ListResourcesAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, ulong? maxResults = null, string? continuationToken = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
@@ -166,7 +170,7 @@ public class FileSystemResourceStorage
 
         foreach (var file in directory.GetFiles("*.json", SearchOption.AllDirectories))
         {
-            var resource = await this.ReadOneAsync(file, cancellationToken).ConfigureAwait(false);
+            var resource = await this.ReadResourceFromFileAsync(file, cancellationToken).ConfigureAwait(false);
             if (labelSelectors?.Any() == true)
             {
                 var unboxedResource = resource.ConvertTo<Resource>()!;
@@ -179,26 +183,7 @@ public class FileSystemResourceStorage
     }
 
     /// <inheritdoc/>
-    public virtual async IAsyncEnumerable<IResource> ReadAllAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
-        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
-
-        var directory = new DirectoryInfo(this.ResolveResourcePath(group, version, plural, @namespace));
-        var kind = this.ResolveResourceKind(group, plural);
-
-        if (!directory.Exists) yield break;
-
-        foreach (var file in directory.GetFiles("*.json", SearchOption.AllDirectories))
-        {
-            var resource = await this.ReadOneAsync(file, cancellationToken).ConfigureAwait(false);
-            if (labelSelectors?.Any() == true && !labelSelectors.All(l => l.Selects(resource))) continue;
-            yield return resource;
-        }
-    }
-
-    /// <inheritdoc/>
-    public virtual Task<IResourceWatch> WatchAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, CancellationToken cancellationToken = default)
+    public virtual Task<IResourceWatch> WatchResourcesAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
@@ -207,13 +192,81 @@ public class FileSystemResourceStorage
     }
 
     /// <inheritdoc/>
-    public virtual async Task<IResource> DeleteAsync(string group, string version, string plural, string name, string? @namespace = null, CancellationToken cancellationToken = default)
+    public virtual async Task<IResource> PatchResourceAsync(Patch patch, string group, string version, string plural, string name, string? @namespace = null, bool dryRun = false, CancellationToken cancellationToken = default)
+    {
+        if (patch == null) throw new ArgumentNullException(nameof(patch));
+        if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
+        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
+
+        var resourceRef = new ResourceReference(new(group, version, plural), name, @namespace);
+        var resource = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceRef));
+        var patchedResource = patch.ApplyTo(resource.ConvertTo<Resource>())!;
+
+        var diffPatch = JsonPatchHelper.CreateJsonPatchFromDiff(resource, patchedResource);
+        if (!diffPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceRef));
+
+        return await this.WriteResourceToFileAsync(patchedResource, group, version, plural, @namespace, null, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public virtual async Task<IResource> ReplaceResourceAsync(IResource resource, string group, string version, string plural, string name, string? @namespace = null, bool dryRun = false, CancellationToken cancellationToken = default)
+    {
+        if (resource == null) throw new ArgumentNullException(nameof(resource));
+        if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
+        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
+
+        var resourceRef = new ResourceReference(new(group, version, plural), name, @namespace);
+        var originalState = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceRef));
+        var diffPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalState, resource);
+        if (!diffPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceRef));
+
+        return await this.WriteResourceToFileAsync(resource, group, version, plural, @namespace, null, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public virtual async Task<IResource> PatchSubResourceAsync(Patch patch, string group, string version, string plural, string name, string subResource, string? @namespace = null, bool dryRun = false, CancellationToken cancellationToken = default)
+    {
+        if (patch == null) throw new ArgumentNullException(nameof(patch));
+        if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
+        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
+
+        var resourceRef = new ResourceReference(new(group, version, plural), name, @namespace);
+        var resource = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceRef));
+        var patchedResource = patch.ApplyTo(resource.ConvertTo<Resource>())!;
+
+        var diffPatch = JsonPatchHelper.CreateJsonPatchFromDiff(resource, patchedResource);
+        if (!diffPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceRef));
+
+        return await this.WriteResourceToFileAsync(patchedResource, group, version, plural, @namespace, subResource, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public virtual async Task<IResource> ReplaceSubResourceAsync(IResource resource, string group, string version, string plural, string name, string subResource, string? @namespace = null, bool dryRun = false, CancellationToken cancellationToken = default)
+    {
+        if (resource == null) throw new ArgumentNullException(nameof(resource));
+        if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
+        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
+
+        var resourceRef = new ResourceReference(new(group, version, plural), name, @namespace);
+        var originalState = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceRef));
+        var diffPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalState, resource);
+        if (!diffPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceRef));
+
+        return await this.WriteResourceToFileAsync(resource, group, version, plural, @namespace, subResource, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public virtual async Task<IResource> DeleteResourceAsync(string group, string version, string plural, string name, string? @namespace = null, bool dryRun = false, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
 
-        var resource = await this.ReadOneAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new NullReferenceException($"Failed to find the specified resource '{group}/{version}/{name}'"); //todo: replace with specialized exception
+        var resource = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new NullReferenceException($"Failed to find the specified resource '{group}/{version}/{name}'"); //todo: replace with specialized exception
         File.Delete(this.ResolveResourcePath(group, version, plural, @namespace, name)); //todo: try until file is not locked anymore
         return resource;
     }
@@ -280,12 +333,49 @@ public class FileSystemResourceStorage
     }
 
     /// <summary>
+    /// Serializes the specified <see cref="IResource"/> to a file
+    /// </summary>
+    /// <param name="resource">The <see cref="IResource"/> to serialize</param>
+    /// <param name="group">The API group the <see cref="IResource"/> to serialize belongs to</param>
+    /// <param name="version">The version of the <see cref="IResource"/> to serialize</param>
+    /// <param name="plural">The plural name of the <see cref="IResource"/> to serialize</param>
+    /// <param name="namespace">The namespace the <see cref="IResource"/> to serialize belongs to</param>
+    /// <param name="subResource">The sub resource to serialize</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    /// <returns>The serialized <see cref="IResource"/></returns>
+    public virtual async Task<IResource> WriteResourceToFileAsync(IResource resource, string group, string version, string plural, string? @namespace = null, string? subResource = null, CancellationToken cancellationToken = default)
+    {
+        if (resource == null) throw new ArgumentNullException(nameof(resource));
+        if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
+        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
+
+        if (resource.IsResourceDefinition()) this.MapDefinitionKind(resource.ConvertTo<IResourceDefinition>()!);
+
+        var path = this.ResolveResourcePath(group, version, plural, resource.GetNamespace(), resource.GetName());
+        var file = new FileInfo(path);
+        if (!file.Directory!.Exists) file.Directory!.Create();
+
+        var resourceNode = Serializer.Json.SerializeToNode<object>(resource)!.AsObject();
+        resourceNode.Remove(nameof(IMetadata.Metadata).ToCamelCase());
+        resource.Metadata.ResourceVersion = string.Format("{0:X}", Serializer.Json.Serialize(resourceNode).GetHashCode());
+
+        if (string.IsNullOrWhiteSpace(subResource)) resource.Metadata.Generation++;
+
+        using var stream = await file.OpenWriteAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        stream.SetLength(0);
+        await Serializer.Json.SerializeAsync(stream, resource, typeof(object), true, cancellationToken).ConfigureAwait(false);
+        await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+
+        return resource;
+    }
+
+    /// <summary>
     /// Deserializes a <see cref="IResource"/> from the specified file
     /// </summary>
     /// <param name="file">The file to read</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>The deserialized resource</returns>
-    protected virtual async Task<IResource> ReadOneAsync(FileInfo file, CancellationToken cancellationToken = default)
+    protected virtual async Task<IResource> ReadResourceFromFileAsync(FileInfo file, CancellationToken cancellationToken = default)
     {
         using var stream = await file.OpenReadAsync(cancellationToken).ConfigureAwait(false);
         using var streamReader = new StreamReader(stream);
@@ -304,19 +394,19 @@ public class FileSystemResourceStorage
         {
             var file = new FileInfo(e.FullPath);
             if (!file.Exists) return;
-            var resource = await this.ReadOneAsync(file, this.CancellationTokenSource!.Token);
+            var resource = await this.ReadResourceFromFileAsync(file, this.CancellationTokenSource!.Token);
             this.ResourceWatchEvents.OnNext(new ResourceWatchEvent(e.ChangeType.ToResourceWatchEventType(), resource.ConvertTo<Resource>()!));
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             this.Logger.LogError("An error occured while handling a file system event concerning file '{fileName}': {ex}", e.FullPath, ex);
         }
     }
 
     /// <summary>
-    /// Disposes of the <see cref="FileSystemResourceStorage"/>
+    /// Disposes of the <see cref="FileSystemDatabase"/>
     /// </summary>
-    /// <param name="disposing">A boolean indicating whether or not the <see cref="FileSystemResourceStorage"/> is being disposed of</param>
+    /// <param name="disposing">A boolean indicating whether or not the <see cref="FileSystemDatabase"/> is being disposed of</param>
     /// <returns>A new awaitable <see cref="Task"/></returns>
     protected virtual ValueTask DisposeAsync(bool disposing)
     {
@@ -339,9 +429,9 @@ public class FileSystemResourceStorage
     }
 
     /// <summary>
-    /// Disposes of the <see cref="FileSystemResourceStorage"/>
+    /// Disposes of the <see cref="FileSystemDatabase"/>
     /// </summary>
-    /// <param name="disposing">A boolean indicating whether or not the <see cref="FileSystemResourceStorage"/> is being disposed of</param>
+    /// <param name="disposing">A boolean indicating whether or not the <see cref="FileSystemDatabase"/> is being disposed of</param>
     protected virtual void Dispose(bool disposing)
     {
         if (this._disposed || !disposing) return;
@@ -362,7 +452,7 @@ public class FileSystemResourceStorage
     }
 
     /// <summary>
-    /// Exposes constants about the file system structure used by the <see cref="FileSystemResourceStorage"/>
+    /// Exposes constants about the file system structure used by the <see cref="FileSystemDatabase"/>
     /// </summary>
     public static class FileSystem
     {

@@ -1,25 +1,23 @@
 ﻿using Hylo.Infrastructure.Services;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace Hylo.Providers.Kubernetes.Services;
 
 /// <summary>
-/// Represents the <see href="https://kubernetes.io/">Kubernetes</see> implementation of the <see cref="IRepository"/> interface
+/// Represents the <see href="https://kubernetes.io/">Kubernetes</see> implementation of the <see cref="IDatabaseProvider"/> interface
 /// </summary>
-public class K8sResourceStorageProvider
-    : IPlugin, IResourceStorageProvider
+public class KubernetesDatabaseProvider
+    : IPlugin, IDatabaseProvider
 {
 
     private bool _disposed;
 
     /// <summary>
-    /// Initializes a new <see cref="K8sResourceStorageProvider"/>
+    /// Initializes a new <see cref="KubernetesDatabaseProvider"/>
     /// </summary>
     /// <param name="applicationServices">The current application's services</param>
-    public K8sResourceStorageProvider(IServiceProvider applicationServices)
+    public KubernetesDatabaseProvider(IServiceProvider applicationServices)
     {
         this.ApplicationServices = applicationServices;
     }
@@ -40,7 +38,7 @@ public class K8sResourceStorageProvider
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddKubernetesClient();
-        services.AddSingleton<K8sResourceStorage>();
+        services.AddSingleton<KubernetesDatabase>();
         this.PluginServices = services.BuildServiceProvider();
         foreach (var hostedService in this.PluginServices.GetServices<IHostedService>())
         {
@@ -49,16 +47,16 @@ public class K8sResourceStorageProvider
     }
 
     /// <inheritdoc/>
-    public virtual IResourceStorage GetResourceStorage()
+    public virtual IDatabase GetDatabase()
     {
-        if (this.PluginServices == null) return this.ApplicationServices.GetRequiredService<K8sResourceStorage>();
-        else return this.PluginServices.GetRequiredService<K8sResourceStorage>();
+        if (this.PluginServices == null) return this.ApplicationServices.GetRequiredService<KubernetesDatabase>();
+        else return this.PluginServices.GetRequiredService<KubernetesDatabase>();
     }
 
     /// <summary>
-    /// Disposes of the <see cref="K8sResourceStorageProvider"/>
+    /// Disposes of the <see cref="KubernetesDatabaseProvider"/>
     /// </summary>
-    /// <param name="disposing">A boolean indicating whether or not the <see cref="K8sResourceStorageProvider"/> is being disposed of</param>
+    /// <param name="disposing">A boolean indicating whether or not the <see cref="KubernetesDatabaseProvider"/> is being disposed of</param>
     /// <returns>A new awaitable <see cref="ValueTask"/></returns>
     protected virtual async ValueTask DisposeAsync(bool disposing)
     {
@@ -79,9 +77,9 @@ public class K8sResourceStorageProvider
     }
 
     /// <summary>
-    /// Disposes of the <see cref="K8sResourceStorageProvider"/>
+    /// Disposes of the <see cref="KubernetesDatabaseProvider"/>
     /// </summary>
-    /// <param name="disposing">A boolean indicating whether or not the <see cref="K8sResourceStorageProvider"/> is being disposed of</param>
+    /// <param name="disposing">A boolean indicating whether or not the <see cref="KubernetesDatabaseProvider"/> is being disposed of</param>
     protected virtual void Dispose(bool disposing)
     {
         if (!disposing || this._disposed) return;

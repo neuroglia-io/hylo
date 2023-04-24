@@ -56,7 +56,7 @@ public interface IDatabase
     /// <param name="labelSelectors">A collection of objects used to configure the labels to filter the <see cref="IResource"/>s to get by</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>A new <see cref="IAsyncEnumerable{T}"/> used to get all matching <see cref="IResource"/>s of type specified type</returns>
-    IAsyncEnumerable<IResource> GetAllResourcesAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<IResource> GetResourcesAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Watches <see cref="IResource"/>s of the specified type

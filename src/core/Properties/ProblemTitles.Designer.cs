@@ -22,7 +22,7 @@ namespace Hylo.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class ProblemTitles {
+    public class ProblemTitles {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace Hylo.Properties {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Hylo.Properties.ProblemTitles", typeof(ProblemTitles).Assembly);
@@ -51,7 +51,7 @@ namespace Hylo.Properties {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -63,7 +63,7 @@ namespace Hylo.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Resource Admission Failed.
         /// </summary>
-        internal static string AdmissionFailed {
+        public static string AdmissionFailed {
             get {
                 return ResourceManager.GetString("AdmissionFailed", resourceCulture);
             }
@@ -72,7 +72,7 @@ namespace Hylo.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Resource Conversion Failed.
         /// </summary>
-        internal static string ConversionFailed {
+        public static string ConversionFailed {
             get {
                 return ResourceManager.GetString("ConversionFailed", resourceCulture);
             }
@@ -81,16 +81,34 @@ namespace Hylo.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Not Found.
         /// </summary>
-        internal static string NotFound {
+        public static string NotFound {
             get {
                 return ResourceManager.GetString("NotFound", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Resource Validation Failed.
+        ///   Looks up a localized string similar to Not Modified.
         /// </summary>
-        internal static string ValidationFailed {
+        public static string NotModified {
+            get {
+                return ResourceManager.GetString("NotModified", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unsupported.
+        /// </summary>
+        public static string Unsupported {
+            get {
+                return ResourceManager.GetString("Unsupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Validation Failed.
+        /// </summary>
+        public static string ValidationFailed {
             get {
                 return ResourceManager.GetString("ValidationFailed", resourceCulture);
             }

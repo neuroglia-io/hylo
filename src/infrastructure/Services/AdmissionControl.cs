@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using System.Net;
 
 namespace Hylo.Infrastructure.Services;
 
@@ -13,13 +14,11 @@ public class AdmissionControl
     /// Initializes a new <see cref="AdmissionControl"/>
     /// </summary>
     /// <param name="serviceProvider">The current <see cref="IServiceProvider"/></param>
-    /// <param name="userInfoProvider">The service used to provide information about users</param>
     /// <param name="mutators">An <see cref="IEnumerable{T}"/> containing the services used to mutate resources</param>
     /// <param name="validators">An <see cref="IEnumerable{T}"/> containing the services used to validate resources</param>
-    public AdmissionControl(IServiceProvider serviceProvider, IUserInfoProvider userInfoProvider, IEnumerable<IResourceMutator> mutators, IEnumerable<IResourceValidator> validators)
+    public AdmissionControl(IServiceProvider serviceProvider, IEnumerable<IResourceMutator> mutators, IEnumerable<IResourceValidator> validators)
     {
         this.ServiceProvider = serviceProvider;
-        this.UserInfoProvider = userInfoProvider;
         this.Mutators = mutators;
         this.Validators = validators;
     }
@@ -28,11 +27,6 @@ public class AdmissionControl
     /// Gets the current <see cref="IServiceProvider"/>
     /// </summary>
     protected IServiceProvider ServiceProvider { get; }
-
-    /// <summary>
-    /// Gets a service used to provide information about users
-    /// </summary>
-    protected IUserInfoProvider UserInfoProvider { get; }
 
     /// <summary>
     /// Gets an <see cref="IEnumerable{T}"/> containing the services used to mutate resources
@@ -45,64 +39,83 @@ public class AdmissionControl
     protected IEnumerable<IResourceValidator> Validators { get; }
 
     /// <inheritdoc/>
-    public virtual async Task<AdmissionReviewResult> ReviewAsync(AdmissionReviewRequest request, CancellationToken cancellationToken = default)
+    public virtual async Task<AdmissionReviewResponse> ReviewAsync(Hylo.AdmissionReviewRequest request, CancellationToken cancellationToken = default)
     {
         if (request == null) throw new ArgumentNullException(nameof(request));
-        var context = new AdmissionReviewContext(request);
-        await this.MutateAsync(context, cancellationToken).ConfigureAwait(false);
-        if (context.Allowed) await this.ValidateAsync(context, cancellationToken).ConfigureAwait(false);
+        var result = await this.MutateAsync(request, cancellationToken).ConfigureAwait(false);
+        if (!result.Allowed) return result;
+        return await this.ValidateAsync(request, cancellationToken).ConfigureAwait(false);
     }
-
 
     /// <summary>
     /// Mutates the specified <see cref="IResource"/> upon admission
     /// </summary>
-    /// <param name="context">The current <see cref="AdmissionReviewContext"/></param>
+    /// <param name="request">The <see cref="AdmissionReviewRequest"/> to evaluate</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
-    /// <returns>A new awaitable <see cref="Task"/></returns>
-    protected virtual async Task MutateAsync(AdmissionReviewContext context, CancellationToken cancellationToken)
+    /// <returns>A new <see cref="AdmissionReviewResponse"/> that describes the result of the operation</returns>
+    protected virtual async Task<AdmissionReviewResponse> MutateAsync(AdmissionReviewRequest request, CancellationToken cancellationToken)
     {
-        if (context == null) throw new ArgumentNullException(nameof(context));
+        if (request == null) throw new ArgumentNullException(nameof(request));
+        if (request.Operation != Operation.Create && request.Operation != Operation.Replace && request.Operation != Operation.Patch) return new AdmissionReviewResponse(request.Uid, true);
 
-        var mutators = this.Mutators.Where(m => m.AppliesTo(context)).ToList();
+        var mutators = this.Mutators.Where(m => m.AppliesTo(request)).ToList();
 
-        mutators.AddRange(await this.ServiceProvider.GetRequiredService<IRepository>()
-            .GetMutatingWebhooksFor(context.Request.Operation, context.Request.Resource, cancellationToken)
-            .Select(wh => ActivatorUtilities.CreateInstance<WebhookResourceMutator>(this.ServiceProvider, wh))
-            .ToListAsync(cancellationToken).ConfigureAwait(false));
+        try
+        {
+            mutators.AddRange(await this.ServiceProvider.GetRequiredService<IRepository>()
+                .GetMutatingWebhooksFor(request.Operation, request.Resource, cancellationToken)
+                .Select(wh => ActivatorUtilities.CreateInstance<WebhookResourceMutator>(this.ServiceProvider, wh))
+                .ToListAsync(cancellationToken).ConfigureAwait(false));
+        }
+        catch
+        {
+            //todo: log
+        }
+
 
         foreach (var mutator in mutators)
         {
-            await mutator.MutateAsync(context, cancellationToken).ConfigureAwait(false);
-            if (!context.Allowed) break;
+            var result = await mutator.MutateAsync(request, cancellationToken).ConfigureAwait(false);
+            if (!result.Allowed) return result;
+            if (result.Patch != null) request.UpdatedState = result.Patch.ApplyTo(request.UpdatedState);
         }
+
+        return new(request.Uid, true, request.GetDiffPatch());
     }
 
     /// <summary>
     /// Validates the specified <see cref="IResource"/> upon admission
     /// </summary>
-    /// <param name="context">The current <see cref="AdmissionReviewContext"/></param>
+    /// <param name="request">The <see cref="AdmissionReviewRequest"/> to evaluate</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
-    /// <returns>A new awaitable <see cref="Task"/></returns>
-    protected virtual async Task ValidateAsync(AdmissionReviewContext context, CancellationToken cancellationToken)
+    /// <returns>A new <see cref="AdmissionReviewResponse"/> that describes the result of the operation</returns>
+    protected virtual async Task<AdmissionReviewResponse> ValidateAsync(AdmissionReviewRequest request, CancellationToken cancellationToken)
     {
-        if(context == null) throw new ArgumentNullException(nameof(context));
+        if(request == null) throw new ArgumentNullException(nameof(request));
 
-        var validators = this.Validators.Where(m => m.AppliesTo(context)).ToList();
-        
-        validators.AddRange(await this.ServiceProvider.GetRequiredService<IRepository>()
-            .GetMutatingWebhooksFor(context.Request.Operation, context.Request.Resource, cancellationToken)
-            .Select(wh => ActivatorUtilities.CreateInstance<WebhookResourceValidator>(this.ServiceProvider, wh))
-            .ToListAsync(cancellationToken));
-      
+        var validators = this.Validators.Where(m => m.AppliesTo(request)).ToList();
+        try
+        { 
+            validators.AddRange(await this.ServiceProvider.GetRequiredService<IRepository>()
+                .GetMutatingWebhooksFor(request.Operation, request.Resource, cancellationToken)
+                .Select(wh => ActivatorUtilities.CreateInstance<WebhookResourceValidator>(this.ServiceProvider, wh))
+                .ToListAsync(cancellationToken));
+        }
+        catch
+        {
+            //todo: log
+        }
 
-        var tasks = new List<Task>(validators.Count);
+        var tasks = new List<Task<AdmissionReviewResponse>>(validators.Count);
         foreach (var validator in validators)
         {
-            tasks.Add(validator.ValidateAsync(context, cancellationToken));
+            tasks.Add(validator.ValidateAsync(request, cancellationToken));
         }
         await Task.WhenAll(tasks).ConfigureAwait(false);
 
+        var results = tasks.Select(t => t.Result);
+        if (results.All(t => t.Allowed)) return new(request.Uid, true);
+        else return new(request.Uid, false, null, new ProblemDetails(ProblemTypes.Resources.AdmissionFailed, Properties.ProblemTitles.AdmissionFailed, (int)HttpStatusCode.BadRequest, errors: results.Where(r => !r.Allowed && r.Problem != null && r.Problem.Errors != null).SelectMany(r => r.Problem!.Errors!)));
     }
 
 }

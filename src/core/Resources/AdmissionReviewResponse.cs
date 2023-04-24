@@ -1,7 +1,7 @@
 ﻿namespace Hylo;
 
 /// <summary>
-/// Represents an object used to describe the response to a resource admission review request
+/// Represents an object used to describe the result of a resource admission review request
 /// </summary>
 [DataContract]
 public class AdmissionReviewResponse

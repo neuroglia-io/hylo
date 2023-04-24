@@ -117,6 +117,12 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="InvalidResourcePatch" xml:space="preserve">
+    <value>Failed to apply the specified patch to resource '{resource}': the patch document is invalid and/or includes operations that target properties that do not belong to the 'spec' root element.</value>
+  </data>
+  <data name="InvalidSubResourcePatch" xml:space="preserve">
+    <value>Failed to apply the specified patch to resource '{resource}': the patch document is invalid and/or includes operations that target properties that do not belong to the sub resource's root element.</value>
+  </data>
   <data name="ResourceAdmissionFailed" xml:space="preserve">
     <value>Failed to admit operation '{operation}' the specified resource '{resource}':\n{errors}</value>
   </data>
@@ -129,6 +135,9 @@
   <data name="ResourceNotFound" xml:space="preserve">
     <value>Failed to find the specified resource '{resource}'.</value>
   </data>
+  <data name="ResourceNotModified" xml:space="preserve">
+    <value>The specified patch or update had no effect on resource '{resource}'.</value>
+  </data>
   <data name="ResourceSchemaValidationFailed" xml:space="preserve">
     <value>Failed to validate the resource against schema '{group}/{version}/{plural}'. Please check errors for further details.</value>
   </data>
@@ -137,5 +146,11 @@
   </data>
   <data name="ResourceVersionNotFound" xml:space="preserve">
     <value>Failed to find the specified version '{version}' of the resource definition '{plural}.{group}'</value>
+  </data>
+  <data name="ResourceVersionRequired" xml:space="preserve">
+    <value>Failed to replace (sub)resource '{resource}': the '.metadata.resourceVersion' property is required for optimistic concurrency checks when performing replace operations</value>
+  </data>
+  <data name="UnsupportedSubResource" xml:space="preserve">
+    <value>The specified sub resource '{subResource}' is not supported</value>
   </data>
 </root>

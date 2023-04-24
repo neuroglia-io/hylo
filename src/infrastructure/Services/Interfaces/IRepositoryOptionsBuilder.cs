@@ -48,20 +48,6 @@ public interface IRepositoryOptionsBuilder
     IRepositoryOptionsBuilder WithDefaultNamespace(string name);
 
     /// <summary>
-    /// Seeds the <see cref="IRepository"/> to configure with the specified well-known <see cref="IResourceDefinition"/>
-    /// </summary>
-    /// <param name="definition">The <see cref="IResourceDefinition"/> to use</param>
-    /// <returns>The configured <see cref="IRepositoryOptionsBuilder"/></returns>
-    IRepositoryOptionsBuilder WithDefinition(IResourceDefinition definition);
-
-    /// <summary>
-    /// Seeds the <see cref="IRepository"/> to configure with the specified well-known <see cref="IResource"/>
-    /// </summary>
-    /// <param name="resource">The <see cref="IResource"/> to seed the <see cref="IRepository"/> with</param>
-    /// <returns>The configured <see cref="IRepository"/></returns>
-    IRepositoryOptionsBuilder WithResource(IResource resource);
-
-    /// <summary>
     /// Configures the <see cref="IRepositoryOptionsBuilder"/> to used the specified type of <see cref="IPluginManager"/>
     /// </summary>
     /// <typeparam name="TManager">The type of <see cref="IPluginManager"/> to use</typeparam>

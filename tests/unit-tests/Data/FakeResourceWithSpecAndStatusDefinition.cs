@@ -10,12 +10,12 @@ internal class FakeResourceWithSpecAndStatusDefinition
 
     internal new const string ResourceGroup = "unit.tests.hylo.io";
     internal new const string ResourceVersion = "v1";
-    internal new const string ResourceSingular = "fake";
+    internal const string ResourceSingular = "fake";
     internal new const string ResourcePlural = "fakes";
     internal new const string ResourceKind = "fake";
 
     public FakeResourceWithSpecAndStatusDefinition()
-        : base(new(ResourceScope.Namespaced, ResourceGroup, new(ResourceSingular, ResourcePlural, ResourceKind), new ResourceDefinitionVersion(ResourceVersion, new(GetSchema())) { Served = true, Storage = true }))
+        : base(new(ResourceScope.Namespaced, ResourceGroup, new(ResourceSingular, ResourcePlural, ResourceKind), new ResourceDefinitionVersion(ResourceVersion, new(GetSchema())) { Served = true, Storage = true, SubResources = new Dictionary<string, object>() { { "status", new() } } }))
     {
 
     }

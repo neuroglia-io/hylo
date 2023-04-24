@@ -7,20 +7,20 @@ using Microsoft.Extensions.Logging;
 namespace Hylo.Providers.FileSystem.Services;
 
 /// <summary>
-/// Represents a file system based implementation of the <see cref="IResourceStorageProvider"/> interface.
+/// Represents a file system based implementation of the <see cref="IDatabaseProvider"/> interface.
 /// </summary>
 /// <remarks>Should only be used for test purposes</remarks>
-public class FileSystemResourceStorageProvider
-    : IPlugin, IResourceStorageProvider
+public class FileSystemDatabaseProvider
+    : IPlugin, IDatabaseProvider
 {
 
     bool _disposed;
 
     /// <summary>
-    /// Initializes a new <see cref="FileSystemResourceStorageProvider"/>
+    /// Initializes a new <see cref="FileSystemDatabaseProvider"/>
     /// </summary>
     /// <param name="applicationServices">The current application's services</param>
-    public FileSystemResourceStorageProvider(IServiceProvider applicationServices)
+    public FileSystemDatabaseProvider(IServiceProvider applicationServices)
     {
         this.ApplicationServices = applicationServices;
     }
@@ -41,8 +41,8 @@ public class FileSystemResourceStorageProvider
         var services = new ServiceCollection();
         services.AddSingleton(this.ApplicationServices.GetRequiredService<IConfiguration>());
         services.AddSingleton(this.ApplicationServices.GetRequiredService<ILoggerFactory>());
-        services.AddSingleton<FileSystemResourceStorage>();
-        services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<FileSystemResourceStorage>());
+        services.AddSingleton<FileSystemDatabase>();
+        services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<FileSystemDatabase>());
         this.PluginServices = services.BuildServiceProvider();
         foreach(var hostedService in this.PluginServices.GetServices<IHostedService>())
         {
@@ -51,16 +51,16 @@ public class FileSystemResourceStorageProvider
     }
 
     /// <inheritdoc/>
-    public virtual IResourceStorage GetResourceStorage()
+    public virtual IDatabase GetDatabase()
     {
-        if (this.PluginServices == null) return this.ApplicationServices.GetRequiredService<FileSystemResourceStorage>();
-        else return this.PluginServices.GetRequiredService<FileSystemResourceStorage>();
+        if (this.PluginServices == null) return this.ApplicationServices.GetRequiredService<FileSystemDatabase>();
+        else return this.PluginServices.GetRequiredService<FileSystemDatabase>();
     }
 
     /// <summary>
-    /// Disposes of the <see cref="FileSystemResourceStorageProvider"/>
+    /// Disposes of the <see cref="FileSystemDatabaseProvider"/>
     /// </summary>
-    /// <param name="disposing">A boolean indicating whether or not the <see cref="FileSystemResourceStorageProvider"/> is being disposed of</param>
+    /// <param name="disposing">A boolean indicating whether or not the <see cref="FileSystemDatabaseProvider"/> is being disposed of</param>
     /// <returns>A new awaitable <see cref="ValueTask"/></returns>
     protected virtual async ValueTask DisposeAsync(bool disposing)
     {
@@ -84,9 +84,9 @@ public class FileSystemResourceStorageProvider
     }
 
     /// <summary>
-    /// Disposes of the <see cref="FileSystemResourceStorageProvider"/>
+    /// Disposes of the <see cref="FileSystemDatabaseProvider"/>
     /// </summary>
-    /// <param name="disposing">A boolean indicating whether or not the <see cref="FileSystemResourceStorageProvider"/> is being disposed of</param>
+    /// <param name="disposing">A boolean indicating whether or not the <see cref="FileSystemDatabaseProvider"/> is being disposed of</param>
     protected virtual void Dispose(bool disposing)
     {
         if (this._disposed || !disposing) return;

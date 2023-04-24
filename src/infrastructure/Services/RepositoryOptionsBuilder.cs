@@ -2,7 +2,6 @@
 using Hylo.Resources.Definitions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 
 namespace Hylo.Infrastructure.Services;
 
@@ -117,26 +116,6 @@ public class RepositoryOptionsBuilder
         ObjectNamingConvention.Current.EnsureIsValidResourceName(name);
 
         Namespace.DefaultNamespaceName = name;
-
-        return this;
-    }
-
-    /// <inheritdoc/>
-    public virtual IRepositoryOptionsBuilder WithDefinition(IResourceDefinition definition)
-    {
-        if (definition == null) throw new ArgumentNullException(nameof(definition));
-
-        this.Options.WellKnownDefinitions.Add(definition);
-
-        return this;
-    }
-
-    /// <inheritdoc/>
-    public virtual IRepositoryOptionsBuilder WithResource(IResource resource)
-    {
-        if (resource == null) throw new ArgumentNullException(nameof(resource));
-
-        this.Options.WellKnownResources.Add(resource);
 
         return this;
     }

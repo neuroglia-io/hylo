@@ -22,7 +22,7 @@ public interface IResourceValidator
     /// </summary>
     /// <param name="context">The context in which to perform the resource's validation</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
-    /// <returns>A new awaitable <see cref="Task"/></returns>
-    Task ValidateAsync(AdmissionReviewContext context, CancellationToken cancellationToken = default);
+    /// <returns>A new <see cref="AdmissionReviewResponse"/> that describes the result of the operation</returns>
+    Task<AdmissionReviewResponse> ValidateAsync(AdmissionReviewRequest context, CancellationToken cancellationToken = default);
 
 }
