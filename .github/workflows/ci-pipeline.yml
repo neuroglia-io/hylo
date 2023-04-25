@@ -11,15 +11,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  #test:
-  #  # Skip if it's not running in the main branch of the `neuroglia-io/hylo` repo
-  #  if: github.repository == 'neuroglia-io/hylo' && github.ref_name == 'main'
-  #  uses: ./.github/workflows/test-dotnet.yml
-  #  secrets: inherit
+  test:
+   # Skip if it's not running in the main branch of the `neuroglia-io/hylo` repo
+   if: github.repository == 'neuroglia-io/hylo' && github.ref_name == 'main'
+   uses: ./.github/workflows/test-dotnet.yml
+   secrets: inherit
 
   versioning:
-    #needs: [test]
-    if: github.repository == 'neuroglia-io/hylo' && github.ref_name == 'main' # comment if test are turned on
+    needs: [test]
+    #if: github.repository == 'neuroglia-io/hylo' && github.ref_name == 'main' # comment if test are turned on
     uses: ./.github/workflows/versioning.yml
     secrets: inherit
 
