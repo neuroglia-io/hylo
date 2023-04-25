@@ -1,0 +1,126 @@
+name: Manual publish of .NET packages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+env:
+  SOLUTION: ./Hylo.sln
+  REGISTRY: ghcr.io
+
+jobs:
+  publish-packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 7.0.x
+      - name: Restore dependencies
+        run: dotnet restore "${{ env.SOLUTION }}"
+      - name: Build
+        run: dotnet build "${{ env.SOLUTION }}" --configuration Release --no-restore 
+      - name: Push1
+        run: dotnet nuget push "./src/*/bin/Release/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - name: Push2
+        run: dotnet nuget push "./src/*/*/bin/Release/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+  publish-broker-bin:
+    name: Publish Broker Binaries
+    strategy:
+      matrix:
+        kind: ['linux', 'windows', 'macOS']
+        include:
+          - kind: linux
+            os: ubuntu-latest
+            target: linux-x64
+          - kind: windows
+            os: windows-latest
+            target: win-x64
+          - kind: macOS
+            os: macos-latest
+            target: osx-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Setup
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 7.0.x
+      - name: Restore
+        run: dotnet restore
+      - name: Build
+        shell: bash
+        run: |
+          tag=$(git describe --tags --abbrev=0)
+          release_name="cloud-streams-broker-${{ matrix.target }}"
+          # Publish
+          dotnet publish src/broker/server/CloudStreams.Broker.Api.Server.csproj --runtime "${{ matrix.target }}" -c Release -o "$release_name"
+          # Pack
+          if [ "${{ matrix.target }}" == "win-x64" ]; then
+            # Pack for Windows
+            7z a -tzip "${release_name}.zip" "./${release_name}/*"
+          else
+            # Pack for other OS
+            tar czvf "${release_name}.tar.gz" "$release_name"
+          fi
+          # Delete output directory
+          rm -r "$release_name"
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "cloud-streams-broker*"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-gateway-bin:
+    name: Publish Gateway Binaries
+    strategy:
+      matrix:
+        kind: ['linux', 'windows', 'macOS']
+        include:
+          - kind: linux
+            os: ubuntu-latest
+            target: linux-x64
+          - kind: windows
+            os: windows-latest
+            target: win-x64
+          - kind: macOS
+            os: macos-latest
+            target: osx-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Setup
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 7.0.x
+      - name: Restore
+        run: dotnet restore
+      - name: Build
+        shell: bash
+        run: |
+          tag=$(git describe --tags --abbrev=0)
+          release_name="cloud-streams-gateway-${{ matrix.target }}"
+          # Publish
+          dotnet publish src/gateway/server/CloudStreams.Gateway.Api.Server.csproj --runtime "${{ matrix.target }}" -c Release -o "$release_name"
+          # Pack
+          if [ "${{ matrix.target }}" == "win-x64" ]; then
+            # Pack for Windows
+            7z a -tzip "${release_name}.zip" "./${release_name}/*"
+          else
+            # Pack for other OS
+            tar czvf "${release_name}.tar.gz" "$release_name"
+          fi
+          # Delete output directory
+          rm -r "$release_name"
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "cloud-streams-gateway*"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
