@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<GenerateDocumentationFile>True</GenerateDocumentationFile>
-	<VersionPrefix>0.01.00</VersionPrefix>
+	<VersionPrefix>0.1.0</VersionPrefix>
 	<AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
 	<FileVersion>$(VersionPrefix)</FileVersion>
 	<NeutralLanguage>en</NeutralLanguage>
@@ -16,6 +16,9 @@
 	<RepositoryUrl>https://github.com/neuroglia-io/hylo</RepositoryUrl>
 	<RepositoryType>git</RepositoryType>
 	<EnableDynamicLoading>true</EnableDynamicLoading>
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<Title>$(AssemblyName)</Title>
+	<Description>A file system implementation of an Hylo database provider</Description>
   </PropertyGroup>
 
   <ItemGroup>
