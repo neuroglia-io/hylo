@@ -12,7 +12,7 @@
 	<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 	<Copyright>Copyright © 2023-Present The Hylo Authors. All rights reserved.</Copyright>
 	<PackageProjectUrl>https://github.com/neuroglia-io/hylo</PackageProjectUrl>
-	<PackageReadmeFile>README.md</PackageReadmeFile>
+	<PackageReadmeFile>..\..\..\README.md</PackageReadmeFile>
 	<RepositoryUrl>https://github.com/neuroglia-io/hylo</RepositoryUrl>
 	<RepositoryType>git</RepositoryType>
 	<EnableDynamicLoading>true</EnableDynamicLoading>
