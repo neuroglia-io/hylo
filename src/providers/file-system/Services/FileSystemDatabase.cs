@@ -404,7 +404,7 @@ public class FileSystemDatabase
             var file = new FileInfo(e.FullPath);
             if (!file.Exists) return;
             if (this.Cache.TryGetValue<DateTime>(file.FullName, out var lastWriteTime)) return;
-            this.Cache.Set(file.FullName, file.LastWriteTimeUtc, TimeSpan.FromMilliseconds(5));
+            this.Cache.Set(file.FullName, file.LastWriteTimeUtc, TimeSpan.FromMilliseconds(50));
             var resource = await this.ReadResourceFromFileAsync(file, this.CancellationTokenSource!.Token);
             this.ResourceWatchEvents.OnNext(new ResourceWatchEvent(e.ChangeType.ToResourceWatchEventType(), resource.ConvertTo<Resource>()!));
         }
