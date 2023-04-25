@@ -20,6 +20,7 @@ public static class IResourceRepositoryOptionsBuilderExtensions
     public static IRepositoryOptionsBuilder UseFileSystem(this IRepositoryOptionsBuilder builder, string? connectionString = null)
     {
         builder.Configuration.GetSection("ConnectionStrings")![FileSystemDatabase.ConnectionStringName] = connectionString;
+        builder.Services.AddMemoryCache();
         builder.Services.AddSingleton<FileSystemDatabase>();
         builder.Services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<FileSystemDatabase>());
         builder.UseDatabaseProvider<FileSystemDatabaseProvider>();

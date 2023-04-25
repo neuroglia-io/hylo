@@ -217,6 +217,7 @@ public abstract class RepositoryTestsBase
 
         //assert
         processedWatchEvents.ToList().Should().HaveCount(resourceCount);
+        processedWatchEvents.ToList().Should().AllSatisfy(e => e.Type.Should().Be(ResourceWatchEventType.Created));
     }
 
     [Fact, Priority(7)]

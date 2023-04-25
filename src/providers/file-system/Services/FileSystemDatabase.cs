@@ -1,10 +1,12 @@
 ﻿using Hylo.Infrastructure.Services;
 using Hylo.Resources;
 using Hylo.Resources.Definitions;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Runtime.CompilerServices;
 
@@ -33,11 +35,13 @@ public class FileSystemDatabase
     /// </summary>
     /// <param name="loggerFactory">The service used to create <see cref="ILogger"/>s</param>
     /// <param name="configuration">The current <see cref="IConfiguration"/></param>
-    public FileSystemDatabase(ILoggerFactory loggerFactory, IConfiguration configuration)
+    /// <param name="cache">The <see cref="IMemoryCache"/> used to cache file last write timestamps in order to throttle observed events to avoid duplicates</param>
+    public FileSystemDatabase(ILoggerFactory loggerFactory, IConfiguration configuration, IMemoryCache cache)
     {
         this.Logger = loggerFactory.CreateLogger(this.GetType());
         this.ConnectionString = configuration.GetConnectionString(ConnectionStringName) ?? DefaultConnectionString;
         this.FileSystemWatcher = new();
+        this.Cache = cache;
     }
 
     /// <summary>
@@ -64,6 +68,11 @@ public class FileSystemDatabase
     /// Gets a <see cref="ConcurrentDictionary{TKey, TValue}"/> used to maintain a plural/kind map of all known resource definitions
     /// </summary>
     protected ConcurrentDictionary<string, string> PluralKindMap { get; } = new();
+
+    /// <summary>
+    /// Gets the <see cref="IMemoryCache"/> used to cache file last write timestamps in order to throttle observed events to avoid duplicates
+    /// </summary>
+    protected IMemoryCache Cache { get; }
 
     /// <summary>
     /// Gets the <see cref="FileSystemDatabase"/>'s <see cref="System.Threading.CancellationTokenSource"/>
@@ -104,7 +113,7 @@ public class FileSystemDatabase
         this.FileSystemWatcher.Path = Path.Combine(this.ConnectionString, FileSystem.ResourcesDirectory);
         this.FileSystemWatcher.Filter = "*.json";
         this.FileSystemWatcher.IncludeSubdirectories = true;
-        this.FileSystemWatcher.NotifyFilter = NotifyFilters.Size;
+        this.FileSystemWatcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.Size;
         this.FileSystemWatcher.Created += this.OnFileSystemWatcherEvent;
         this.FileSystemWatcher.Changed += this.OnFileSystemWatcherEvent;
         this.FileSystemWatcher.Deleted += this.OnFileSystemWatcherEvent;
@@ -188,7 +197,7 @@ public class FileSystemDatabase
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
 
-        return Task.FromResult<IResourceWatch>(new ResourceWatch(this.ResourceWatchEvents, false));
+        return Task.FromResult<IResourceWatch>(new ResourceWatch(this.ResourceWatchEvents.Where(r => r.Resource.GetGroup() == group && r.Resource.GetVersion() == version && r.Resource.GetNamespace() == @namespace), false));
     }
 
     /// <inheritdoc/>
@@ -394,6 +403,8 @@ public class FileSystemDatabase
         {
             var file = new FileInfo(e.FullPath);
             if (!file.Exists) return;
+            if (this.Cache.TryGetValue<DateTime>(file.FullName, out var lastWriteTime)) return;
+            this.Cache.Set(file.FullName, file.LastWriteTimeUtc, TimeSpan.FromMilliseconds(5));
             var resource = await this.ReadResourceFromFileAsync(file, this.CancellationTokenSource!.Token);
             this.ResourceWatchEvents.OnNext(new ResourceWatchEvent(e.ChangeType.ToResourceWatchEventType(), resource.ConvertTo<Resource>()!));
         }
