@@ -14,7 +14,8 @@ env:
   SOLUTION: ./Hylo.sln
 
 jobs:
-  build:
+  test:
+    name: Testing
     env:
       DOTNET_USE_POLLING_FILE_WATCHER: true
     runs-on: ubuntu-latest
