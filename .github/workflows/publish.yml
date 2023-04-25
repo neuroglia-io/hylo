@@ -27,22 +27,9 @@ jobs:
       - name: Push2
         run: dotnet nuget push "./src/*/*/bin/Release/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
-  publish-broker-bin:
-    name: Publish Broker Binaries
-    strategy:
-      matrix:
-        kind: ['linux', 'windows', 'macOS']
-        include:
-          - kind: linux
-            os: ubuntu-latest
-            target: linux-x64
-          - kind: windows
-            os: windows-latest
-            target: win-x64
-          - kind: macOS
-            os: macos-latest
-            target: osx-x64
-    runs-on: ${{ matrix.os }}
+  publish-file-system-provider:
+    name: Publishing File System Provider Plugin
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -56,42 +43,23 @@ jobs:
         shell: bash
         run: |
           tag=$(git describe --tags --abbrev=0)
-          release_name="cloud-streams-broker-${{ matrix.target }}"
+          release_name="hylo-provider-fs"
           # Publish
-          dotnet publish src/broker/server/CloudStreams.Broker.Api.Server.csproj --runtime "${{ matrix.target }}" -c Release -o "$release_name"
+          dotnet publish src/providers/file-system/Hylo.Providers.FileSystem.csproj -c Release -o "${release_name}" --no-restore
           # Pack
-          if [ "${{ matrix.target }}" == "win-x64" ]; then
-            # Pack for Windows
-            7z a -tzip "${release_name}.zip" "./${release_name}/*"
-          else
-            # Pack for other OS
-            tar czvf "${release_name}.tar.gz" "$release_name"
-          fi
+          tar czvf "${release_name}.tar.gz" "${release_name}"
           # Delete output directory
-          rm -r "$release_name"
+          rm -r "${release_name}"
       - name: Publish
         uses: softprops/action-gh-release@v1
         with:
-          files: "cloud-streams-broker*"
+          files: "hylo-provider-fs*"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  publish-gateway-bin:
-    name: Publish Gateway Binaries
-    strategy:
-      matrix:
-        kind: ['linux', 'windows', 'macOS']
-        include:
-          - kind: linux
-            os: ubuntu-latest
-            target: linux-x64
-          - kind: windows
-            os: windows-latest
-            target: win-x64
-          - kind: macOS
-            os: macos-latest
-            target: osx-x64
-    runs-on: ${{ matrix.os }}
+  publish-kubernetes-provider:
+    name: Publishing Kubernetes Provider Plugin
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -105,22 +73,76 @@ jobs:
         shell: bash
         run: |
           tag=$(git describe --tags --abbrev=0)
-          release_name="cloud-streams-gateway-${{ matrix.target }}"
+          release_name="hylo-provider-k8s"
           # Publish
-          dotnet publish src/gateway/server/CloudStreams.Gateway.Api.Server.csproj --runtime "${{ matrix.target }}" -c Release -o "$release_name"
+          dotnet publish src/providers/kubernetes/Hylo.Providers.Kubernetes.csproj -c Release -o "${release_name}" --no-restore
           # Pack
-          if [ "${{ matrix.target }}" == "win-x64" ]; then
-            # Pack for Windows
-            7z a -tzip "${release_name}.zip" "./${release_name}/*"
-          else
-            # Pack for other OS
-            tar czvf "${release_name}.tar.gz" "$release_name"
-          fi
+          tar czvf "${release_name}.tar.gz" "${release_name}"
           # Delete output directory
-          rm -r "$release_name"
+          rm -r "${release_name}"
       - name: Publish
         uses: softprops/action-gh-release@v1
         with:
-          files: "cloud-streams-gateway*"
+          files: "hylo-provider-k8s*"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-mongo-provider:
+    name: Publishing Mongo Provider Plugin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Setup
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 7.0.x
+      - name: Restore
+        run: dotnet restore
+      - name: Build
+        shell: bash
+        run: |
+          tag=$(git describe --tags --abbrev=0)
+          release_name="hylo-provider-mongo"
+          # Publish
+          dotnet publish src/providers/mongo/Hylo.Providers.Mongo.csproj -c Release -o "${release_name}" --no-restore
+          # Pack
+          tar czvf "${release_name}.tar.gz" "${release_name}"
+          # Delete output directory
+          rm -r "${release_name}"
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "hylo-provider-mongo*"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-redis-provider:
+    name: Publishing Redis Provider Plugin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Setup
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 7.0.x
+      - name: Restore
+        run: dotnet restore
+      - name: Build
+        shell: bash
+        run: |
+          tag=$(git describe --tags --abbrev=0)
+          release_name="hylo-provider-redis"
+          # Publish
+          dotnet publish src/providers/redis/Hylo.Providers.Redis.csproj -c Release -o "${release_name}" --no-restore
+          # Pack
+          tar czvf "${release_name}.tar.gz" "${release_name}"
+          # Delete output directory
+          rm -r "${release_name}"
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "hylo-provider-redis*"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
