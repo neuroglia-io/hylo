@@ -113,7 +113,7 @@ public class FileSystemDatabase
         this.FileSystemWatcher.Path = Path.Combine(this.ConnectionString, FileSystem.ResourcesDirectory);
         this.FileSystemWatcher.Filter = "*.json";
         this.FileSystemWatcher.IncludeSubdirectories = true;
-        this.FileSystemWatcher.NotifyFilter = NotifyFilters.Size;
+        this.FileSystemWatcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.Size;
         this.FileSystemWatcher.Created += this.OnFileSystemWatcherEvent;
         this.FileSystemWatcher.Changed += this.OnFileSystemWatcherEvent;
         this.FileSystemWatcher.Deleted += this.OnFileSystemWatcherEvent;
