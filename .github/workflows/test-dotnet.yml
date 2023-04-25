@@ -15,6 +15,8 @@ env:
 
 jobs:
   build:
+    env:
+      DOTNET_USE_POLLING_FILE_WATCHER: true
     runs-on: ubuntu-latest
     strategy:
       matrix:
