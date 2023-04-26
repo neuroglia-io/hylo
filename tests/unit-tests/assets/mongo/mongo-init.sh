@@ -32,7 +32,7 @@ while true; do
 done
 
 echo 'about to initialize replica set'
-# FIXME: hard-coded replica set name & member host
+# FIXME: hard-coded replica set name & member host.
 "${mongo[@]}" <<-EOF
     disableTelemetry();
     var admin = db.getSiblingDB('admin');
