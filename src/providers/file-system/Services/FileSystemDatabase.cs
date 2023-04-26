@@ -1,7 +1,6 @@
 ﻿using Hylo.Infrastructure.Services;
 using Hylo.Resources;
 using Hylo.Resources.Definitions;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -9,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Hylo.Providers.FileSystem.Services;
 
@@ -16,7 +16,7 @@ namespace Hylo.Providers.FileSystem.Services;
 /// Represents the file system implementation of an Hylo resource database
 /// </summary>
 public class FileSystemDatabase
-    : BackgroundService, IDatabase
+    : IHostedService, IDatabase
 {
 
     /// <summary>
@@ -35,13 +35,11 @@ public class FileSystemDatabase
     /// </summary>
     /// <param name="loggerFactory">The service used to create <see cref="ILogger"/>s</param>
     /// <param name="configuration">The current <see cref="IConfiguration"/></param>
-    /// <param name="cache">The <see cref="IMemoryCache"/> used to cache file last write timestamps in order to throttle observed events to avoid duplicates</param>
-    public FileSystemDatabase(ILoggerFactory loggerFactory, IConfiguration configuration, IMemoryCache cache)
+    public FileSystemDatabase(ILoggerFactory loggerFactory, IConfiguration configuration)
     {
         this.Logger = loggerFactory.CreateLogger(this.GetType());
         this.ConnectionString = configuration.GetConnectionString(ConnectionStringName) ?? DefaultConnectionString;
         this.FileSystemWatcher = new();
-        this.Cache = cache;
     }
 
     /// <summary>
@@ -70,19 +68,19 @@ public class FileSystemDatabase
     protected ConcurrentDictionary<string, string> PluralKindMap { get; } = new();
 
     /// <summary>
-    /// Gets the <see cref="IMemoryCache"/> used to cache file last write timestamps in order to throttle observed events to avoid duplicates
-    /// </summary>
-    protected IMemoryCache Cache { get; }
-
-    /// <summary>
     /// Gets the <see cref="FileSystemDatabase"/>'s <see cref="System.Threading.CancellationTokenSource"/>
     /// </summary>
     protected CancellationTokenSource? CancellationTokenSource { get; private set; }
 
+    /// <summary>
+    /// Gets a <see cref="ConcurrentDictionary{TKey, TValue}"/> containing name/last write time UTC mappings of all files managed by the <see cref="FileSystemDatabase"/>
+    /// </summary>
+    protected ConcurrentDictionary<string, DateTime> FileMap { get; } = new();
+
     /// <inheritdoc/>
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public virtual async Task StartAsync(CancellationToken cancellationToken)
     {
-        this.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        this.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         var directory = new DirectoryInfo(Path.Combine(this.ConnectionString, FileSystem.ResourceDefinitionsDirectory));
         if (!directory.Exists) directory.Create();
@@ -97,7 +95,7 @@ public class FileSystemDatabase
         if (!directory.Exists) directory.Create();
 
         this.PluralKindMap.TryAdd($"{ResourceDefinition.ResourcePlural}.{ResourceDefinition.ResourceGroup}", ResourceDefinition.ResourceKind);
-        await foreach (var definition in this.GetDefinitionsAsync(cancellationToken: stoppingToken))
+        await foreach (var definition in this.GetDefinitionsAsync(cancellationToken: this.CancellationTokenSource.Token))
         {
             this.MapDefinitionKind(definition);
         }
@@ -110,13 +108,28 @@ public class FileSystemDatabase
             await this.CreateResourceAsync(ValidatingWebhook.ResourceDefinition, false, this.CancellationTokenSource.Token).ConfigureAwait(false);
         }
 
-        this.FileSystemWatcher.Path = Path.Combine(this.ConnectionString, FileSystem.ResourcesDirectory);
-        this.FileSystemWatcher.Filter = "*.json";
+        var resourcesDirectory = new DirectoryInfo(Path.Combine(this.ConnectionString, FileSystem.ResourcesDirectory));
+        var resourceFileFilter = "*.json";
+        foreach (var file in resourcesDirectory.GetFiles(resourceFileFilter, SearchOption.AllDirectories))
+        {
+            this.FileMap[file.FullName] = file.LastWriteTimeUtc;
+        }
+
+        this.FileSystemWatcher.Path = resourcesDirectory.FullName;
+        this.FileSystemWatcher.Filter = resourceFileFilter;
         this.FileSystemWatcher.IncludeSubdirectories = true;
+        this.FileSystemWatcher.NotifyFilter = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? NotifyFilters.FileName | NotifyFilters.Size : NotifyFilters.Size; //on Windows, all filters work as expected. On non-Windows systems, or when relying on NFS storage (Docker, Kubernetes, ...), the only supported filter seem to be Size
         this.FileSystemWatcher.Created += this.OnFileSystemWatcherEvent;
         this.FileSystemWatcher.Changed += this.OnFileSystemWatcherEvent;
         this.FileSystemWatcher.Deleted += this.OnFileSystemWatcherEvent;
         this.FileSystemWatcher.EnableRaisingEvents = true;
+    }
+
+    /// <inheritdoc/>
+    public virtual Task StopAsync(CancellationToken cancellationToken)
+    {
+        this.CancellationTokenSource?.Cancel();
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
@@ -401,11 +414,38 @@ public class FileSystemDatabase
         try
         {
             var file = new FileInfo(e.FullPath);
-            if (!file.Exists) return;
-            if (this.Cache.TryGetValue<DateTime>(file.FullName, out var lastWriteTime)) return;
-            this.Cache.Set(file.FullName, file.LastWriteTimeUtc, TimeSpan.FromMilliseconds(50));
+            ResourceWatchEventType watchEventType;
+            if(this.FileMap.TryGetValue(e.FullPath, out var lastWriteTimeUtc))
+            {
+                if (file.Exists)
+                {
+                    if (file.LastWriteTimeUtc - lastWriteTimeUtc <= TimeSpan.FromMilliseconds(50)) return;
+                }
+                else
+                {
+                    this.FileMap.Remove(e.FullPath, out _);
+                    return;
+                }
+                watchEventType = file.Length < 1 ? ResourceWatchEventType.Deleted : ResourceWatchEventType.Updated;
+            }
+            else
+            {
+                watchEventType = ResourceWatchEventType.Created;
+            }
+            var isDuplicate = false;
+            this.FileMap.AddOrUpdate(file.FullName, file.LastWriteTimeUtc, (key, current) =>
+            {
+                if (current >= file.LastWriteTimeUtc)
+                {
+                    isDuplicate = true;
+                    return current;
+                }
+                return file.LastWriteTimeUtc;
+            });
+            if (isDuplicate) return;
             var resource = await this.ReadResourceFromFileAsync(file, this.CancellationTokenSource!.Token);
-            this.ResourceWatchEvents.OnNext(new ResourceWatchEvent(e.ChangeType.ToResourceWatchEventType(), resource.ConvertTo<Resource>()!));
+
+            this.ResourceWatchEvents.OnNext(new ResourceWatchEvent(watchEventType, resource.ConvertTo<Resource>()!));
         }
         catch (Exception ex)
         {
@@ -455,7 +495,7 @@ public class FileSystemDatabase
     }
 
     /// <inheritdoc/>
-    public override void Dispose()
+    public void Dispose()
     {
         this.Dispose(true);
         GC.SuppressFinalize(this);
