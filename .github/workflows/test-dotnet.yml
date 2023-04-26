@@ -42,8 +42,8 @@ jobs:
       - name: Test File System Database Provider
         run: dotnet test "${{ env.SOLUTION }}" --no-restore --filter "FullyQualifiedName~Providers.FileSystem"
 
-      - name: Test Mongo Database Provider
-        run: dotnet test "${{ env.SOLUTION }}" --no-restore --filter "FullyQualifiedName~Providers.Mongo"
+      #- name: Test Mongo Database Provider
+      #  run: dotnet test "${{ env.SOLUTION }}" --no-restore --filter "FullyQualifiedName~Providers.Mongo"
         
       - name: Test Redis Database Provider
         run: dotnet test "${{ env.SOLUTION }}" --no-restore --filter "FullyQualifiedName~Providers.Mongo"
