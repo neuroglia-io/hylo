@@ -1,0 +1,148 @@
+name: Manual publish of .NET packages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+env:
+  SOLUTION: ./Hylo.sln
+  REGISTRY: ghcr.io
+
+jobs:
+  publish-packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 7.0.x
+      - name: Restore dependencies
+        run: dotnet restore "${{ env.SOLUTION }}"
+      - name: Build
+        run: dotnet build "${{ env.SOLUTION }}" --configuration Release --no-restore 
+      - name: Push1
+        run: dotnet nuget push "./src/*/bin/Release/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - name: Push2
+        run: dotnet nuget push "./src/*/*/bin/Release/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+  publish-file-system-provider:
+    name: Publishing File System Provider Plugin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Setup
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 7.0.x
+      - name: Restore
+        run: dotnet restore
+      - name: Build
+        shell: bash
+        run: |
+          tag=$(git describe --tags --abbrev=0)
+          release_name="hylo-provider-fs"
+          # Publish
+          dotnet publish src/providers/file-system/Hylo.Providers.FileSystem.csproj -c Release -o "${release_name}" --no-restore
+          # Pack
+          tar czvf "${release_name}.tar.gz" "${release_name}"
+          # Delete output directory
+          rm -r "${release_name}"
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "hylo-provider-fs*"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-kubernetes-provider:
+    name: Publishing Kubernetes Provider Plugin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Setup
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 7.0.x
+      - name: Restore
+        run: dotnet restore
+      - name: Build
+        shell: bash
+        run: |
+          tag=$(git describe --tags --abbrev=0)
+          release_name="hylo-provider-k8s"
+          # Publish
+          dotnet publish src/providers/kubernetes/Hylo.Providers.Kubernetes.csproj -c Release -o "${release_name}" --no-restore
+          # Pack
+          tar czvf "${release_name}.tar.gz" "${release_name}"
+          # Delete output directory
+          rm -r "${release_name}"
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "hylo-provider-k8s*"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-mongo-provider:
+    name: Publishing Mongo Provider Plugin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Setup
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 7.0.x
+      - name: Restore
+        run: dotnet restore
+      - name: Build
+        shell: bash
+        run: |
+          tag=$(git describe --tags --abbrev=0)
+          release_name="hylo-provider-mongo"
+          # Publish
+          dotnet publish src/providers/mongo/Hylo.Providers.Mongo.csproj -c Release -o "${release_name}" --no-restore
+          # Pack
+          tar czvf "${release_name}.tar.gz" "${release_name}"
+          # Delete output directory
+          rm -r "${release_name}"
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "hylo-provider-mongo*"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-redis-provider:
+    name: Publishing Redis Provider Plugin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Setup
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 7.0.x
+      - name: Restore
+        run: dotnet restore
+      - name: Build
+        shell: bash
+        run: |
+          tag=$(git describe --tags --abbrev=0)
+          release_name="hylo-provider-redis"
+          # Publish
+          dotnet publish src/providers/redis/Hylo.Providers.Redis.csproj -c Release -o "${release_name}" --no-restore
+          # Pack
+          tar czvf "${release_name}.tar.gz" "${release_name}"
+          # Delete output directory
+          rm -r "${release_name}"
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "hylo-provider-redis*"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
