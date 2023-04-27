@@ -4,7 +4,7 @@
 /// Represents an object used to reference a sub resource
 /// </summary>
 [DataContract]
-public class SubResourceReference
+public record SubResourceReference
     : ResourceReference, ISubResourceReference
 {
 

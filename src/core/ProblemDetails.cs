@@ -8,7 +8,7 @@ namespace Hylo;
 /// Represents an object used to describe a problem, as defined by <see href="https://www.rfc-editor.org/rfc/rfc7807">RFC 7807</see>
 /// </summary>
 [DataContract]
-public class ProblemDetails
+public record ProblemDetails
     : IExtensible
 {
 

@@ -4,7 +4,7 @@
 /// Represents a review of an operation requested on a specific resource to determine whether or not to allow it
 /// </summary>
 [DataContract]
-public class AdmissionReview
+public record AdmissionReview
     : IObject
 {
 

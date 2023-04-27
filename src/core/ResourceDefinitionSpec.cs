@@ -4,7 +4,7 @@
 /// Represents an object used to configure a resource definition
 /// </summary>
 [DataContract]
-public class ResourceDefinitionSpec
+public record ResourceDefinitionSpec
 {
 
     /// <summary>

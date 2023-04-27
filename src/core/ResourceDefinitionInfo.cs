@@ -4,8 +4,7 @@
 /// Describes the definition of a resource
 /// </summary>
 [DataContract]
-public class ResourceDefinitionInfo
-    : ValueObject<ResourceDefinitionInfo>
+public record ResourceDefinitionInfo
 {
 
     /// <summary>
@@ -54,15 +53,6 @@ public class ResourceDefinitionInfo
     /// </summary>
     [DataMember(Order = 4, Name = "kind"), JsonPropertyOrder(4), JsonPropertyName("kind"), YamlMember(Order = 4, Alias = "kind")]
     public virtual string Kind { get; set; } = null!;
-
-    /// <inheritdoc/>
-    protected override IEnumerable<object> GetEqualityComponents()
-    {
-        yield return this.Group;
-        yield return this.Version;
-        yield return this.Plural;
-        yield return this.Kind;
-    }
 
     /// <inheritdoc/>
     public override string ToString() => string.IsNullOrWhiteSpace(this.Group) ? this.Plural : $"{this.Plural}.{this.Group}";

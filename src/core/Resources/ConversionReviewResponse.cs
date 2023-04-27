@@ -4,7 +4,7 @@
 /// Represents a resource version conversion response
 /// </summary>
 [DataContract]
-public class ConversionReviewResponse
+public record ConversionReviewResponse
 {
 
     /// <summary>

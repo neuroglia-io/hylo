@@ -6,7 +6,7 @@ namespace Hylo.Resources;
 /// Represents a namespace
 /// </summary>
 [DataContract]
-public class Namespace
+public record Namespace
     : Resource
 {
 

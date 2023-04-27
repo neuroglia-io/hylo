@@ -6,7 +6,7 @@ namespace Hylo;
 /// Represents the object used to configure a webhook-based <see cref="ResourceConversion"/>
 /// </summary>
 [DataContract]
-public class V1WebhookResourceConversion
+public record WebhookResourceConversion
 {
 
     /// <summary>

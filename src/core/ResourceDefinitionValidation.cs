@@ -4,7 +4,7 @@
 /// Represents the object used to configure a schema to validate defined resources
 /// </summary>
 [DataContract]
-public class ResourceDefinitionValidation
+public record ResourceDefinitionValidation
 {
 
     /// <summary>

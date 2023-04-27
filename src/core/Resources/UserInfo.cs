@@ -4,7 +4,7 @@
 /// Represents an object that holds information about a user
 /// </summary>
 [DataContract]
-public class UserInfo
+public record UserInfo
 {
 
     /// <summary>

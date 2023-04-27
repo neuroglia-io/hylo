@@ -4,7 +4,7 @@
 /// Describes a patch
 /// </summary>
 [DataContract]
-public class Patch
+public record Patch
 {
 
     /// <summary>

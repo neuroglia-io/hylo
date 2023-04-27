@@ -4,7 +4,7 @@
 /// Represents an object used to filter <see cref="IResource"/>s
 /// </summary>
 [DataContract]
-public class RuleWithOperation
+public record RuleWithOperation
 {
 
     /// <summary>

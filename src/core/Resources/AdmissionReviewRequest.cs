@@ -6,7 +6,7 @@ namespace Hylo;
 /// Represents a request to perform a review to determine whether or not an operation can be performed on a specific resource
 /// </summary>
 [DataContract]
-public class AdmissionReviewRequest
+public record AdmissionReviewRequest
     : IExtensible
 {
 

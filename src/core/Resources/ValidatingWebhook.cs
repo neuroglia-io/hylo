@@ -6,7 +6,7 @@ namespace Hylo.Resources;
 /// Represents a webhook used to validate <see cref="IResource"/>s
 /// </summary>
 [DataContract]
-public class ValidatingWebhook
+public record ValidatingWebhook
     : Resource<ValidatingWebhookSpec>
 {
 
@@ -35,7 +35,7 @@ public class ValidatingWebhook
     /// <summary>
     /// Initializes a new <see cref="ValidatingWebhook"/>
     /// </summary>
-    public ValidatingWebhook() : base(new(ResourceGroup, ResourceVersion, ResourcePlural, ResourceKind)) { }
+    public ValidatingWebhook() : base(new ResourceDefinitionInfo(ResourceGroup, ResourceVersion, ResourcePlural, ResourceKind)) { }
 
     /// <summary>
     /// Initializes a new <see cref="ValidatingWebhook"/>

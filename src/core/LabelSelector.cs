@@ -4,7 +4,7 @@
 /// Represents a label-based resource selector
 /// </summary>
 [DataContract]
-public class LabelSelector
+public record LabelSelector
 {
 
     /// <summary>

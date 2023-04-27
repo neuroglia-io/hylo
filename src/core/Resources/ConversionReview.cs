@@ -4,7 +4,7 @@
 /// Represents a resource version conversion review
 /// </summary>
 [DataContract]
-public class ConversionReview
+public record ConversionReview
     : IObject
 {
 

@@ -4,7 +4,7 @@
 /// Represents an object used to describe the result of a resource admission review request
 /// </summary>
 [DataContract]
-public class AdmissionReviewResponse
+public record AdmissionReviewResponse
     : IExtensible
 {
 

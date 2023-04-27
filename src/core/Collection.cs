@@ -4,7 +4,7 @@
 /// Represents a collection of objects
 /// </summary>
 [DataContract]
-public class Collection
+public record Collection
     : ICollection
 {
 

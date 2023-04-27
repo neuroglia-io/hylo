@@ -4,7 +4,7 @@
 /// Represents the specification of a <see cref="ValidatingWebhook"/>'s 
 /// </summary>
 [DataContract]
-public class ValidatingWebhookSpec
+public record ValidatingWebhookSpec
 {
 
     /// <summary>
