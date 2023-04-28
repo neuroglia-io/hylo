@@ -42,7 +42,6 @@ public class FileSystemDatabaseProvider
         services.AddSingleton(this.ApplicationServices.GetRequiredService<IConfiguration>());
         services.AddSingleton(this.ApplicationServices.GetRequiredService<ILoggerFactory>());
         services.AddSingleton<FileSystemDatabase>();
-        services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<FileSystemDatabase>());
         this.PluginServices = services.BuildServiceProvider();
         foreach(var hostedService in this.PluginServices.GetServices<IHostedService>())
         {

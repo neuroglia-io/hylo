@@ -1,6 +1,4 @@
-﻿using System.Reactive;
-
-namespace Hylo.Infrastructure.Services;
+﻿namespace Hylo.Infrastructure.Services;
 
 /// <summary>
 /// Represents the default implementation of the <see cref="IResourceMonitor"/> interface
@@ -16,16 +14,23 @@ public class ResourceMonitor
     /// </summary>
     /// <param name="resourceWatch">The service used to watch events produced by the monitored <see cref="IResource"/></param>
     /// <param name="resource">The current state of the monitored <see cref="IResource"/></param>
-    public ResourceMonitor(IResourceWatch resourceWatch, IResource resource)
+    /// <param name="leaveOpen">A boolean indicating whether or not to leave the <see cref="IResourceWatch"/> open when the <see cref="ResourceMonitor"/> is being disposed of</param>
+    public ResourceMonitor(IResourceWatch resourceWatch, IResource resource, bool leaveOpen)
     {
         this.ResourceWatch = resourceWatch;
         this.Resource = resource;
+        this.LeaveOpen = leaveOpen;
     }
 
     /// <summary>
     /// Gets the service used to watch events produced by the monitored <see cref="IResource"/>
     /// </summary>
     protected IResourceWatch ResourceWatch { get; }
+
+    /// <summary>
+    /// Gets a boolean indicating whether or not to leave the <see cref="IResourceWatch"/> open when the <see cref="ResourceMonitor"/> is being disposed of
+    /// </summary>
+    protected bool LeaveOpen { get; }
 
     /// <summary>
     /// Gets the <see cref="ResourceMonitor"/>'s <see cref="System.Threading.CancellationTokenSource"/>
@@ -86,7 +91,7 @@ public class ResourceMonitor
     {
         if (this._disposed || !disposing) return;
         this.CancellationTokenSource?.Dispose();
-        if (this.ResourceWatch != null) await this.ResourceWatch.DisposeAsync().ConfigureAwait(false);
+        if (!this.LeaveOpen && this.ResourceWatch != null) await this.ResourceWatch.DisposeAsync().ConfigureAwait(false);
         this._disposed = true;
     }
 
@@ -105,7 +110,7 @@ public class ResourceMonitor
     {
         if (this._disposed || !disposing) return;
         this.CancellationTokenSource?.Dispose();
-        this.ResourceWatch?.Dispose();
+        if (!this.LeaveOpen) this.ResourceWatch?.Dispose();
         this._disposed = true;
     }
 
@@ -130,20 +135,27 @@ public class ResourceMonitor<TResource>
     bool _disposed;
 
     /// <summary>
-    /// Initializes a new <see cref="ResourceMonitor"/>
+    /// Initializes a new <see cref="ResourceMonitor{TResource}"/>
     /// </summary>
     /// <param name="resourceWatch">The service used to watch events produced by the monitored <see cref="IResource"/></param>
     /// <param name="resource">The current state of the monitored <see cref="IResource"/></param>
-    public ResourceMonitor(IResourceWatch<TResource> resourceWatch, TResource resource)
+    /// <param name="leaveOpen">A boolean indicating whether or not to leave the <see cref="IResourceWatch"/> open when the <see cref="ResourceMonitor{TResource}"/> is being disposed of</param>
+    public ResourceMonitor(IResourceWatch<TResource> resourceWatch, TResource resource, bool leaveOpen)
     {
         this.ResourceWatch = resourceWatch;
         this.Resource = resource;
+        this.LeaveOpen = leaveOpen;
     }
 
     /// <summary>
     /// Gets the service used to watch events produced by the monitored <see cref="IResource"/>
     /// </summary>
     protected IResourceWatch<TResource> ResourceWatch { get; }
+
+    /// <summary>
+    /// Gets a boolean indicating whether or not to leave the <see cref="IResourceWatch"/> open when the <see cref="ResourceMonitor{TResource}"/> is being disposed of
+    /// </summary>
+    protected bool LeaveOpen { get; }
 
     /// <summary>
     /// Gets the <see cref="ResourceMonitor"/>'s <see cref="System.Threading.CancellationTokenSource"/>
@@ -204,7 +216,7 @@ public class ResourceMonitor<TResource>
     {
         if (this._disposed || !disposing) return;
         this.CancellationTokenSource?.Dispose();
-        if (this.ResourceWatch != null) await this.ResourceWatch.DisposeAsync().ConfigureAwait(false);
+        if (!this.LeaveOpen && this.ResourceWatch != null) await this.ResourceWatch.DisposeAsync().ConfigureAwait(false);
         this._disposed = true;
     }
 
@@ -223,7 +235,7 @@ public class ResourceMonitor<TResource>
     {
         if (this._disposed || !disposing) return;
         this.CancellationTokenSource?.Dispose();
-        this.ResourceWatch?.Dispose();
+        if (!this.LeaveOpen) this.ResourceWatch?.Dispose();
         this._disposed = true;
     }
 

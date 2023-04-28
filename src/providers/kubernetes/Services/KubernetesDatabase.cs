@@ -4,7 +4,6 @@ using Hylo.Resources.Definitions;
 using k8s;
 using k8s.Autorest;
 using k8s.Models;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -16,7 +15,7 @@ namespace Hylo.Providers.Kubernetes.Services;
 /// Represents a <see href="https://kubernetes.io/">Kubernetes</see> implementation of an Hylo resource database
 /// </summary>
 public class KubernetesDatabase
-    : BackgroundService, IDatabase
+    : IDatabase
 {
 
     bool _disposed;
@@ -45,23 +44,23 @@ public class KubernetesDatabase
     /// <summary>
     /// Gets the <see cref="KubernetesDatabase"/>'s <see cref="System.Threading.CancellationTokenSource"/>
     /// </summary>
-    protected CancellationTokenSource CancellationTokenSource { get; private set; } = null!;
+    protected CancellationTokenSource CancellationTokenSource { get; } = new();
 
     /// <inheritdoc/>
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public virtual async Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
     {
-        this.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
-        var seed = true;
+        var initialized = true;
         try
         {
-            seed = await this.GetDefinitionAsync<MutatingWebhook>(this.CancellationTokenSource.Token).ConfigureAwait(false) == null;
+            initialized = await this.GetDefinitionAsync<MutatingWebhook>(this.CancellationTokenSource.Token).ConfigureAwait(false) == null;
         }
         catch { }
-        if(seed)
+        if (initialized)
         {
             await this.CreateResourceAsync(new MutatingWebhookDefinition(), false, this.CancellationTokenSource.Token).ConfigureAwait(false);
             await this.CreateResourceAsync(new ValidatingWebhookDefinition(), false, this.CancellationTokenSource.Token).ConfigureAwait(false);
         }
+        return initialized;
     }
 
     /// <inheritdoc/>
@@ -77,7 +76,7 @@ public class KubernetesDatabase
         else if (resource.IsNamespaced()) storageResource = (await this.Kubernetes.CreateNamespacedCustomObjectAsync(resource, group, version, @namespace, plural, dryRun: dryRun ? "All" : null, cancellationToken: cancellationToken).ConfigureAwait(false)).ConvertTo<Resource>()!;
         else storageResource = (await this.Kubernetes.CreateClusterCustomObjectAsync(resource, group, version, plural, dryRun: dryRun ? "All" : null, cancellationToken: cancellationToken).ConfigureAwait(false)).ConvertTo<Resource>()!;
 
-        if(resource is IStatus status && status.Status != null)
+        if (resource is IStatus status && status.Status != null)
         {
             resource.Metadata.ResourceVersion = storageResource.Metadata.ResourceVersion;
             storageResource = (await this.ReplaceSubResourceAsync(resource, group, version, plural, storageResource.GetName(), "status", @namespace, dryRun, cancellationToken).ConfigureAwait(false)).ConvertTo<Resource>()!;
@@ -106,11 +105,11 @@ public class KubernetesDatabase
 
             return resource.ConvertTo<Resource>();
         }
-        catch (HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound) 
+        catch (HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             return null;
         }
-        
+
     }
 
     /// <inheritdoc/>
@@ -124,7 +123,7 @@ public class KubernetesDatabase
             result = await this.Kubernetes.ListCustomResourceDefinitionAsync(labelSelector: labelSelectors.ToExpression(), cancellationToken: cancellationToken).ConfigureAwait(false);
         else if (string.IsNullOrWhiteSpace(@namespace)) result = await this.Kubernetes.CustomObjects.ListClusterCustomObjectAsync(group, version, plural, labelSelector: labelSelectors.ToExpression(), cancellationToken: cancellationToken).ConfigureAwait(false);
         else result = await this.Kubernetes.CustomObjects.ListNamespacedCustomObjectAsync(group, version, @namespace, plural, labelSelector: labelSelectors.ToExpression(), cancellationToken: cancellationToken).ConfigureAwait(false);
-        
+
         await foreach (var resource in result.ConvertTo<Collection<Resource>>()!.Items!.ToAsyncEnumerable())
         {
             yield return resource;
@@ -142,7 +141,7 @@ public class KubernetesDatabase
             result = await this.Kubernetes.ListCustomResourceDefinitionAsync(continueParameter: continuationToken, labelSelector: labelSelectors.ToExpression(), cancellationToken: cancellationToken).ConfigureAwait(false);
         else if (string.IsNullOrWhiteSpace(@namespace)) result = await this.Kubernetes.CustomObjects.ListClusterCustomObjectAsync(group, version, plural, continueParameter: continuationToken, labelSelector: labelSelectors.ToExpression(), cancellationToken: cancellationToken).ConfigureAwait(false);
         else result = await this.Kubernetes.CustomObjects.ListNamespacedCustomObjectAsync(group, version, @namespace, plural, continueParameter: continuationToken, labelSelector: labelSelectors.ToExpression(), cancellationToken: cancellationToken).ConfigureAwait(false);
-        
+
         return result.ConvertTo<Collection>()!;
     }
 
@@ -155,7 +154,7 @@ public class KubernetesDatabase
 
         if (string.IsNullOrWhiteSpace(@namespace)) response = await this.Kubernetes.CustomObjects.ListClusterCustomObjectWithHttpMessagesAsync(group, version, plural, labelSelector: labelSelectors.ToExpression(), watch: true, cancellationToken: cancellationToken).ConfigureAwait(false);
         else response = await this.Kubernetes.CustomObjects.ListNamespacedCustomObjectWithHttpMessagesAsync(group, version, @namespace, plural, labelSelector: labelSelectors.ToExpression(), watch: true, cancellationToken: cancellationToken).ConfigureAwait(false);
-        
+
         var subject = new Subject<IResourceWatchEvent>();
         var watch = response.Watch((WatchEventType watchEventType, object resource) => subject.OnNext(new ResourceWatchEvent(watchEventType.ToHyloWatchEventType(), resource.ConvertTo<Resource>()!)));
         return new ResourceWatch(Observable.Using(() => watch, _ => subject), true);
@@ -170,7 +169,7 @@ public class KubernetesDatabase
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
 
         object resource;
-        if(string.IsNullOrWhiteSpace(@namespace)) resource = await this.Kubernetes.PatchClusterCustomObjectAsync(patch.ToV1Patch(), group, version, plural, name, dryRun: dryRun ? "All" : null, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(@namespace)) resource = await this.Kubernetes.PatchClusterCustomObjectAsync(patch.ToV1Patch(), group, version, plural, name, dryRun: dryRun ? "All" : null, cancellationToken: cancellationToken).ConfigureAwait(false);
         else resource = await this.Kubernetes.PatchNamespacedCustomObjectAsync(patch.ToV1Patch(), group, version, @namespace, plural, name, dryRun: dryRun ? "All" : null, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         return resource.ConvertTo<Resource>()!;
@@ -281,7 +280,7 @@ public class KubernetesDatabase
     }
 
     /// <inheritdoc/>
-    public override void Dispose()
+    public void Dispose()
     {
         this.Dispose(true);
         GC.SuppressFinalize(this);

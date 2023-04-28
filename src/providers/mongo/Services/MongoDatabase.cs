@@ -2,7 +2,6 @@
 using Hylo.Resources;
 using Hylo.Resources.Definitions;
 using Json.Patch;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
@@ -15,7 +14,7 @@ namespace Hylo.Providers.Mongo;
 /// Represents a <see href="https://www.mongodb.com/">MongoDB</see> implementation of the <see cref="IDatabase"/> interface
 /// </summary>
 public class MongoDatabase
-    : IHostedService, IDatabase
+    : IDatabase
 {
 
     /// <summary>
@@ -50,21 +49,23 @@ public class MongoDatabase
     /// <summary>
     /// Gets the <see cref="MongoDatabase"/>'s <see cref="System.Threading.CancellationTokenSource"/>
     /// </summary>
-    protected CancellationTokenSource CancellationTokenSource { get; private set; } = null!;
+    protected CancellationTokenSource CancellationTokenSource { get; } = new();
 
     /// <inheritdoc/>
-    public async Task StartAsync(CancellationToken stoppingToken)
+    public virtual async Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
     {
-        this.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
-        if ((await this.GetDefinitionAsync<Namespace>(stoppingToken).ConfigureAwait(false)) == null) await this.CreateResourceAsync(new NamespaceDefinition(), false, this.CancellationTokenSource.Token).ConfigureAwait(false);
-        if ((await this.ListResourcesAsync<Namespace>(cancellationToken: stoppingToken).ConfigureAwait(false)).Items?.Any() != true) await this.CreateNamespaceAsync(Namespace.DefaultNamespaceName, false, this.CancellationTokenSource.Token).ConfigureAwait(false);
-    }
-
-    /// <inheritdoc/>
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        this.CancellationTokenSource.Cancel();
-        return Task.CompletedTask;
+        var initialized = false;
+        if ((await this.GetDefinitionAsync<Namespace>(this.CancellationTokenSource.Token).ConfigureAwait(false)) == null)
+        {
+            initialized = true;
+            await this.CreateResourceAsync(new NamespaceDefinition(), false, this.CancellationTokenSource.Token).ConfigureAwait(false);
+        }
+        if ((await this.ListResourcesAsync<Namespace>(cancellationToken: this.CancellationTokenSource.Token).ConfigureAwait(false)).Items?.Any() != true)
+        {
+            initialized = true;
+            await this.CreateNamespaceAsync(Namespace.DefaultNamespaceName, false, this.CancellationTokenSource.Token).ConfigureAwait(false);
+        }
+        return initialized;
     }
 
     /// <inheritdoc/>
@@ -110,7 +111,7 @@ public class MongoDatabase
                 .ToList();
             foreach (var ns in namespaces)
             {
-                await foreach(var resource in this.GetResourcesAsync(group, version, plural, ns, labelSelectors, cancellationToken).ConfigureAwait(false))
+                await foreach (var resource in this.GetResourcesAsync(group, version, plural, ns, labelSelectors, cancellationToken).ConfigureAwait(false))
                 {
                     yield return resource;
                 }
@@ -186,7 +187,7 @@ public class MongoDatabase
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
-        
+
         var resourceReference = new ResourceReference(new(group, version, plural), name, @namespace);
         var originalResource = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceReference));
 
@@ -214,7 +215,7 @@ public class MongoDatabase
         var jsonPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalResource, updatedResource);
         jsonPatch = new JsonPatch(jsonPatch.Operations.Where(o => o.Path.Segments.First() == subResource));
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceReference));
-        
+
         return await this.WriteResourceAsync(jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>()!)!, group, version, plural, false, ResourceWatchEventType.Updated, cancellationToken).ConfigureAwait(false);
     }
 
@@ -228,14 +229,14 @@ public class MongoDatabase
 
         var resourceReference = new ResourceReference(new(group, version, plural), name, @namespace);
         var originalResource = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceReference));
-        
+
         var jsonPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalResource, resource);
         jsonPatch = new JsonPatch(jsonPatch.Operations.Where(o => o.Path.Segments.First() == subResource));
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceReference));
 
         var updatedResource = jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>())!;
         if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new Exception("Conflict"); //todo: urgent: replace with proper exception
-        
+
         return await this.WriteResourceAsync(updatedResource, group, version, plural, false, ResourceWatchEventType.Updated, cancellationToken).ConfigureAwait(false); ;
     }
 

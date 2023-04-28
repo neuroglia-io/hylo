@@ -67,6 +67,11 @@ public class RepositoryOptionsBuilder
     protected Type RepositoryType { get; set; } = typeof(Repository);
 
     /// <summary>
+    /// Gets/sets the type of <see cref="IDatabaseInitializer"/> to use
+    /// </summary>
+    protected Type DatabaseInitializerType { get; set; } = typeof(DatabaseInitializer);
+
+    /// <summary>
     /// Gets the <see cref="ResourceRepositoryOptions"/> to configure
     /// </summary>
     protected ResourceRepositoryOptions Options { get; } = new();
@@ -81,7 +86,7 @@ public class RepositoryOptionsBuilder
         ObjectNamingConvention.Current.EnsureIsValidResourcePluralName(plural);
         if (string.IsNullOrWhiteSpace(kind)) throw new ArgumentNullException(nameof(kind));
         ObjectNamingConvention.Current.EnsureIsValidResourceKind(kind);
-        
+
         ResourceDefinition.ResourceGroup = group;
         ResourceDefinition.ResourceVersion = version;
         ResourceDefinition.ResourcePlural = plural;
@@ -162,6 +167,12 @@ public class RepositoryOptionsBuilder
         return this;
     }
 
+    IRepositoryOptionsBuilder IRepositoryOptionsBuilder.UseDatabaseInitializer<TInitializer>()
+    {
+        this.DatabaseInitializerType = typeof(TInitializer);
+        return this;
+    }
+
     /// <inheritdoc/>
     public virtual void Build()
     {
@@ -185,6 +196,9 @@ public class RepositoryOptionsBuilder
 
         this.Services.TryAddSingleton(typeof(IRepository), this.RepositoryType);
         if (typeof(IHostedService).IsAssignableFrom(this.RepositoryType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IRepository>());
+
+        this.Services.TryAddSingleton(typeof(IDatabaseInitializer), this.DatabaseInitializerType);
+        if (typeof(IDatabaseInitializer).IsAssignableFrom(this.DatabaseInitializerType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IDatabaseInitializer>());
 
         this.Services.TryAddSingleton(provider => provider.GetRequiredService<IDatabaseProvider>().GetDatabase());
 

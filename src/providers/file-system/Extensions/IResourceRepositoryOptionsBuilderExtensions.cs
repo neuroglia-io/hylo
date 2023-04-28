@@ -21,7 +21,6 @@ public static class IResourceRepositoryOptionsBuilderExtensions
     {
         builder.Configuration.GetSection("ConnectionStrings")![FileSystemDatabase.ConnectionStringName] = connectionString;
         builder.Services.AddSingleton<FileSystemDatabase>();
-        builder.Services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<FileSystemDatabase>());
         builder.UseDatabaseProvider<FileSystemDatabaseProvider>();
         return builder;
     }

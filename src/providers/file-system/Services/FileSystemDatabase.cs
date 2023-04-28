@@ -2,7 +2,6 @@
 using Hylo.Resources;
 using Hylo.Resources.Definitions;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Reactive.Linq;
@@ -16,7 +15,7 @@ namespace Hylo.Providers.FileSystem.Services;
 /// Represents the file system implementation of an Hylo resource database
 /// </summary>
 public class FileSystemDatabase
-    : IHostedService, IDatabase
+    : IDatabase
 {
 
     /// <summary>
@@ -70,7 +69,7 @@ public class FileSystemDatabase
     /// <summary>
     /// Gets the <see cref="FileSystemDatabase"/>'s <see cref="System.Threading.CancellationTokenSource"/>
     /// </summary>
-    protected CancellationTokenSource? CancellationTokenSource { get; private set; }
+    protected CancellationTokenSource CancellationTokenSource { get; } = new();
 
     /// <summary>
     /// Gets a <see cref="ConcurrentDictionary{TKey, TValue}"/> containing name/last write time UTC mappings of all files managed by the <see cref="FileSystemDatabase"/>
@@ -78,21 +77,36 @@ public class FileSystemDatabase
     protected ConcurrentDictionary<string, DateTime> FileMap { get; } = new();
 
     /// <inheritdoc/>
-    public virtual async Task StartAsync(CancellationToken cancellationToken)
+    public virtual async Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
     {
-        this.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-
+        var initialized = false;
         var directory = new DirectoryInfo(Path.Combine(this.ConnectionString, FileSystem.ResourceDefinitionsDirectory));
-        if (!directory.Exists) directory.Create();
+        if (!directory.Exists)
+        {
+            initialized = true;
+            directory.Create();
+        }
 
         directory = new DirectoryInfo(Path.Combine(this.ConnectionString, FileSystem.ClusterResourcesDirectory));
-        if (!directory.Exists) directory.Create();
+        if (!directory.Exists)
+        {
+            initialized = true;
+            directory.Create();
+        }
 
         directory = new DirectoryInfo(this.ResolveResourcePath(Namespace.ResourceGroup, Namespace.ResourceVersion, Namespace.ResourcePlural));
-        if (!directory.Exists) directory.Create();
+        if (!directory.Exists)
+        {
+            initialized = true;
+            directory.Create();
+        }
 
         directory = new DirectoryInfo(Path.Combine(this.ConnectionString, FileSystem.NamespacedResourcesDirectory));
-        if (!directory.Exists) directory.Create();
+        if (!directory.Exists)
+        {
+            initialized = true;
+            directory.Create();
+        }
 
         this.PluralKindMap.TryAdd($"{ResourceDefinition.ResourcePlural}.{ResourceDefinition.ResourceGroup}", ResourceDefinition.ResourceKind);
         await foreach (var definition in this.GetDefinitionsAsync(cancellationToken: this.CancellationTokenSource.Token))
@@ -102,6 +116,7 @@ public class FileSystemDatabase
 
         if ((await this.GetDefinitionAsync<Namespace>(this.CancellationTokenSource.Token).ConfigureAwait(false)) == null)
         {
+            initialized = true;
             await this.CreateResourceAsync(new NamespaceDefinition(), false, this.CancellationTokenSource.Token).ConfigureAwait(false);
             await this.CreateNamespaceAsync(Namespace.DefaultNamespaceName, false, this.CancellationTokenSource.Token).ConfigureAwait(false);
             await this.CreateResourceAsync(MutatingWebhook.ResourceDefinition, false, this.CancellationTokenSource.Token).ConfigureAwait(false);
@@ -123,21 +138,16 @@ public class FileSystemDatabase
         this.FileSystemWatcher.Changed += this.OnFileSystemWatcherEvent;
         this.FileSystemWatcher.Deleted += this.OnFileSystemWatcherEvent;
         this.FileSystemWatcher.EnableRaisingEvents = true;
-    }
 
-    /// <inheritdoc/>
-    public virtual Task StopAsync(CancellationToken cancellationToken)
-    {
-        this.CancellationTokenSource?.Cancel();
-        return Task.CompletedTask;
+        return initialized;
     }
 
     /// <inheritdoc/>
     public virtual Task<IResource> CreateResourceAsync(IResource resource, string group, string version, string plural, string? @namespace = null, bool dryRun = false, CancellationToken cancellationToken = default)
     {
         if (resource == null) throw new ArgumentNullException(nameof(resource));
-        if(string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
-        if(string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
+        if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
+        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
 
         return this.WriteResourceToFileAsync(resource, group, version, plural, @namespace, null, cancellationToken);
     }
@@ -415,7 +425,7 @@ public class FileSystemDatabase
         {
             var file = new FileInfo(e.FullPath);
             ResourceWatchEventType watchEventType;
-            if(this.FileMap.TryGetValue(e.FullPath, out var lastWriteTimeUtc))
+            if (this.FileMap.TryGetValue(e.FullPath, out var lastWriteTimeUtc))
             {
                 if (file.Exists)
                 {

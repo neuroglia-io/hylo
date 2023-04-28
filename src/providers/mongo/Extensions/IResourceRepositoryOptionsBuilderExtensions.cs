@@ -2,7 +2,6 @@
 using Hylo.Providers.Mongo.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace Hylo.Providers.Mongo;
 
@@ -23,7 +22,6 @@ public static class IRepositoryOptionsBuilderExtensions
         if (string.IsNullOrWhiteSpace(connectionString)) connectionString = builder.Configuration.GetConnectionString(MongoDatabase.ConnectionStringName)!;
         builder.Services.AddMongoClient(connectionString);
         builder.Services.AddSingleton<MongoDatabase>();
-        builder.Services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<MongoDatabase>());
         builder.UseDatabaseProvider<MongoDatabaseProvider>();
         return builder;
     }

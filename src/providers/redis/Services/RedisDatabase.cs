@@ -2,7 +2,6 @@
 using Hylo.Resources;
 using Hylo.Resources.Definitions;
 using Json.Patch;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System.Reactive.Subjects;
@@ -14,7 +13,7 @@ namespace Hylo.Providers.Redis;
 /// Represents a <see href="https://redis.io/">Redis</see> implementation of the <see cref="Infrastructure.Services.IDatabase"/> interface
 /// </summary>
 public class RedisDatabase
-    : IHostedService, Infrastructure.Services.IDatabase
+    : Infrastructure.Services.IDatabase
 {
 
     /// <summary>
@@ -67,22 +66,24 @@ public class RedisDatabase
     /// <summary>
     /// Gets the <see cref="RedisDatabase"/>'s <see cref="System.Threading.CancellationTokenSource"/>
     /// </summary>
-    protected CancellationTokenSource CancellationTokenSource { get; private set; } = null!;
+    protected CancellationTokenSource CancellationTokenSource { get; } = new();
 
     /// <inheritdoc/>
-    public virtual async Task StartAsync(CancellationToken stoppingToken)
+    public virtual async Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
     {
-        this.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        var initialized = false;
         await this.Subscriber.SubscribeAsync(WatchEventChannel, OnWatchEvent).ConfigureAwait(false);
-        if ((await this.GetDefinitionAsync<Namespace>(this.CancellationTokenSource.Token).ConfigureAwait(false)) == null) await this.CreateResourceAsync(new NamespaceDefinition(), false, this.CancellationTokenSource.Token).ConfigureAwait(false);
-        if ((await this.ListResourcesAsync<Namespace>(cancellationToken: this.CancellationTokenSource.Token).ConfigureAwait(false)).Items?.Any() != true) await this.CreateNamespaceAsync(Namespace.DefaultNamespaceName, false, this.CancellationTokenSource.Token).ConfigureAwait(false);
-    }
-
-    /// <inheritdoc/>
-    public virtual Task StopAsync(CancellationToken cancellationToken)
-    {
-        this.CancellationTokenSource.Cancel();
-        return Task.CompletedTask;
+        if ((await this.GetDefinitionAsync<Namespace>(this.CancellationTokenSource.Token).ConfigureAwait(false)) == null)
+        {
+            initialized = true;
+            await this.CreateResourceAsync(new NamespaceDefinition(), false, this.CancellationTokenSource.Token).ConfigureAwait(false);
+        }
+        if ((await this.ListResourcesAsync<Namespace>(cancellationToken: this.CancellationTokenSource.Token).ConfigureAwait(false)).Items?.Any() != true)
+        {
+            initialized = true;
+            await this.CreateNamespaceAsync(Namespace.DefaultNamespaceName, false, this.CancellationTokenSource.Token).ConfigureAwait(false);
+        }
+        return initialized;
     }
 
     /// <inheritdoc/>
@@ -136,7 +137,7 @@ public class RedisDatabase
             .HashScanAsync(definitionIndexKey, pattern)
             .SelectAwait(async e => (await this.ReadResourceAsync((string)e.Value!, cancellationToken).ConfigureAwait(false))!);
         if (labelSelectors?.Any() == true) results = results.Select(r => r.ConvertTo<Resource>()!).Where(r => labelSelectors.All(s => s.Selects(r)));
-        await foreach(var result in results)
+        await foreach (var result in results)
         {
             yield return result;
         }
@@ -162,7 +163,7 @@ public class RedisDatabase
         var resourceReference = new ResourceReference(new(group, version, plural), name, @namespace);
         var originalResource = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceReference));
         var updatedResource = patch.ApplyTo(originalResource.ConvertTo<Resource>()!)!;
-        
+
         var jsonPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalResource, updatedResource);
         jsonPatch = new JsonPatch(jsonPatch.Operations.Where(o => o.Path.Segments.First() == nameof(ISpec.Spec).ToCamelCase()));
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceReference));
@@ -182,11 +183,11 @@ public class RedisDatabase
         var originalResource = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceReference));
         var jsonPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalResource, resource);
         jsonPatch = new JsonPatch(jsonPatch.Operations.Where(o => o.Path.Segments.First() == nameof(ISpec.Spec).ToCamelCase()));
-        
+
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceReference));
         var updatedResource = jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>()!)!;
         if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new Exception("Conflict"); //todo: urgent: replace with proper exception
-        
+
         return await this.WriteResourceAsync(group, version, plural, updatedResource, true, ResourceWatchEventType.Updated, cancellationToken).ConfigureAwait(false);
     }
 
@@ -202,7 +203,7 @@ public class RedisDatabase
         var resourceReference = new SubResourceReference(new(group, version, plural), name, subResource, @namespace);
         var originalResource = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceReference));
         var updatedResource = patch.ApplyTo(originalResource.ConvertTo<Resource>()!)!;
-        
+
         var jsonPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalResource, updatedResource);
         jsonPatch = new JsonPatch(jsonPatch.Operations.Where(o => o.Path.Segments.First() == nameof(IStatus.Status).ToCamelCase()));
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceReference));
@@ -223,7 +224,7 @@ public class RedisDatabase
         var originalResource = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceReference));
         var jsonPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalResource, resource);
         jsonPatch = new JsonPatch(jsonPatch.Operations.Where(o => o.Path.Segments.First() == nameof(IStatus.Status).ToCamelCase()));
-        
+
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified((ResourceReference)originalResource!));
         var updatedResource = jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>()!)!;
         if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new Exception("Conflict"); //todo: urgent: replace with proper exception
@@ -346,7 +347,7 @@ public class RedisDatabase
         var namespaceIndexEntryKey = resource.GetName();
         var transactions = new List<Transaction>();
 
-        if(!await this.Database.HashExistsAsync(definitionIndexKey, definitionIndexEntryKey).ConfigureAwait(false))
+        if (!await this.Database.HashExistsAsync(definitionIndexKey, definitionIndexEntryKey).ConfigureAwait(false))
         {
             transactions.Add(new()
             {
@@ -387,7 +388,7 @@ public class RedisDatabase
                 await transaction.CommitAsync();
                 processed.Add(transaction);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
                 processed.Reverse();

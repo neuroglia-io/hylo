@@ -3,7 +3,6 @@ using Hylo.Infrastructure.Services;
 using Hylo.Providers.Redis.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace Hylo.Providers.Redis;
 
@@ -24,7 +23,6 @@ public static class IRepositoryOptionsBuilderExtensions
         if (string.IsNullOrWhiteSpace(connectionString)) connectionString = builder.Configuration.GetConnectionString(RedisDatabase.ConnectionStringName)!;
         builder.Services.AddStackExchangeRedis(connectionString);
         builder.Services.AddSingleton<RedisDatabase>();
-        builder.Services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<RedisDatabase>());
         builder.UseDatabaseProvider<RedisDatabaseProvider>();
         return builder;
     }
