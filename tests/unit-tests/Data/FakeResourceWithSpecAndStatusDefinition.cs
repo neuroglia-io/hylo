@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace Hylo.UnitTests.Data;
 
 [DataContract]
-internal class FakeResourceWithSpecAndStatusDefinition
+internal record FakeResourceWithSpecAndStatusDefinition
     : ResourceDefinition
 {
 
@@ -15,7 +15,7 @@ internal class FakeResourceWithSpecAndStatusDefinition
     internal new const string ResourceKind = "fake";
 
     public FakeResourceWithSpecAndStatusDefinition()
-        : base(new(ResourceScope.Namespaced, ResourceGroup, new(ResourceSingular, ResourcePlural, ResourceKind), new ResourceDefinitionVersion(ResourceVersion, new(GetSchema())) { Served = true, Storage = true, SubResources = new Dictionary<string, object>() { { "status", new() } } }))
+        : base(new ResourceDefinitionSpec(ResourceScope.Namespaced, ResourceGroup, new(ResourceSingular, ResourcePlural, ResourceKind), new ResourceDefinitionVersion(ResourceVersion, new(GetSchema())) { Served = true, Storage = true, SubResources = new Dictionary<string, object>() { { "status", new() } } }))
     {
 
     }

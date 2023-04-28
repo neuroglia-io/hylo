@@ -4,7 +4,7 @@
 /// Represents an event produced during a watch
 /// </summary>
 [DataContract]
-public class ResourceWatchEvent
+public record ResourceWatchEvent
     : IResourceWatchEvent
 {
 
@@ -46,7 +46,7 @@ public class ResourceWatchEvent
 /// Represents an event produced during a watch
 /// </summary>
 [DataContract]
-public class ResourceWatchEvent<TResource>
+public record ResourceWatchEvent<TResource>
     : IResourceWatchEvent<TResource>
     where TResource : class, IResource, new()
 {

@@ -1,10 +1,12 @@
-﻿namespace Hylo;
+﻿using System.Linq;
+
+namespace Hylo;
 
 /// <summary>
 /// Represents an object used to describe a resource
 /// </summary>
 [DataContract]
-public class ResourceMetadata
+public record ResourceMetadata
     : IExtensible
 {
 
@@ -21,7 +23,10 @@ public class ResourceMetadata
     /// <param name="labels">A key/value mappings of the described resource's labels, if any</param>
     public ResourceMetadata(string name, string? @namespace = null, IDictionary<string, string>? labels = null)
     {
-        if(string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
+        if (name.Split('.').Length == 1 || !name.Split('.').All(ObjectNamingConvention.Current.IsValidResourceName)) ObjectNamingConvention.Current.EnsureIsValidResourceName(name);
+        if (@namespace != null) ObjectNamingConvention.Current.EnsureIsValidResourceName(@namespace);
+        if (labels != null) labels.Keys.ToList().ForEach(ObjectNamingConvention.Current.EnsureIsValidLabelName);
         this.Name = name;
         this.Namespace = @namespace;
         this.CreationTimestamp = DateTimeOffset.Now;

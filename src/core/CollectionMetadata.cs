@@ -4,7 +4,7 @@
 /// Represents an object used to describe a resource collection
 /// </summary>
 [DataContract]
-public class CollectionMetadata
+public record CollectionMetadata
     : IExtensible
 {
 

@@ -4,7 +4,7 @@
 /// Represents an object used to configure the names of a resource definition
 /// </summary>
 [DataContract]
-public class ResourceDefinitionNames
+public record ResourceDefinitionNames
 {
 
     /// <summary>
@@ -27,7 +27,7 @@ public class ResourceDefinitionNames
         this.Singular = singular;
         this.Plural = plural;
         this.Kind = kind;
-        this.ShortNames = shortNames?.ToList();
+        this.ShortNames = shortNames?.WithValueSemantics();
     }
 
     /// <summary>
@@ -56,6 +56,6 @@ public class ResourceDefinitionNames
     /// </summary>
     [Required, MinLength(1)]
     [DataMember(Order = 4, Name = "shortNames", IsRequired = true), JsonPropertyOrder(4), JsonPropertyName("shortNames"), YamlMember(Order = 4, Alias = "shortNames")]
-    public virtual List<string>? ShortNames { get; set; }
+    public virtual EquatableList<string>? ShortNames { get; set; }
 
 }

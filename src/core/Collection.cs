@@ -4,7 +4,7 @@
 /// Represents a collection of objects
 /// </summary>
 [DataContract]
-public class Collection
+public record Collection
     : ICollection
 {
 
@@ -32,7 +32,7 @@ public class Collection
         this.ApiVersion = apiVersion;
         this.Kind = $"{kind}{KindSuffix}";
         this.Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
-        this.Items = items?.ToList();
+        this.Items = items?.WithValueSemantics();
     }
 
     /// <summary>
@@ -62,7 +62,7 @@ public class Collection
 
     /// <inheritdoc/>
     [DataMember(Order = -996, Name = "items", IsRequired = true), JsonPropertyOrder(-996), JsonPropertyName("items"), YamlMember(Order = -996, Alias = "items")]
-    public virtual IList<object>? Items { get; set; }
+    public virtual EquatableList<object>? Items { get; set; }
 
     /// <inheritdoc/>
     [DataMember(Order = 999, Name = "extensionData"), JsonExtensionData]
@@ -95,7 +95,7 @@ public class Collection<TObject>
         this.ApiVersion = obj.ApiVersion;
         this.Kind = $"{obj.Kind}{Collection.KindSuffix}";
         this.Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
-        this.Items = items?.ToList();
+        this.Items = items?.WithValueSemantics();
     }
 
     /// <summary>
@@ -125,9 +125,9 @@ public class Collection<TObject>
 
     /// <inheritdoc/>
     [DataMember(Order = -996, Name = "items", IsRequired = true), JsonPropertyOrder(-996), JsonPropertyName("items"), YamlMember(Order = -996, Alias = "items")]
-    public virtual IList<TObject>? Items { get; set; }
+    public virtual EquatableList<TObject>? Items { get; set; }
 
-    IList<object>? ICollection.Items => this.Items?.OfType<object>().ToList();
+    EquatableList<object>? ICollection.Items => this.Items?.OfType<object>().WithValueSemantics();
 
     /// <inheritdoc/>
     [DataMember(Order = 999, Name = "extensionData"), JsonExtensionData]

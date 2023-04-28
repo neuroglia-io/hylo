@@ -4,7 +4,7 @@
 /// Represents the definition of a resource type
 /// </summary>
 [DataContract]
-public class ResourceDefinition
+public record ResourceDefinition
     : Resource<ResourceDefinitionSpec>, IResourceDefinition
 {
 
@@ -33,7 +33,7 @@ public class ResourceDefinition
     /// <summary>
     /// Initializes a new <see cref="ResourceDefinition"/>
     /// </summary>
-    public ResourceDefinition() : base(new (ResourceGroup, ResourceVersion, ResourcePlural, ResourceKind)) { }
+    public ResourceDefinition() : base(new ResourceDefinitionInfo(ResourceGroup, ResourceVersion, ResourcePlural, ResourceKind)) { }
 
     /// <summary>
     /// Initializes a new <see cref="ResourceDefinition"/>

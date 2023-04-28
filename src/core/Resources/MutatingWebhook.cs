@@ -6,7 +6,7 @@ namespace Hylo.Resources;
 /// Represents a webhook used to validate <see cref="Resource"/>s
 /// </summary>
 [DataContract]
-public class MutatingWebhook
+public record MutatingWebhook
     : Resource<MutatingWebhookSpec>
 {
 

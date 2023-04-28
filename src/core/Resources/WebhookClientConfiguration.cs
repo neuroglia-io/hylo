@@ -4,7 +4,7 @@
 /// Represents the object used to configure a webhook client
 /// </summary>
 [DataContract]
-public class WebhookClientConfiguration
+public record WebhookClientConfiguration
 {
 
     /// <summary>

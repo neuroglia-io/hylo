@@ -6,7 +6,7 @@ namespace Hylo;
 /// Represents the object used to configure a webhook-based <see cref="ResourceConversion"/>
 /// </summary>
 [DataContract]
-public class V1WebhookResourceConversion
+public record WebhookResourceConversion
 {
 
     /// <summary>
@@ -14,7 +14,7 @@ public class V1WebhookResourceConversion
     /// </summary>
     [Required]
     [DataMember(Name = "supportedVersions", Order = 1), JsonPropertyOrder(1), JsonPropertyName("supportedVersions"), YamlMember(Order = 1, Alias = "supportedVersions")]
-    public virtual List<string>? SupportedVersions { get; set; }
+    public virtual EquatableList<string>? SupportedVersions { get; set; }
 
     /// <summary>
     /// Gets the object used to configure the webhook to call

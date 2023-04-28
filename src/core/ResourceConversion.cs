@@ -4,7 +4,7 @@
 /// Represents the object used to configure the conversion of related <see cref="IResource"/>s to different <see cref="IResourceDefinition"/> versions
 /// </summary>
 [DataContract]
-public class ResourceConversion
+public record ResourceConversion
 {
 
     /// <summary>
@@ -16,7 +16,7 @@ public class ResourceConversion
     /// Initializes a new <see cref="ResourceConversion"/>
     /// </summary>
     /// <param name="webhook">The object used to configure the webhook to invoke</param>
-    public ResourceConversion(V1WebhookResourceConversion webhook)
+    public ResourceConversion(WebhookResourceConversion webhook)
     {
         this.Strategy = ConversionStrategy.Webhook;
         this.Webhook = webhook ?? throw new ArgumentNullException(nameof(webhook));
@@ -31,7 +31,7 @@ public class ResourceConversion
     /// <summary>
     /// Gets the object used to configure the webhook to invoke when strategy has been set to 'webhook'
     /// </summary>
-    [DataMember(Name = "webhook", Order = 2), JsonPropertyOrder(2), JsonPropertyName("webhook"), YamlMember(Order = 2, Alias = "strategy")]
-    public virtual V1WebhookResourceConversion? Webhook { get; set; }
+    [DataMember(Name = "webhook", Order = 2), JsonPropertyOrder(2), JsonPropertyName("webhook"), YamlMember(Order = 2, Alias = "webhook")]
+    public virtual WebhookResourceConversion? Webhook { get; set; }
 
 }

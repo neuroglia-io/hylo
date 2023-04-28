@@ -4,7 +4,7 @@
 /// Represents the definition of validating webhooks
 /// </summary>
 [DataContract]
-public class MutatingWebhookDefinition
+public record MutatingWebhookDefinition
     : ResourceDefinition
 {
 
@@ -36,6 +36,6 @@ public class MutatingWebhookDefinition
     /// <summary>
     /// Initializes a new <see cref="ValidatingWebhookDefinition"/>
     /// </summary>
-    public MutatingWebhookDefinition() : base(new(ResourceScope.Cluster, ResourceGroup, new(ResourceSingular, ResourcePlural, ResourceKind, ResourceShortNames), new ResourceDefinitionVersion(ResourceVersion, new()))) { }
+    public MutatingWebhookDefinition() : base(new ResourceDefinitionSpec(ResourceScope.Cluster, ResourceGroup, new(ResourceSingular, ResourcePlural, ResourceKind, ResourceShortNames), new ResourceDefinitionVersion(ResourceVersion, new()))) { }
 
 }

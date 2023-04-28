@@ -4,7 +4,7 @@
 /// Represents the base class of all cloud stream resources
 /// </summary>
 [DataContract]
-public class Resource
+public record Resource
     : IResource
 {
 
@@ -76,7 +76,7 @@ public class Resource
 /// </summary>
 /// <typeparam name="TSpec">The type of the resource's spec</typeparam>
 [DataContract]
-public class Resource<TSpec>
+public record Resource<TSpec>
     : Resource, IResource<TSpec>
     where TSpec : class, new()
 {
@@ -120,7 +120,7 @@ public class Resource<TSpec>
 /// <typeparam name="TSpec">The type of the resource's spec</typeparam>
 /// <typeparam name="TStatus">The type of the resource's status</typeparam>
 [DataContract]
-public class Resource<TSpec, TStatus>
+public record Resource<TSpec, TStatus>
     : Resource<TSpec>, IResource<TSpec, TStatus>
     where TSpec : class, new()
     where TStatus : class, new()

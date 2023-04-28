@@ -4,7 +4,7 @@
 /// Represents an object used to reference a resource
 /// </summary>
 [DataContract]
-public class ResourceReference
+public record ResourceReference
     : IResourceReference
 {
 

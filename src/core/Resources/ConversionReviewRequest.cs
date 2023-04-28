@@ -4,7 +4,7 @@
 /// Represents a request to convert the version of a resource
 /// </summary>
 [DataContract]
-public class ConversionReviewRequest
+public record ConversionReviewRequest
 {
 
     /// <summary>

@@ -4,7 +4,7 @@
 /// Represents the definition of resource namespaces
 /// </summary>
 [DataContract]
-public class NamespaceDefinition
+public record NamespaceDefinition
     : ResourceDefinition
 {
 
@@ -36,6 +36,6 @@ public class NamespaceDefinition
     /// <summary>
     /// Initializes a new <see cref="NamespaceDefinition"/>
     /// </summary>
-    public NamespaceDefinition() : base(new(ResourceScope.Cluster, ResourceGroup, new(ResourceSingular, ResourcePlural, ResourceKind, ResourceShortNames), new ResourceDefinitionVersion(ResourceVersion, new()) { Served = true, Storage = true })) { }
+    public NamespaceDefinition() : base(new ResourceDefinitionSpec(ResourceScope.Cluster, ResourceGroup, new(ResourceSingular, ResourcePlural, ResourceKind, ResourceShortNames), new ResourceDefinitionVersion(ResourceVersion, new()) { Served = true, Storage = true })) { }
 
 }

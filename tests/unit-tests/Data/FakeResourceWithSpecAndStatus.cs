@@ -3,7 +3,7 @@
 namespace Hylo.UnitTests.Data;
 
 [DataContract]
-internal class FakeResourceWithSpecAndStatus
+internal record FakeResourceWithSpecAndStatus
     : Resource<FakeResourceSpec, FakeResourceStatus>
 {
 

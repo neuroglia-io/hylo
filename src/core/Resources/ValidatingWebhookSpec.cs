@@ -4,7 +4,7 @@
 /// Represents the specification of a <see cref="ValidatingWebhook"/>'s 
 /// </summary>
 [DataContract]
-public class ValidatingWebhookSpec
+public record ValidatingWebhookSpec
 {
 
     /// <summary>
@@ -21,7 +21,7 @@ public class ValidatingWebhookSpec
     public ValidatingWebhookSpec(WebhookClientConfiguration client, IEnumerable<RuleWithOperation>? resources = null, long? priority = null)
     {
         this.Client = client ?? throw new ArgumentNullException(nameof(client));
-        this.Resources = resources?.ToList();
+        this.Resources = resources?.WithValueSemantics();
         this.Priority = priority;
     }
 
@@ -36,7 +36,7 @@ public class ValidatingWebhookSpec
     /// Gets a <see cref="List{T}"/> containing the filters used to configure when to call the <see cref="ValidatingWebhook"/>
     /// </summary>
     [DataMember(Name = "resources", Order = 2), JsonPropertyOrder(2), JsonPropertyName("resources"), YamlMember(Order = 2, Alias = "resources")]
-    public virtual List<RuleWithOperation>? Resources { get; set; }
+    public virtual EquatableList<RuleWithOperation>? Resources { get; set; }
 
     /// <summary>
     /// Gets the <see cref="ValidatingWebhook"/>'s priority

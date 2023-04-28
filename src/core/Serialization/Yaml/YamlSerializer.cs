@@ -29,6 +29,7 @@ public static partial class Serializer
                 .WithTypeConverter(new JsonPointerTypeConverter())
                 .WithTypeConverter(new StringEnumSerializer())
                 .WithTypeConverter(new UriTypeSerializer())
+                .WithTypeConverter(new DateTimeOffsetSerializer())
                 .Build();
             Deserializer = new DeserializerBuilder()
                 .IgnoreUnmatchedProperties()
@@ -62,6 +63,23 @@ public static partial class Serializer
         /// <param name="graph">The object to serialized</param>
         /// <returns>The YAML of the serialized object</returns>
         public static void Serialize<T>(TextWriter writer, T graph) => Serializer.Serialize(writer, graph!);
+
+        /// <summary>
+        /// Serializes the specified object to JSON
+        /// </summary>
+        /// <param name="graph">The object to serialized</param>
+        /// <param name="inputType">The type of object to serialize</param>
+        /// <returns>The JSON of the serialized object</returns>
+        public static string Serialize(object graph, Type inputType)
+        {
+            using var stream = new MemoryStream();
+            using var streamWriter = new StreamWriter(stream);
+            Serializer.Serialize(streamWriter, graph, inputType);
+            streamWriter.Flush();
+            stream.Position = 0;
+            using var streamReader = new StreamReader(stream);
+            return streamReader.ReadToEnd();
+        }
 
         /// <summary>
         /// Deserializes the specified YAML input
