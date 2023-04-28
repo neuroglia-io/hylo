@@ -153,6 +153,42 @@ public static class IRepositoryExtensions
     }
 
     /// <summary>
+    /// Monitors changes to the specified <see cref="IResource"/>
+    /// </summary>
+    /// <param name="repository">The extended <see cref="IRepository"/></param>
+    /// <param name="group">The API group the <see cref="IResource"/> to monitor belongs to</param>
+    /// <param name="version">The version of the <see cref="IResource"/> to monitor</param>
+    /// <param name="plural">The plural form of the type of the <see cref="IResource"/> to monitor</param>
+    /// <param name="name">The name of the <see cref="IResource"/> to monitor</param>
+    /// <param name="namespace">The namespace the <see cref="IResource"/> to monitor belongs to, if any</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    /// <returns>A new <see cref="IResourceMonitor"/></returns>
+    public static async Task<IResourceMonitor> MonitorAsync(this IRepository repository, string group, string version, string plural, string name, string? @namespace = null, CancellationToken cancellationToken = default)
+    {
+        var resource = await repository.GetAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(new ResourceReference(new(group, version, plural), name, @namespace)));
+        var watch = await repository.WatchAsync(group, version, plural, @namespace, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return new ResourceMonitor(watch, resource);
+    }
+
+    /// <summary>
+    /// Monitors changes to the specified <see cref="IResource"/>
+    /// </summary>
+    /// <typeparam name="TResource">The type of the <see cref="IResource"/> to monitor</typeparam>
+    /// <param name="repository">The extended <see cref="IRepository"/></param>
+    /// <param name="name">The name of the <see cref="IResource"/> to monitor</param>
+    /// <param name="namespace">The namespace the <see cref="IResource"/> to monitor belongs to, if any</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    /// <returns>A new <see cref="IResourceMonitor"/></returns>
+    public static async Task<IResourceMonitor<TResource>> MonitorAsync<TResource>(this IRepository repository, string name, string? @namespace = null, CancellationToken cancellationToken = default)
+        where TResource : class, IResource, new()
+    {
+        var resourceReference = new ResourceReference<TResource>(name, @namespace);
+        var resource = await repository.GetAsync<TResource>(name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceReference));
+        var watch = await repository.WatchAsync<TResource>(@namespace, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return new ResourceMonitor<TResource>(watch, resource);
+    }
+
+    /// <summary>
     /// Patches the specified <see cref="IResource"/>
     /// </summary>
     /// <typeparam name="TResource">The type of the <see cref="IResource"/> to patch</typeparam>
