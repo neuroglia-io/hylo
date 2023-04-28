@@ -14,7 +14,7 @@ public record WebhookResourceConversion
     /// </summary>
     [Required]
     [DataMember(Name = "supportedVersions", Order = 1), JsonPropertyOrder(1), JsonPropertyName("supportedVersions"), YamlMember(Order = 1, Alias = "supportedVersions")]
-    public virtual List<string>? SupportedVersions { get; set; }
+    public virtual EquatableList<string>? SupportedVersions { get; set; }
 
     /// <summary>
     /// Gets the object used to configure the webhook to call

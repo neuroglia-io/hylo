@@ -23,10 +23,10 @@ public record RuleWithOperation
     public RuleWithOperation(string? scope, List<string>? apiGroups, List<string>? apiVersions, List<string>? kinds, List<string>? operations)
     {
         this.Scope = scope;
-        this.ApiGroups = apiGroups;
-        this.ApiVersions = apiVersions;
-        this.Kinds = kinds;
-        this.Operations = operations;
+        this.ApiGroups = apiGroups?.WithValueSemantics();
+        this.ApiVersions = apiVersions?.WithValueSemantics();
+        this.Kinds = kinds?.WithValueSemantics();
+        this.Operations = operations?.WithValueSemantics();
     }
 
     /// <summary>
@@ -39,24 +39,24 @@ public record RuleWithOperation
     /// Gets a <see cref="List{T}"/> containing expressions used to filter <see cref="IResource"/>s by api groups
     /// </summary>
     [DataMember(Name = "apiGroups", Order = 2), JsonPropertyOrder(2), JsonPropertyName("apiGroups"), YamlMember(Order = 2, Alias = "apiGroups")]
-    public virtual List<string>? ApiGroups { get; set; }
+    public virtual EquatableList<string>? ApiGroups { get; set; }
 
     /// <summary>
     /// Gets a <see cref="List{T}"/> containing expressions used to filter <see cref="IResource"/>s by api versions
     /// </summary>
     [DataMember(Name = "apiVersions", Order = 3), JsonPropertyOrder(3), JsonPropertyName("apiVersions"), YamlMember(Order = 3, Alias = "apiVersions")]
-    public virtual List<string>? ApiVersions { get; set; }
+    public virtual EquatableList<string>? ApiVersions { get; set; }
 
     /// <summary>
     /// Gets a <see cref="List{T}"/> containing expressions used to filter <see cref="IResource"/>s by kind
     /// </summary>
     [DataMember(Name = "kinds", Order = 4), JsonPropertyOrder(4), JsonPropertyName("kinds"), YamlMember(Order = 4, Alias = "kinds")]
-    public virtual List<string>? Kinds { get; set; }
+    public virtual EquatableList<string>? Kinds { get; set; }
 
     /// <summary>
     /// Gets a <see cref="List{T}"/> containing expressions used to filter <see cref="IResource"/>s by operations
     /// </summary>
     [DataMember(Name = "operations", Order = 5), JsonPropertyOrder(5), JsonPropertyName("operations"), YamlMember(Order = 5, Alias = "operations")]
-    public virtual List<string>? Operations { get; set; }
+    public virtual EquatableList<string>? Operations { get; set; }
 
 }

@@ -31,7 +31,7 @@ public record ResourceConversion
     /// <summary>
     /// Gets the object used to configure the webhook to invoke when strategy has been set to 'webhook'
     /// </summary>
-    [DataMember(Name = "webhook", Order = 2), JsonPropertyOrder(2), JsonPropertyName("webhook"), YamlMember(Order = 2, Alias = "strategy")]
+    [DataMember(Name = "webhook", Order = 2), JsonPropertyOrder(2), JsonPropertyName("webhook"), YamlMember(Order = 2, Alias = "webhook")]
     public virtual WebhookResourceConversion? Webhook { get; set; }
 
 }

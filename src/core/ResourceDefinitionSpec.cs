@@ -26,7 +26,7 @@ public record ResourceDefinitionSpec
         this.Scope = scope;
         this.Group = group;
         this.Names = names ?? throw new ArgumentNullException(nameof(names));
-        this.Versions = versions.ToList();
+        this.Versions = new(versions.ToList());
     }
 
     /// <summary>
@@ -55,7 +55,7 @@ public record ResourceDefinitionSpec
     /// </summary>
     [Required, MinLength(1)]
     [DataMember(Order = 4, Name = "versions", IsRequired = true), JsonPropertyOrder(4), JsonPropertyName("versions"), YamlMember(Order = 4, Alias = "versions")]
-    public virtual List<ResourceDefinitionVersion> Versions { get; set; } = null!;
+    public virtual EquatableList<ResourceDefinitionVersion> Versions { get; set; } = null!;
 
     /// <summary>
     /// Gets an object used to configure the way versions of the resource definition should be converted

@@ -5,7 +5,7 @@ using YamlDotNet.Serialization;
 namespace Hylo.UnitTests.Data;
 
 [DataContract]
-internal class FakeResourceSpec
+internal record FakeResourceSpec
 {
 
     [DataMember(Order = 1, Name = "fakeProperty1"), JsonPropertyOrder(1), JsonPropertyName("fakeProperty1"), YamlMember(Order = 1, Alias = "fakeProperty1")]

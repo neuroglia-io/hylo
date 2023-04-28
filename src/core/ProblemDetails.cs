@@ -34,7 +34,7 @@ public record ProblemDetails
         this.Status = status;
         this.Detail = detail;
         this.Instance = instance;
-        this.Errors = errors;
+        this.Errors = errors?.WithValueSemantics();
         this.ExtensionData = extensionData;
     }
 
@@ -72,7 +72,7 @@ public record ProblemDetails
     /// Gets/sets an optional collection containing error messages mapped per error code
     /// </summary>
     [DataMember(Order = 6, Name = "errors"), JsonPropertyName("errors"), YamlMember(Alias = "errors")]
-    public virtual IEnumerable<KeyValuePair<string, string[]>>? Errors { get; set; }
+    public virtual EquatableList<KeyValuePair<string, string[]>>? Errors { get; set; }
 
     /// <summary>
     /// Gets/sets a mapping containing problem details extension data, if any

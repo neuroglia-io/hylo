@@ -21,7 +21,7 @@ public record MutatingWebhookSpec
     public MutatingWebhookSpec(WebhookClientConfiguration client, IEnumerable<RuleWithOperation>? resources = null, int? priority = null)
     {
         this.Client = client ?? throw new ArgumentNullException(nameof(client));
-        this.Resources = resources?.ToList();
+        this.Resources = resources?.WithValueSemantics();
         this.Priority = priority;
     }
 
@@ -36,7 +36,7 @@ public record MutatingWebhookSpec
     /// Gets a <see cref="List{T}"/> containing the filters used to configure when to call the <see cref="MutatingWebhook"/>
     /// </summary>
     [DataMember(Name = "resources", Order = 2), JsonPropertyOrder(2), JsonPropertyName("resources"), YamlMember(Order = 2, Alias = "resources")]
-    public virtual List<RuleWithOperation>? Resources { get; set; }
+    public virtual EquatableList<RuleWithOperation>? Resources { get; set; }
 
     /// <summary>
     /// Gets the <see cref="MutatingWebhook"/>'s priority

@@ -44,7 +44,7 @@ public record UserInfo
     /// <summary>
     /// Gets/sets a key/comma-separated values mapping of the claims used to describe the authenticated user
     /// </summary>
-    [DataMember(Order = 3, Name = "authenticationType", IsRequired = true), JsonPropertyOrder(3), JsonPropertyName("authenticationType"), YamlMember(Order = 3, Alias = "authenticationType")]
+    [DataMember(Order = 3, Name = "claims", IsRequired = true), JsonPropertyOrder(3), JsonPropertyName("claims"), YamlMember(Order = 3, Alias = "claims")]
     public virtual IDictionary<string, string>? Claims { get; set; }
 
 }

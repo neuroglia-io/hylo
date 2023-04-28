@@ -24,7 +24,7 @@ public record LabelSelector
         this.Operator = @operator;
         if (values == null) return;
         if (values.Length == 1 && @operator == LabelSelectionOperator.Equals || @operator == LabelSelectionOperator.NotEquals) this.Value = values[0];
-        else this.Values = values.ToList();
+        else this.Values = values.WithValueSemantics();
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ public record LabelSelector
     /// Gets/sets a list containing expected values, if any
     /// </summary>
     [DataMember(Order = 4, Name = "values", IsRequired = true), JsonPropertyOrder(4), JsonPropertyName("values"), YamlMember(Order = 4, Alias = "values")]
-    public virtual List<string>? Values { get; set; }
+    public virtual EquatableList<string>? Values { get; set; }
 
     /// <inheritdoc/>
     public override string ToString()
