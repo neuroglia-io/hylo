@@ -22,15 +22,7 @@ public class YamlSerializationTests
             var serializedResource = faker.Generate(resourceType);
             var yaml = Serializer.Yaml.Serialize(serializedResource, resourceType);
             var deserializedResource = Serializer.Yaml.Deserialize(yaml, resourceType);
-            try
-            {
-                deserializedResource.Should().BeEquivalentTo(serializedResource);
-            }
-            catch(Exception ex)
-            {
-                var yaml1 = Serializer.Yaml.Serialize(serializedResource, resourceType);
-                throw;
-            }
+            deserializedResource.Should().BeEquivalentTo(serializedResource);
         }
     }
 

@@ -18,16 +18,7 @@ public class JsonSerializationTests
             var serializedResource = faker.Generate(resourceType);
             var json = Serializer.Json.Serialize(serializedResource, resourceType);
             var deserializedResource = Serializer.Json.Deserialize(json, resourceType);
-            try
-            {
-                deserializedResource.Should().BeEquivalentTo(serializedResource);
-            }
-            catch (Exception ex)
-            {
-                var json1 = Serializer.Json.Serialize(serializedResource, resourceType);
-                throw;
-            }
-
+            deserializedResource.Should().BeEquivalentTo(serializedResource);
         }
     }
 

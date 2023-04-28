@@ -26,7 +26,7 @@ public record ResourceMetadata
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
         if (name.Split('.').Length == 1 || !name.Split('.').All(ObjectNamingConvention.Current.IsValidResourceName)) ObjectNamingConvention.Current.EnsureIsValidResourceName(name);
         if (@namespace != null) ObjectNamingConvention.Current.EnsureIsValidResourceName(@namespace);
-        if (labels != null) labels.Keys.ToList().ForEach(ObjectNamingConvention.Current.EnsureIsValidLabelName);
+        labels?.Keys.ToList().ForEach(ObjectNamingConvention.Current.EnsureIsValidLabelName);
         this.Name = name;
         this.Namespace = @namespace;
         this.CreationTimestamp = DateTimeOffset.Now;

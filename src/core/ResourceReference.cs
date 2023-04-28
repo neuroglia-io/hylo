@@ -47,3 +47,43 @@ public record ResourceReference
     public override string ToString() => string.IsNullOrWhiteSpace(this.Namespace) ? $"{this.Definition}/{this.Name}" : $"{this.Definition.Group}/{this.Definition.Version}/namespaces/{this.Namespace}/{this.Definition.Plural}/{this.Name}";
 
 }
+
+/// <summary>
+/// Represents an object used to reference a resource
+/// </summary>
+/// <typeparam name="TResource">The type of the referenced resource</typeparam>
+[DataContract]
+public record ResourceReference<TResource>
+    : ResourceReference
+    where TResource : class, IResource, new()
+{
+
+    /// <summary>
+    /// Initializes a new <see cref="ResourceReference{TResource}"/>
+    /// </summary>
+    public ResourceReference() { }
+
+    /// <summary>
+    /// Initializes a new <see cref="ResourceReference{TResource}"/>
+    /// </summary>
+    /// <param name="name">The name of the referenced resource</param>
+    /// <param name="namespace">The namespace the referenced resource belongs to, if any</param>
+    public ResourceReference(string name, string? @namespace = null)
+        : base(DefinitionReference, name, @namespace)
+    {
+
+    }
+
+    /// <summary>
+    /// Gets a new <see cref="ResourceDefinitionReference"/> that describes the referenced resource's definition
+    /// </summary>
+    public static ResourceDefinitionReference DefinitionReference
+    {
+        get
+        {
+            var resource = new TResource();
+            return new(resource.Definition.Group, resource.Definition.Version, resource.Definition.Plural);
+        }
+    }
+
+}
