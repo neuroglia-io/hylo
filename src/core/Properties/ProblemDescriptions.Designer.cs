@@ -124,6 +124,15 @@ namespace Hylo.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to update the resource &apos;{resource}&apos; due to an optimistic concurrency error: the resource&apos;s target version &apos;{targetVersion}&apos; differs from the actual version &apos;{actualVersion}&apos;.
+        /// </summary>
+        public static string ResourceOptimisticConcurrencyCheckFailed {
+            get {
+                return ResourceManager.GetString("ResourceOptimisticConcurrencyCheckFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to validate the resource against schema &apos;{group}/{version}/{plural}&apos;. Please check errors for further details..
         /// </summary>
         public static string ResourceSchemaValidationFailed {

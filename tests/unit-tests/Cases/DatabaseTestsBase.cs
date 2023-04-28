@@ -1,18 +1,20 @@
-﻿using Hylo.Infrastructure.Services;
+﻿using AutoBogus;
+using Hylo.Infrastructure.Services;
+using Hylo.Resources;
 using Hylo.UnitTests.Services;
 using Microsoft.Extensions.Configuration;
 
 namespace Hylo.UnitTests.Cases;
 
 [TestCaseOrderer("Xunit.PriorityTestCaseOrderer", "Hylo.UnitTests")]
-public abstract class RepositoryTestsBase
+public abstract class DatabaseTestsBase
     : IDisposable
 {
 
     internal const string FakeNamespaceName = "fake-namespace";
     bool _disposed;
 
-    protected RepositoryTestsBase(Action<IRepositoryOptionsBuilder> setup)
+    protected DatabaseTestsBase(Action<IRepositoryOptionsBuilder> setup)
     {
         this.RepositoryBuilder = new(setup);
     }
@@ -377,6 +379,34 @@ public abstract class RepositoryTestsBase
         //assert
         deletedResource.Should().NotBeNull();
         (await resources.GetAsync<FakeResourceWithSpecAndStatus>(resource.GetName(), resource.GetNamespace())).Should().BeNull();
+    }
+
+    [Fact, Priority(13)]
+    public async Task Monitor_Resource_Should_Work()
+    {
+        //arrange
+        var @namespace = FakeNamespaceName;
+        using var resourceRepository = await this.RepositoryBuilder
+             .WithDefinition<FakeResourceWithSpecAndStatusDefinition>()
+             .WithResource(new Namespace(@namespace))
+             .BuildAsync()
+             .ConfigureAwait(false);
+        long updateCount = 0;
+        var resource = await resourceRepository.AddAsync(FakeResourceWithSpecAndStatus.Create(@namespace)).ConfigureAwait(false);
+        var updatedResource1 = resource with { Spec = resource.Spec with { FakeProperty1 = AutoFaker.Generate<string>() } };
+        var updatedResource2 = updatedResource1 with { Spec = resource.Spec with { FakeProperty2 = AutoFaker.Generate<long>() } };
+
+        //act
+        await using var monitor = await resourceRepository.MonitorAsync<FakeResourceWithSpecAndStatus>(resource.GetName(), @namespace).ConfigureAwait(false);
+        monitor.Subscribe(_ => Interlocked.Increment(ref updateCount));
+        var storedResource1 = await resourceRepository.ReplaceAsync(updatedResource1).ConfigureAwait(false);
+        var storedResource2 = await resourceRepository.ReplaceAsync(updatedResource2 with { Metadata = updatedResource2.Metadata with { ResourceVersion = storedResource1.Metadata.ResourceVersion } }).ConfigureAwait(false);
+        await Task.Delay(10);
+
+        //assert
+        updateCount.Should().Be(Interlocked.Read(ref updateCount));
+        storedResource1.Spec.Should().Be(updatedResource1.Spec);
+        storedResource2.Spec.Should().Be(updatedResource2.Spec);
     }
 
     protected virtual void Dispose(bool disposing)

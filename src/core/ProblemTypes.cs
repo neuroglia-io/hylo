@@ -64,6 +64,11 @@ public static class ProblemTypes
         /// Gets the <see cref="Uri"/> that references a problem due to the '.metadata.resourceVersion' property not being set in the context of a replace operation
         /// </summary>
         public static readonly Uri ResourceVersionRequired = new(BaseUri, "resource-version-required");
+        /// <summary>
+        /// Gets the <see cref="Uri"/> that describes a problem due to the failure of an optimistic concurrency check on a resource
+        /// </summary>
+        public static readonly Uri OptimisticConcurrencyCheckFailed = new(BaseUri, "concurrency-check-failed");
+        
     }
 
 }

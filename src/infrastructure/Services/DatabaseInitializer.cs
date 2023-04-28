@@ -4,7 +4,7 @@
 /// Represents the default implementation of the <see cref="IDatabaseInitializer"/> interface
 /// </summary>
 public class DatabaseInitializer
-    : BackgroundService, IDatabaseInitializer
+    : IHostedService, IDatabaseInitializer
 {
 
     /// <summary>
@@ -22,9 +22,15 @@ public class DatabaseInitializer
     protected IDatabase Database { get; }
 
     /// <inheritdoc/>
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    public virtual Task StartAsync(CancellationToken stoppingToken)
     {
         return this.InitializeAsync(stoppingToken);
+    }
+
+    /// <inheritdoc/>
+    public virtual Task StopAsync(CancellationToken stoppingToken)
+    {
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc/>

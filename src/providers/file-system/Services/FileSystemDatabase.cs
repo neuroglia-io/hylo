@@ -297,7 +297,8 @@ public class FileSystemDatabase
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
 
-        var resource = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new NullReferenceException($"Failed to find the specified resource '{group}/{version}/{name}'"); //todo: replace with specialized exception
+        var resourceRef = new ResourceReference(new(group, version, plural), name, @namespace);
+        var resource = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceRef));
         File.Delete(this.ResolveResourcePath(group, version, plural, @namespace, name)); //todo: try until file is not locked anymore
         return resource;
     }

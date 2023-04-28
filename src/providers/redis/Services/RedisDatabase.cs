@@ -186,7 +186,7 @@ public class RedisDatabase
 
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceReference));
         var updatedResource = jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>()!)!;
-        if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new Exception("Conflict"); //todo: urgent: replace with proper exception
+        if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new HyloException(ProblemDetails.ResourceOptimisticConcurrencyCheckFailed(resourceReference, resource.Metadata.ResourceVersion, originalResource.Metadata.ResourceVersion));
 
         return await this.WriteResourceAsync(group, version, plural, updatedResource, true, ResourceWatchEventType.Updated, cancellationToken).ConfigureAwait(false);
     }
@@ -227,7 +227,7 @@ public class RedisDatabase
 
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified((ResourceReference)originalResource!));
         var updatedResource = jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>()!)!;
-        if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new Exception("Conflict"); //todo: urgent: replace with proper exception
+        if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new HyloException(ProblemDetails.ResourceOptimisticConcurrencyCheckFailed(resourceReference, resource.Metadata.ResourceVersion, originalResource.Metadata.ResourceVersion));
 
         return await this.WriteResourceAsync(group, version, plural, updatedResource, false, ResourceWatchEventType.Updated, cancellationToken).ConfigureAwait(false); ;
     }

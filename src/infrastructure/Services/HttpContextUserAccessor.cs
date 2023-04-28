@@ -14,9 +14,9 @@ public class HttpContextUserAccessor
     /// Initializes a new <see cref="HttpContextUserAccessor"/>
     /// </summary>
     /// <param name="httpContextAccessor">The service used to access the current <see cref="Microsoft.AspNetCore.Http.HttpContext"/></param>
-    public HttpContextUserAccessor(IHttpContextAccessor httpContextAccessor)
+    public HttpContextUserAccessor(IHttpContextAccessor? httpContextAccessor = null)
     {
-        this.HttpContext = httpContextAccessor.HttpContext;
+        this.HttpContext = httpContextAccessor?.HttpContext;
     }
 
     /// <summary>

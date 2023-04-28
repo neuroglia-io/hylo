@@ -196,7 +196,7 @@ public class MongoDatabase
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceReference));
 
         var updatedResource = jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>()!)!;
-        if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new Exception("Conflict"); //todo: urgent: replace with proper exception
+        if (originalResource.Metadata.ResourceVersion != resource.Metadata.ResourceVersion) throw new HyloException(ProblemDetails.ResourceOptimisticConcurrencyCheckFailed(resourceReference, resource.Metadata.ResourceVersion, originalResource.Metadata.ResourceVersion));
 
         return await this.WriteResourceAsync(updatedResource, group, version, plural, true, ResourceWatchEventType.Updated, cancellationToken).ConfigureAwait(false);
     }
@@ -235,7 +235,7 @@ public class MongoDatabase
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceReference));
 
         var updatedResource = jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>())!;
-        if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new Exception("Conflict"); //todo: urgent: replace with proper exception
+        if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new HyloException(ProblemDetails.ResourceOptimisticConcurrencyCheckFailed(resourceReference, resource.Metadata.ResourceVersion, originalResource.Metadata.ResourceVersion));
 
         return await this.WriteResourceAsync(updatedResource, group, version, plural, false, ResourceWatchEventType.Updated, cancellationToken).ConfigureAwait(false); ;
     }
