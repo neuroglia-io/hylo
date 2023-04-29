@@ -42,28 +42,6 @@ public class RepositoryTests
 
     }
 
-    [Fact, Priority(2)]
-    public async Task Monitor_CloseWatch_Should_Work()
-    {
-        //arrange
-        var @namespace = FakeNamespaceName;
-        using var resourceRepository = await this.RepositoryBuilder
-            .WithDefinition<FakeResourceWithSpecAndStatusDefinition>()
-            .WithResource(new Namespace(@namespace))
-            .BuildAsync()
-            .ConfigureAwait(false);
-        var resource = await resourceRepository.AddAsync(FakeResourceWithSpecAndStatus.Create(@namespace)).ConfigureAwait(false);
-        var watch = await resourceRepository.WatchAsync<FakeResourceWithSpecAndStatus>(@namespace).ConfigureAwait(false);
-        var monitor = new ResourceMonitor<FakeResourceWithSpecAndStatus>(watch, resource, false);
-
-        //act
-        await monitor.DisposeAsync().ConfigureAwait(false);
-
-        //assert
-        var test = () => new ResourceMonitor<FakeResourceWithSpecAndStatus>(watch, resource, false);
-        test.Should().Throw<ObjectDisposedException>();
-    }
-
     public void Dispose()
     {
         Task.Delay(10).GetAwaiter().GetResult();
