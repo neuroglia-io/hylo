@@ -4,7 +4,7 @@ using Hylo.UnitTests.Containers;
 namespace Hylo.UnitTests.Cases.Providers;
 
 public class MongoDatabaseProviderTests
-    : RepositoryTestsBase
+    : DatabaseTestsBase
 {
 
     public MongoDatabaseProviderTests()

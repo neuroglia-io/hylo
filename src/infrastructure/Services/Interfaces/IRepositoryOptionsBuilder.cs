@@ -80,6 +80,14 @@ public interface IRepositoryOptionsBuilder
         where TAccessor : class, IUserAccessor;
 
     /// <summary>
+    /// Configures the <see cref="IRepositoryOptionsBuilder"/> to used the specified type of <see cref="IDatabaseInitializer"/>
+    /// </summary>
+    /// <typeparam name="TInitializer">The type of <see cref="IDatabaseInitializer"/> to use</typeparam>
+    /// <returns>The configured <see cref="IRepositoryOptionsBuilder"/></returns>
+    IRepositoryOptionsBuilder UseDatabaseInitializer<TInitializer>()
+        where TInitializer : class, IDatabaseInitializer;
+
+    /// <summary>
     /// Configures the <see cref="IRepositoryOptionsBuilder"/> to used the specified type of <see cref="IUserInfoProvider"/>
     /// </summary>
     /// <typeparam name="TProvider">The type of <see cref="IUserInfoProvider"/> to use</typeparam>

@@ -3,7 +3,7 @@
 namespace Hylo.UnitTests.Cases.Providers;
 
 public class FileSystemDatabaseProviderTests
-    : RepositoryTestsBase
+    : DatabaseTestsBase
 {
 
     static readonly string ConnectionString = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToShortString());

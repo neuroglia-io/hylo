@@ -2,7 +2,6 @@
 using Hylo.Providers.Kubernetes.Services;
 using k8s.Models;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace Hylo.Providers.Kubernetes;
 
@@ -21,7 +20,6 @@ public static class IRepositoryOptionsBuilderExtensions
     {
         builder.Services.AddKubernetesClient();
         builder.Services.AddSingleton<KubernetesDatabase>();
-        builder.Services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<KubernetesDatabase>());
         builder.UseDefinitionsKind(V1CustomResourceDefinition.KubeGroup, V1CustomResourceDefinition.KubeApiVersion, V1CustomResourceDefinition.KubePluralName, V1CustomResourceDefinition.KubeKind);
         builder.UseNamespacesKind(V1Namespace.KubeGroup, V1Namespace.KubeApiVersion, V1Namespace.KubePluralName, V1Namespace.KubeKind);
         builder.UseDatabaseProvider<KubernetesDatabaseProvider>();

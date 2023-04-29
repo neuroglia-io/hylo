@@ -8,6 +8,13 @@ public interface IDatabase
 {
 
     /// <summary>
+    /// Initializes the <see cref="IDatabase"/>
+    /// </summary>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    /// <returns>A boolean indicating whether or not the <see cref="IDatabase"/> has been initialized. True means that the <see cref="IDatabase"/> did not exist and has been initialized as expected</returns>
+    Task<bool> InitializeAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Creates a new <see cref="IResource"/>
     /// </summary>
     /// <param name="resource">The <see cref="IResource"/> to create</param>

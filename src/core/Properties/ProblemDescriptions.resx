@@ -138,6 +138,9 @@
   <data name="ResourceNotModified" xml:space="preserve">
     <value>The specified patch or update had no effect on resource '{resource}'.</value>
   </data>
+  <data name="ResourceOptimisticConcurrencyCheckFailed" xml:space="preserve">
+    <value>Failed to update the resource '{resource}' due to an optimistic concurrency error: the resource's target version '{targetVersion}' differs from the actual version '{actualVersion}'</value>
+  </data>
   <data name="ResourceSchemaValidationFailed" xml:space="preserve">
     <value>Failed to validate the resource against schema '{group}/{version}/{plural}'. Please check errors for further details.</value>
   </data>

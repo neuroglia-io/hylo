@@ -1,6 +1,5 @@
 ﻿using Hylo.Properties;
 using System.Net;
-using static Hylo.ProblemTypes;
 
 namespace Hylo;
 
@@ -295,6 +294,24 @@ public record ProblemDetails
             ProblemTitles.ValidationFailed,
             (int)HttpStatusCode.BadRequest,
             StringExtensions.Format(ProblemDescriptions.InvalidResourcePatch, subResourceReference)
+        );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ProblemDetails"/> that describes failure to perform optimistic concurrency checks on the specified resource
+    /// </summary>
+    /// <param name="resource">The invalid resource</param>
+    /// <param name="targetVersion">The target version of the resource</param>
+    /// <param name="actualVersion">The current version of the resource</param>
+    /// <returns>A new <see cref="ProblemDetails"/></returns>
+    public static ProblemDetails ResourceOptimisticConcurrencyCheckFailed(IResourceReference resource, string targetVersion, string actualVersion)
+    {
+        return new
+        (
+            ProblemTypes.Resources.OptimisticConcurrencyCheckFailed,
+            ProblemTitles.Conflict,
+            (int)HttpStatusCode.Conflict,
+            StringExtensions.Format(ProblemDescriptions.ResourceOptimisticConcurrencyCheckFailed, resource, targetVersion, actualVersion)
         );
     }
 

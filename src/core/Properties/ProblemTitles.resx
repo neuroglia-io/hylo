@@ -120,6 +120,9 @@
   <data name="AdmissionFailed" xml:space="preserve">
     <value>Resource Admission Failed</value>
   </data>
+  <data name="Conflict" xml:space="preserve">
+    <value>Conflict</value>
+  </data>
   <data name="ConversionFailed" xml:space="preserve">
     <value>Resource Conversion Failed</value>
   </data>

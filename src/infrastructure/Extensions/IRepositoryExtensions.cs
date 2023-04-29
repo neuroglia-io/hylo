@@ -16,9 +16,9 @@ public static class IRepositoryExtensions
     /// <returns>The resource definition with the specified name, if any</returns>
     public static async Task<IResourceDefinition?> GetDefinitionAsync(this IRepository repository, string group, string plural, CancellationToken cancellationToken = default)
     {
-        if(string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
+        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
         var resource = await repository.GetAsync<ResourceDefinition>(string.IsNullOrWhiteSpace(group) ? plural : $"{plural}.{group}", cancellationToken: cancellationToken).ConfigureAwait(false);
-        if(resource == null) return null;
+        if (resource == null) return null;
         return resource.ConvertTo<ResourceDefinition>();
     }
 
@@ -62,7 +62,7 @@ public static class IRepositoryExtensions
     public static async Task<TResource> AddAsync<TResource>(this IRepository repository, TResource resource, bool dryRun = false, CancellationToken cancellationToken = default)
         where TResource : class, IResource, new()
     {
-        if(resource == null) throw new ArgumentNullException(nameof(resource));
+        if (resource == null) throw new ArgumentNullException(nameof(resource));
         var result = await repository.AddAsync(resource, resource.Definition.Group, resource.Definition.Version, resource.Definition.Plural, resource.GetNamespace(), dryRun, cancellationToken).ConfigureAwait(false);
         return result.ConvertTo<TResource>()!;
     }
@@ -77,7 +77,7 @@ public static class IRepositoryExtensions
     /// <returns>The added <see cref="Namespace"/></returns>
     public static async Task<Namespace> AddNamespaceAsync(this IRepository repository, string name, bool dryRun = false, CancellationToken cancellationToken = default)
     {
-        if(string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
         return await repository.AddAsync<Namespace>(new(name), dryRun, cancellationToken).ConfigureAwait(false);
     }
 
@@ -93,7 +93,7 @@ public static class IRepositoryExtensions
     public static async Task<TResource?> GetAsync<TResource>(this IRepository repository, string name, string? @namespace = null, CancellationToken cancellationToken = default)
         where TResource : class, IResource, new()
     {
-        if(string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
         var resource = new TResource();
         var result = await repository.GetAsync(resource.Definition.Group, resource.Definition.Version, resource.Definition.Plural, name, @namespace, cancellationToken).ConfigureAwait(false);
         return result.ConvertTo<TResource>()!;
@@ -161,13 +161,14 @@ public static class IRepositoryExtensions
     /// <param name="plural">The plural form of the type of the <see cref="IResource"/> to monitor</param>
     /// <param name="name">The name of the <see cref="IResource"/> to monitor</param>
     /// <param name="namespace">The namespace the <see cref="IResource"/> to monitor belongs to, if any</param>
+    /// <param name="leaveOpen">A boolean indicating whether or not to leave the <see cref="IResourceWatch"/> open when the <see cref="ResourceMonitor"/> is being disposed of</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>A new <see cref="IResourceMonitor"/></returns>
-    public static async Task<IResourceMonitor> MonitorAsync(this IRepository repository, string group, string version, string plural, string name, string? @namespace = null, CancellationToken cancellationToken = default)
+    public static async Task<IResourceMonitor> MonitorAsync(this IRepository repository, string group, string version, string plural, string name, string? @namespace = null, bool leaveOpen = false, CancellationToken cancellationToken = default)
     {
         var resource = await repository.GetAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(new ResourceReference(new(group, version, plural), name, @namespace)));
         var watch = await repository.WatchAsync(group, version, plural, @namespace, cancellationToken: cancellationToken).ConfigureAwait(false);
-        return new ResourceMonitor(watch, resource);
+        return new ResourceMonitor(watch, resource, leaveOpen);
     }
 
     /// <summary>
@@ -177,15 +178,16 @@ public static class IRepositoryExtensions
     /// <param name="repository">The extended <see cref="IRepository"/></param>
     /// <param name="name">The name of the <see cref="IResource"/> to monitor</param>
     /// <param name="namespace">The namespace the <see cref="IResource"/> to monitor belongs to, if any</param>
+    /// <param name="leaveOpen">A boolean indicating whether or not to leave the <see cref="IResourceWatch"/> open when the <see cref="ResourceMonitor"/> is being disposed of</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>A new <see cref="IResourceMonitor"/></returns>
-    public static async Task<IResourceMonitor<TResource>> MonitorAsync<TResource>(this IRepository repository, string name, string? @namespace = null, CancellationToken cancellationToken = default)
+    public static async Task<IResourceMonitor<TResource>> MonitorAsync<TResource>(this IRepository repository, string name, string? @namespace = null, bool leaveOpen = false, CancellationToken cancellationToken = default)
         where TResource : class, IResource, new()
     {
         var resourceReference = new ResourceReference<TResource>(name, @namespace);
         var resource = await repository.GetAsync<TResource>(name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceReference));
         var watch = await repository.WatchAsync<TResource>(@namespace, cancellationToken: cancellationToken).ConfigureAwait(false);
-        return new ResourceMonitor<TResource>(watch, resource);
+        return new ResourceMonitor<TResource>(watch, resource, leaveOpen);
     }
 
     /// <summary>
