@@ -165,7 +165,8 @@ public class RedisDatabase
         var updatedResource = patch.ApplyTo(originalResource.ConvertTo<Resource>()!)!;
 
         var jsonPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalResource, updatedResource);
-        jsonPatch = new JsonPatch(jsonPatch.Operations.Where(o => o.Path.Segments.First() == nameof(ISpec.Spec).ToCamelCase()));
+        jsonPatch = new JsonPatch(jsonPatch.Operations.Where(o => (o.Path.Segments[0] == nameof(IMetadata.Metadata).ToCamelCase() && (o.Path.Segments[1] == nameof(ResourceMetadata.Annotations).ToCamelCase() 
+            || o.Path.Segments[1] == nameof(ResourceMetadata.Labels).ToCamelCase()))|| o.Path.Segments.First() == nameof(ISpec.Spec).ToCamelCase()));
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceReference));
 
         return await this.WriteResourceAsync(group, version, plural, jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>()!)!, true, ResourceWatchEventType.Updated, cancellationToken).ConfigureAwait(false);
@@ -182,7 +183,8 @@ public class RedisDatabase
         var resourceReference = new ResourceReference(new(group, version, plural), name, @namespace);
         var originalResource = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceReference));
         var jsonPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalResource, resource);
-        jsonPatch = new JsonPatch(jsonPatch.Operations.Where(o => o.Path.Segments.First() == nameof(ISpec.Spec).ToCamelCase()));
+        jsonPatch = new JsonPatch(jsonPatch.Operations.Where(o => (o.Path.Segments[0] == nameof(IMetadata.Metadata).ToCamelCase() && (o.Path.Segments[1] == nameof(ResourceMetadata.Annotations).ToCamelCase()
+             || o.Path.Segments[1] == nameof(ResourceMetadata.Labels).ToCamelCase())) || o.Path.Segments.First() == nameof(ISpec.Spec).ToCamelCase()));
 
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceReference));
         var updatedResource = jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>()!)!;

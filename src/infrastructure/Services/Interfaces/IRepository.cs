@@ -14,11 +14,10 @@ public interface IRepository
     /// <param name="group">The API group the <see cref="IResource"/> to add belongs to</param>
     /// <param name="version">The version of the type of <see cref="IResource"/> to add</param>
     /// <param name="plural">The plural name of the type of <see cref="IResource"/> to add</param>
-    /// <param name="namespace">The namespace the <see cref="IResource"/> to add belongs to, if any</param>
     /// <param name="dryRun">A boolean indicating whether or not to persist the changes resulting from the operation</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>The added <see cref="IResource"/></returns>
-    Task<IResource> AddAsync(IResource resource, string group, string version, string plural, string? @namespace = null, bool dryRun = false, CancellationToken cancellationToken = default);
+    Task<IResource> AddAsync(IResource resource, string group, string version, string plural, bool dryRun = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Reads the <see cref="IResource"/> with the specified name, if any

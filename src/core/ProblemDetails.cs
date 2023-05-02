@@ -163,7 +163,7 @@ public record ProblemDetails
             ProblemTypes.Resources.AdmissionFailed,
             ProblemTitles.AdmissionFailed,
             (int)HttpStatusCode.NotFound,
-            StringExtensions.Format(ProblemDescriptions.ResourceAdmissionFailed, EnumHelper.Stringify(operation), resource, string.Join(Environment.NewLine, errors.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}")))
+            StringExtensions.Format(ProblemDescriptions.ResourceAdmissionFailed, EnumHelper.Stringify(operation), resource, errors == null ? string.Empty : string.Join(Environment.NewLine, errors.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}")))
         );
     }
 
