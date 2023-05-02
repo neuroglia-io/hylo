@@ -62,7 +62,7 @@ public class Repository
     protected ResourceRepositoryOptions Options { get; }
 
     /// <inheritdoc/>
-    public virtual async Task<IResource> AddAsync(IResource resource, string group, string version, string plural, string? @namespace = null, bool dryRun = false, CancellationToken cancellationToken = default)
+    public virtual async Task<IResource> AddAsync(IResource resource, string group, string version, string plural, bool dryRun = false, CancellationToken cancellationToken = default)
     {
         if (resource == null) throw new ArgumentNullException(nameof(resource));
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
@@ -75,17 +75,16 @@ public class Repository
         }
         else
         {
-            var resourceReference = new ResourceReference(new(group, version, plural), resource.GetName(), @namespace);
+            var resourceReference = new ResourceReference(new(group, version, plural), resource.GetName(), resource.GetNamespace());
             var resourceDefinition = await this.GetDefinitionAsync(group, plural, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceDefinitionNotFound(resourceReference.Definition));
             var result = await this.AdmissionControl.ReviewAsync(new(Guid.NewGuid().ToShortString(), Operation.Create, resourceReference, null, null, resource, null, this.UserInfoProvider.GetCurrentUser(), dryRun), cancellationToken).ConfigureAwait(false);
             if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Create, resourceReference, result.Problem?.Errors?.ToArray()!));
-            storageResource = result.Patch!.ApplyTo(resource)!;
-
+            storageResource = result.Patch!.ApplyTo(resource.ConvertTo<Resource>())!;
             var storageVersion = resourceDefinition.GetStorageVersion();
             if (resource.ApiVersion != storageVersion.Name) storageResource = await this.VersionControl.ConvertToStorageVersionAsync(new(resourceReference, resourceDefinition, storageResource), cancellationToken).ConfigureAwait(false);
         }
 
-        storageResource = await this.Database.CreateResourceAsync(storageResource, group, version, plural, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
+        storageResource = await this.Database.CreateResourceAsync(storageResource, group, version, plural, resource.GetNamespace(), dryRun, cancellationToken).ConfigureAwait(false);
         return storageResource;
     }
 
@@ -130,7 +129,7 @@ public class Repository
         var result = await this.AdmissionControl.ReviewAsync(new(Guid.NewGuid().ToShortString(), Operation.Replace, resourceReference, null, null, resource, originalResource, this.UserInfoProvider.GetCurrentUser(), dryRun), cancellationToken).ConfigureAwait(false);
         if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Replace, resourceReference, result.Problem?.Errors?.ToArray()!));
 
-        var storageResource = result.Patch == null ? resource : result.Patch!.ApplyTo(originalResource)!;
+        var storageResource = result.Patch == null ? resource : result.Patch!.ApplyTo(resource.ConvertTo<Resource>())!;
         var storageVersion = resourceDefinition.GetStorageVersion();
         if (storageResource.ApiVersion != storageVersion.Name) storageResource = await this.VersionControl.ConvertToStorageVersionAsync(new(resourceReference, resourceDefinition, storageResource), cancellationToken).ConfigureAwait(false);
         storageResource.Metadata.ResourceVersion = resource.Metadata.ResourceVersion;
@@ -157,7 +156,8 @@ public class Repository
         var patchToApply = result.Patch ?? patch;
         var patchedResource = patchToApply.ApplyTo(originalResource.ConvertTo<Resource>())!;
         var diffPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalResource, patchedResource);
-        if (diffPatch.Operations.Any(o => o.Path.Segments.First() != "spec")) throw new HyloException(ProblemDetails.InvalidResourcePatch(resourceReference));
+        if (diffPatch.Operations.Any(o => o.Path.Segments[0] == nameof(Resource.Metadata).ToCamelCase() ? o.Path.Segments[1] != nameof(ResourceMetadata.Labels).ToCamelCase() && o.Path.Segments[1] != nameof(ResourceMetadata.Annotations).ToCamelCase() : o.Path.Segments.First() != "spec")) 
+            throw new HyloException(ProblemDetails.InvalidResourcePatch(resourceReference));
 
         return await this.Database.PatchResourceAsync(patchToApply, group, version, plural,  name, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
     }
@@ -179,7 +179,7 @@ public class Repository
         var result = await this.AdmissionControl.ReviewAsync(new(Guid.NewGuid().ToShortString(), Operation.Replace, resourceReference, subResource, null, resource, originalResource, this.UserInfoProvider.GetCurrentUser(), dryRun), cancellationToken).ConfigureAwait(false);
         if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Replace, resourceReference, result.Problem?.Errors?.ToArray()!));
 
-        var storageResource = result.Patch == null ? resource : result.Patch.ApplyTo(originalResource)!;
+        var storageResource = result.Patch == null ? resource : result.Patch.ApplyTo(resource.ConvertTo<Resource>())!;
         var storageVersion = resourceDefinition.GetStorageVersion();
         if (storageResource.ApiVersion != storageVersion.Name) storageResource = await this.VersionControl.ConvertToStorageVersionAsync(new(resourceReference, resourceDefinition, storageResource), cancellationToken).ConfigureAwait(false);
         storageResource.Metadata.ResourceVersion = resource.Metadata.ResourceVersion;

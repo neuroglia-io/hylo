@@ -67,7 +67,7 @@ public class RepositoryBuilder
 
         foreach (var resource in this.Resources)
         {
-            await repository.AddAsync(resource, resource.GetGroup(), resource.GetVersion(), resource.Definition.Plural, resource.GetNamespace(), false, cancellationToken).ConfigureAwait(false);
+            await repository.AddAsync(resource, resource.GetGroup(), resource.GetVersion(), resource.Definition.Plural, false, cancellationToken).ConfigureAwait(false);
         }
 
         return repository;

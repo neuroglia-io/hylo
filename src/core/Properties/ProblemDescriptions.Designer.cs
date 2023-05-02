@@ -61,6 +61,24 @@ namespace Hylo.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cluster resources cannot define a namespace.
+        /// </summary>
+        public static string ClusterResourceCannotDefineNamespace {
+            get {
+                return ResourceManager.GetString("ClusterResourceCannotDefineNamespace", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified value &apos;{resourceName}&apos; is an invalid resource name. Consult the documentation of the naming convention in use for further details..
+        /// </summary>
+        public static string InvalidResourceName {
+            get {
+                return ResourceManager.GetString("InvalidResourceName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to apply the specified patch to resource &apos;{resource}&apos;: the patch document is invalid and/or includes operations that target properties that do not belong to the &apos;spec&apos; root element..
         /// </summary>
         public static string InvalidResourcePatch {
@@ -75,6 +93,15 @@ namespace Hylo.Properties {
         public static string InvalidSubResourcePatch {
             get {
                 return ResourceManager.GetString("InvalidSubResourcePatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Namespaced resource must reference a valid namespace.
+        /// </summary>
+        public static string NamespacedResourceMutDefineNamespace {
+            get {
+                return ResourceManager.GetString("NamespacedResourceMutDefineNamespace", resourceCulture);
             }
         }
         

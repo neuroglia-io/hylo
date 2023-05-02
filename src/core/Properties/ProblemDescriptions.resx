@@ -117,11 +117,20 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ClusterResourceCannotDefineNamespace" xml:space="preserve">
+    <value>Cluster resources cannot define a namespace</value>
+  </data>
+  <data name="InvalidResourceName" xml:space="preserve">
+    <value>The specified value '{resourceName}' is an invalid resource name. Consult the documentation of the naming convention in use for further details.</value>
+  </data>
   <data name="InvalidResourcePatch" xml:space="preserve">
     <value>Failed to apply the specified patch to resource '{resource}': the patch document is invalid and/or includes operations that target properties that do not belong to the 'spec' root element.</value>
   </data>
   <data name="InvalidSubResourcePatch" xml:space="preserve">
     <value>Failed to apply the specified patch to resource '{resource}': the patch document is invalid and/or includes operations that target properties that do not belong to the sub resource's root element.</value>
+  </data>
+  <data name="NamespacedResourceMutDefineNamespace" xml:space="preserve">
+    <value>Namespaced resource must reference a valid namespace</value>
   </data>
   <data name="ResourceAdmissionFailed" xml:space="preserve">
     <value>Failed to admit operation '{operation}' the specified resource '{resource}':\n{errors}</value>
