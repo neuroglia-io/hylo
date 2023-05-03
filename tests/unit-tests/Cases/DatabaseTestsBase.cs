@@ -215,7 +215,7 @@ public abstract class DatabaseTestsBase
         {
             await resourceRepository.AddAsync(FakeResourceWithSpecAndStatus.Create(@namespace)).ConfigureAwait(false);
         }
-        await Task.Delay(100);
+        await Task.Delay(150);
 
         //assert
         processedWatchEvents.ToList().Should().HaveCount(resourceCount);

@@ -18,7 +18,7 @@ public class FileSystemDatabaseProviderTests
     {
         if (!disposing) return;
         base.Dispose(disposing);
-        Task.Delay(10).GetAwaiter().GetResult();
+        Task.Delay(25).GetAwaiter().GetResult();
         Directory.Delete(ConnectionString, true);
     }
 
