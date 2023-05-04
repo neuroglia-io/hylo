@@ -16,29 +16,27 @@
 	<RepositoryType>git</RepositoryType>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<Title>$(AssemblyName)</Title>
-	<Description>Contains Hylo infrastructure service definitions and default implementations</Description>
+	<Description>Contains the Hylo API application logic and services</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\README.md" Link="README.md">
+    <None Include="..\..\..\README.md" Link="README.md">
       <PackagePath>\</PackagePath>
       <Pack>True</Pack>
     </None>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentValidation" Version="11.5.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
-    <PackageReference Include="System.Linq.Async" Version="6.0.1" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="4.10.2" />
+    <PackageReference Include="JsonCons.Utilities" Version="1.0.0" />
+    <PackageReference Include="JsonPatch.Net" Version="2.0.6" />
+    <PackageReference Include="JsonSchema.Net" Version="4.0.3" />
+    <PackageReference Include="MediatR" Version="12.0.1" />
+    <PackageReference Include="System.Reactive.Linq" Version="5.0.0" />
+    <PackageReference Include="YamlDotNet" Version="13.0.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\core\Hylo.Core.csproj" />
+    <ProjectReference Include="..\..\infrastructure\Hylo.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

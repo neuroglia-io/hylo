@@ -62,7 +62,7 @@ public class Repository
     protected ResourceRepositoryOptions Options { get; }
 
     /// <inheritdoc/>
-    public virtual async Task<IResource> AddAsync(IResource resource, string group, string version, string plural, string? @namespace = null, bool dryRun = false, CancellationToken cancellationToken = default)
+    public virtual async Task<IResource> AddAsync(IResource resource, string group, string version, string plural, bool dryRun = false, CancellationToken cancellationToken = default)
     {
         if (resource == null) throw new ArgumentNullException(nameof(resource));
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
@@ -75,7 +75,7 @@ public class Repository
         }
         else
         {
-            var resourceReference = new ResourceReference(new(group, version, plural), resource.GetName(), @namespace);
+            var resourceReference = new ResourceReference(new(group, version, plural), resource.GetName(), resource.GetNamespace());
             var resourceDefinition = await this.GetDefinitionAsync(group, plural, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceDefinitionNotFound(resourceReference.Definition));
             var result = await this.AdmissionControl.ReviewAsync(new(Guid.NewGuid().ToShortString(), Operation.Create, resourceReference, null, null, resource, null, this.UserInfoProvider.GetCurrentUser(), dryRun), cancellationToken).ConfigureAwait(false);
             if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Create, resourceReference, result.Problem?.Errors?.ToArray()!));
@@ -85,7 +85,7 @@ public class Repository
             if (resource.ApiVersion != storageVersion.Name) storageResource = await this.VersionControl.ConvertToStorageVersionAsync(new(resourceReference, resourceDefinition, storageResource), cancellationToken).ConfigureAwait(false);
         }
 
-        storageResource = await this.Database.CreateResourceAsync(storageResource, group, version, plural, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
+        storageResource = await this.Database.CreateResourceAsync(storageResource, group, version, plural, resource.GetNamespace(), dryRun, cancellationToken).ConfigureAwait(false);
         return storageResource;
     }
 
@@ -114,17 +114,16 @@ public class Repository
     }
 
     /// <inheritdoc/>
-    public virtual async Task<IResource> ReplaceAsync(IResource resource, string group, string version, string plural, string name, string? @namespace = null, bool dryRun = false, CancellationToken cancellationToken = default)
+    public virtual async Task<IResource> ReplaceAsync(IResource resource, string group, string version, string plural, bool dryRun = false, CancellationToken cancellationToken = default)
     {
         if (resource == null) throw new ArgumentNullException(nameof(resource));
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
-        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
 
-        var resourceReference = new ResourceReference(new(group, version, plural), name, @namespace);
+        var resourceReference = new ResourceReference(new(group, version, plural), resource.GetName(), resource.GetNamespace());
         if (string.IsNullOrWhiteSpace(resource.Metadata.ResourceVersion)) throw new HyloException(ProblemDetails.ResourceVersionRequired(resourceReference));
 
-        var originalResource = await this.GetAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false);
+        var originalResource = await this.GetAsync(group, version, plural, resource.GetName(), resource.GetNamespace(), cancellationToken).ConfigureAwait(false);
         var resourceDefinition = (await this.GetDefinitionAsync(group, plural, cancellationToken).ConfigureAwait(false))!;
 
         var result = await this.AdmissionControl.ReviewAsync(new(Guid.NewGuid().ToShortString(), Operation.Replace, resourceReference, null, null, resource, originalResource, this.UserInfoProvider.GetCurrentUser(), dryRun), cancellationToken).ConfigureAwait(false);
@@ -135,7 +134,7 @@ public class Repository
         if (storageResource.ApiVersion != storageVersion.Name) storageResource = await this.VersionControl.ConvertToStorageVersionAsync(new(resourceReference, resourceDefinition, storageResource), cancellationToken).ConfigureAwait(false);
         storageResource.Metadata.ResourceVersion = resource.Metadata.ResourceVersion;
 
-        storageResource = await this.Database.ReplaceResourceAsync(storageResource, group, version, plural, name, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
+        storageResource = await this.Database.ReplaceResourceAsync(storageResource, group, version, plural, resource.GetName(), resource.GetNamespace(), dryRun, cancellationToken).ConfigureAwait(false);
 
         return storageResource;
     }
@@ -163,17 +162,16 @@ public class Repository
     }
 
     /// <inheritdoc/>
-    public virtual async Task<IResource> ReplaceSubResourceAsync(IResource resource, string group, string version, string plural, string name, string subResource, string? @namespace = null, bool dryRun = false, CancellationToken cancellationToken = default)
+    public virtual async Task<IResource> ReplaceSubResourceAsync(IResource resource, string group, string version, string plural, string subResource, bool dryRun = false, CancellationToken cancellationToken = default)
     {
         if (resource == null) throw new ArgumentNullException(nameof(resource));
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
-        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
 
-        var resourceReference = new SubResourceReference(new(group, version, plural), name, subResource, @namespace);
+        var resourceReference = new SubResourceReference(new(group, version, plural), resource.GetName(), subResource, resource.GetNamespace());
         if (string.IsNullOrWhiteSpace(resource.Metadata.ResourceVersion)) throw new HyloException(ProblemDetails.ResourceVersionRequired(resourceReference));
 
-        var originalResource = await this.GetAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false);
+        var originalResource = await this.GetAsync(group, version, plural, resource.GetName(), resource.GetNamespace(), cancellationToken).ConfigureAwait(false);
         var resourceDefinition = (await this.GetDefinitionAsync(group, plural, cancellationToken).ConfigureAwait(false))!;
 
         var result = await this.AdmissionControl.ReviewAsync(new(Guid.NewGuid().ToShortString(), Operation.Replace, resourceReference, subResource, null, resource, originalResource, this.UserInfoProvider.GetCurrentUser(), dryRun), cancellationToken).ConfigureAwait(false);
@@ -184,7 +182,7 @@ public class Repository
         if (storageResource.ApiVersion != storageVersion.Name) storageResource = await this.VersionControl.ConvertToStorageVersionAsync(new(resourceReference, resourceDefinition, storageResource), cancellationToken).ConfigureAwait(false);
         storageResource.Metadata.ResourceVersion = resource.Metadata.ResourceVersion;
 
-        storageResource = await this.Database.ReplaceSubResourceAsync(storageResource, group, version, plural, name, subResource, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
+        storageResource = await this.Database.ReplaceSubResourceAsync(storageResource, group, version, plural, resource.GetName(), subResource, resource.GetNamespace(), dryRun, cancellationToken).ConfigureAwait(false);
 
         return storageResource;
     }
