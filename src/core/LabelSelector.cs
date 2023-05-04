@@ -1,10 +1,12 @@
-﻿namespace Hylo;
+﻿using System.Text.RegularExpressions;
+
+namespace Hylo;
 
 /// <summary>
 /// Represents a label-based resource selector
 /// </summary>
 [DataContract]
-public record LabelSelector
+public partial record LabelSelector
 {
 
     /// <summary>
@@ -20,11 +22,11 @@ public record LabelSelector
     /// <param name="values">The expected values, if any</param>
     public LabelSelector(string key, LabelSelectionOperator @operator, params string[] values)
     {
-        this.Key = key;
-        this.Operator = @operator;
+        Key = key;
+        Operator = @operator;
         if (values == null) return;
-        if (values.Length == 1 && @operator == LabelSelectionOperator.Equals || @operator == LabelSelectionOperator.NotEquals) this.Value = values[0];
-        else this.Values = values.WithValueSemantics();
+        if (values.Length == 1 && @operator == LabelSelectionOperator.Equals || @operator == LabelSelectionOperator.NotEquals) Value = values[0];
+        else Values = values.WithValueSemantics();
     }
 
     /// <summary>
@@ -56,13 +58,13 @@ public record LabelSelector
     /// <inheritdoc/>
     public override string ToString()
     {
-        return this.Operator switch
+        return Operator switch
         {
-            LabelSelectionOperator.Contains => string.IsNullOrWhiteSpace(this.Value) && this.Values?.Any() == false ? this.Key : $"{this.Key} in ({this.Values!.Join(',')})",
-            LabelSelectionOperator.NotContains => string.IsNullOrWhiteSpace(this.Value) && this.Values?.Any() == false ? $"!{this.Key}" : $"{this.Key} notin ({this.Values!.Join(',')})",
-            LabelSelectionOperator.Equals => $"{this.Key}={this.Value}",
-            LabelSelectionOperator.NotEquals => $"{this.Key}!={this.Value}",
-            _ => throw new NotSupportedException($"The specified {nameof(LabelSelectionOperator)} '{this.Operator}' is not supported"),
+            LabelSelectionOperator.Contains => string.IsNullOrWhiteSpace(Value) && Values?.Any() == false ? Key : $"{Key} in ({Values!.Join(',')})",
+            LabelSelectionOperator.NotContains => string.IsNullOrWhiteSpace(Value) && Values?.Any() == false ? $"!{Key}" : $"{Key} notin ({Values!.Join(',')})",
+            LabelSelectionOperator.Equals => $"{Key}={Value}",
+            LabelSelectionOperator.NotEquals => $"{Key}!={Value}",
+            _ => throw new NotSupportedException($"The specified {nameof(LabelSelectionOperator)} '{Operator}' is not supported"),
         };
     }
 
@@ -104,9 +106,24 @@ public record LabelSelector
     }
 
     /// <summary>
+    /// Parses the specified input
+    /// </summary>
+    /// <param name="input">The input that contains the selectors, separated by a comma</param>
+    /// <returns>A new <see cref="IEnumerable{T}"/> containing the parsed <see cref="LabelSelector"/>s</returns>
+    public static IEnumerable<LabelSelector> ParseList(string input)
+    {
+        if(string.IsNullOrWhiteSpace(input)) return Enumerable.Empty<LabelSelector>();
+        var labelSelectors = new List<LabelSelector>();
+        if (!string.IsNullOrWhiteSpace(input)) labelSelectors.AddRange(SplitNonEnclosedCsvRegex().Split(input).Select(Parse));
+        return labelSelectors;
+    }
+
+    /// <summary>
     /// Implicitly converts the specified input into a new <see cref="LabelSelector"/>
     /// </summary>
     /// <param name="input">The input to convert</param>
     public static implicit operator LabelSelector?(string? input) => string.IsNullOrWhiteSpace(input) ? null : Parse(input);
 
+    [GeneratedRegex(",\\s*(?![^()]*\\))")]
+    private static partial Regex SplitNonEnclosedCsvRegex();
 }

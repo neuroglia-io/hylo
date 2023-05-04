@@ -1,11 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<OutputType>Library</OutputType>
+	<IsPackable>true</IsPackable>
 	<GenerateDocumentationFile>True</GenerateDocumentationFile>
-	<VersionPrefix>0.4.0</VersionPrefix>
+	<VersionPrefix>0.3.0</VersionPrefix>
 	<AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
 	<FileVersion>$(VersionPrefix)</FileVersion>
 	<NeutralLanguage>en</NeutralLanguage>
@@ -14,10 +16,9 @@
 	<PackageProjectUrl>https://github.com/neuroglia-io/hylo</PackageProjectUrl>
 	<RepositoryUrl>https://github.com/neuroglia-io/hylo</RepositoryUrl>
 	<RepositoryType>git</RepositoryType>
-	<EnableDynamicLoading>true</EnableDynamicLoading>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<Title>$(AssemblyName)</Title>
-	<Description>A Mongo implementation of an Hylo database provider</Description>
+	<Description>Contains the HTTP implementation of the Hylo API</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,18 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MongoDB.Driver" Version="2.19.1" />
-    <PackageReference Include="System.Interactive.Async" Version="6.0.1" />
-  </ItemGroup>    
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\infrastructure\Hylo.Infrastructure.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="plugin.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <ProjectReference Include="..\application\Hylo.Api.Application.csproj" />
   </ItemGroup>
 
 </Project>

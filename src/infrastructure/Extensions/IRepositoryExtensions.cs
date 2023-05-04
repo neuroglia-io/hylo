@@ -224,7 +224,7 @@ public static class IRepositoryExtensions
         where TResource : class, IResource, new()
     {
         if (resource == null) throw new ArgumentNullException(nameof(resource));
-        var result = await repository.ReplaceAsync(resource, resource.Definition.Group, resource.Definition.Version, resource.Definition.Plural, resource.GetName(), resource.GetNamespace(), dryRun, cancellationToken).ConfigureAwait(false);
+        var result = await repository.ReplaceAsync(resource, resource.Definition.Group, resource.Definition.Version, resource.Definition.Plural, dryRun, cancellationToken).ConfigureAwait(false);
         return result.ConvertTo<TResource>()!;
     }
 
@@ -262,7 +262,7 @@ public static class IRepositoryExtensions
         where TResource : class, IResource, new()
     {
         if (resource == null) throw new ArgumentNullException(nameof(resource));
-        var result = await repository.ReplaceSubResourceAsync(resource, resource.Definition.Group, resource.Definition.Version, resource.Definition.Plural, resource.GetName(), "status", resource.GetNamespace(), dryRun, cancellationToken).ConfigureAwait(false);
+        var result = await repository.ReplaceSubResourceAsync(resource, resource.Definition.Group, resource.Definition.Version, resource.Definition.Plural, "status", dryRun, cancellationToken).ConfigureAwait(false);
         return result.ConvertTo<TResource>()!;
     }
 

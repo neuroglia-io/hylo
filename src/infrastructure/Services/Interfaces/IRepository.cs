@@ -76,12 +76,10 @@ public interface IRepository
     /// <param name="group">The API group the <see cref="IResource"/> to replace belongs to</param>
     /// <param name="version">The version of the type of <see cref="IResource"/> to replace</param>
     /// <param name="plural">The plural name of the type of <see cref="IResource"/> to replace</param>
-    /// <param name="name">The name of the <see cref="IResource"/> to replace</param>
-    /// <param name="namespace">The namespace the <see cref="IResource"/> to replace belongs to, if any</param>
     /// <param name="dryRun">A boolean indicating whether or not to persist the changes resulting from the operation</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>The deleted <see cref="IResource"/></returns>
-    Task<IResource> ReplaceAsync(IResource resource, string group, string version, string plural, string name, string? @namespace = null, bool dryRun = false, CancellationToken cancellationToken = default);
+    Task<IResource> ReplaceAsync(IResource resource, string group, string version, string plural, bool dryRun = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Patches the specified <see cref="IResource"/>
@@ -104,13 +102,11 @@ public interface IRepository
     /// <param name="group">The API group the <see cref="IResource"/> to replace belongs to</param>
     /// <param name="version">The version of the type of <see cref="IResource"/> to replace</param>
     /// <param name="plural">The plural name of the type of <see cref="IResource"/> to replace</param>
-    /// <param name="name">The name of the <see cref="IResource"/> to replace</param>
     /// <param name="subResource">The name of the sub resource to replace (ex: status)</param>
-    /// <param name="namespace">The namespace the <see cref="IResource"/> to replace belongs to, if any</param>
     /// <param name="dryRun">A boolean indicating whether or not to persist the changes resulting from the operation</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>The deleted <see cref="IResource"/></returns>
-    Task<IResource> ReplaceSubResourceAsync(IResource resource, string group, string version, string plural, string name, string subResource, string? @namespace = null, bool dryRun = false, CancellationToken cancellationToken = default);
+    Task<IResource> ReplaceSubResourceAsync(IResource resource, string group, string version, string plural, string subResource, bool dryRun = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Patches the specified <see cref="IResource"/>'s sub resource
