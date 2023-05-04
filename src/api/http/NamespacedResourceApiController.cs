@@ -1,7 +1,6 @@
-﻿using Hylo.Api.Application.Commands.Resources;
-using Hylo.Api.Application.Commands.Resources.Generic;
+﻿using Hylo.Api.Application.Commands.Resources.Generic;
 using System.Net;
- 
+
 namespace Hylo.Api.Http;
 
 /// <summary>
