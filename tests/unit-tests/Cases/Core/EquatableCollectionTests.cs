@@ -11,19 +11,19 @@ public class EquatableListTests
         var timestamp = DateTimeOffset.UtcNow;
 
         //act
-        var list1 = new EquatableList<FakeResourceWithSpecAndStatus>();
-        FakeResourceWithSpecAndStatus.AutoIncrementIndex = 0;
+        var list1 = new EquatableList<FakeNamespacedResource>();
+        FakeNamespacedResource.AutoIncrementIndex = 0;
         for (int i = 0; i < 10; i++)
         {
-            var resource = FakeResourceWithSpecAndStatus.Create(@namespace);
+            var resource = FakeNamespacedResource.Create(@namespace);
             resource.Metadata.CreationTimestamp = timestamp;
             list1.Add(resource);
         }
-        FakeResourceWithSpecAndStatus.AutoIncrementIndex = 0;
-        var list2 = new EquatableList<FakeResourceWithSpecAndStatus>();
+        FakeNamespacedResource.AutoIncrementIndex = 0;
+        var list2 = new EquatableList<FakeNamespacedResource>();
         for (int i = 0; i < 10; i++)
         {
-            var resource = FakeResourceWithSpecAndStatus.Create(@namespace);
+            var resource = FakeNamespacedResource.Create(@namespace);
             resource.Metadata.CreationTimestamp = timestamp;
             list2.Add(resource);
         }
@@ -41,19 +41,19 @@ public class EquatableListTests
         var timestamp = DateTimeOffset.UtcNow;
 
         //act
-        var list1 = new EquatableList<FakeResourceWithSpecAndStatus>();
-        FakeResourceWithSpecAndStatus.AutoIncrementIndex = 0;
+        var list1 = new EquatableList<FakeNamespacedResource>();
+        FakeNamespacedResource.AutoIncrementIndex = 0;
         for (int i = 0; i < 10; i++)
         {
-            var resource = FakeResourceWithSpecAndStatus.Create(@namespace);
+            var resource = FakeNamespacedResource.Create(@namespace);
             resource.Metadata.CreationTimestamp = timestamp;
             list1.Add(resource);
         }
-        FakeResourceWithSpecAndStatus.AutoIncrementIndex = 0;
-        var list2 = new EquatableList<FakeResourceWithSpecAndStatus>();
+        FakeNamespacedResource.AutoIncrementIndex = 0;
+        var list2 = new EquatableList<FakeNamespacedResource>();
         for (int i = 0; i < 10; i++)
         {
-            var resource = FakeResourceWithSpecAndStatus.Create(@namespace);
+            var resource = FakeNamespacedResource.Create(@namespace);
             resource.Metadata.CreationTimestamp = timestamp;
             list2.Add(resource);
         }

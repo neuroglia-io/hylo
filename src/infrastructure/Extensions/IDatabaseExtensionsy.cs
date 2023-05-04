@@ -94,6 +94,44 @@ public static class IDatabaseExtensions
     }
 
     /// <summary>
+    /// Gets the <see cref="Namespace"/> with the specified name
+    /// </summary>
+    /// <param name="database">The extended <see cref="IDatabase"/></param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    /// <returns>The <see cref="Namespace"/> with the specified name, if any</returns>
+    public static async Task<Namespace?> GetNamespaceAsync(this IDatabase database, string name, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
+        return await database.GetResourceAsync<Namespace>(name, null, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets all <see cref="Namespace"/>s
+    /// </summary>
+    /// <param name="database">The extended <see cref="IRepository"/></param>
+    /// <param name="labelSelectors">A collection of objects used to configure the labels to filter the <see cref="Namespace"/>s to list by</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    /// <returns>A new <see cref="IAsyncEnumerable{T}"/> used to asynchronously enumerate <see cref="Namespace"/>s</returns>
+    public static IAsyncEnumerable<Namespace> GetNamespacesAsync(this IDatabase database, IEnumerable<LabelSelector>? labelSelectors = null, CancellationToken cancellationToken = default)
+    {
+        return database.GetResourcesAsync<Namespace>(null, labelSelectors, cancellationToken);
+    }
+
+    /// <summary>
+    /// Lists <see cref="Namespace"/>s
+    /// </summary>
+    /// <param name="database">The extended <see cref="IRepository"/></param>
+    /// <param name="labelSelectors">A collection of objects used to configure the labels to filter the <see cref="Namespace"/>s to list by</param>
+    /// <param name="maxResults">The maximum amount of results that should be returned</param>
+    /// <param name="continuationToken">A value used to continue paging <see cref="Namespace"/>s, in the context of a paging request</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    /// <returns>A new <see cref="ICollection"/> that contains all matching <see cref="IResourceDefinition"/>s</returns>
+    public static async Task<ICollection<Namespace>> ListNamespacesAsync(this IDatabase database, IEnumerable<LabelSelector>? labelSelectors = null, ulong? maxResults = null, string? continuationToken = null, CancellationToken cancellationToken = default)
+    {
+        return await database.ListResourcesAsync<Namespace>(null, labelSelectors, maxResults, continuationToken, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Gets the <see cref="IResource"/> with the specified name, if any
     /// </summary>
     /// <typeparam name="TResource">The type of <see cref="IResource"/> to get</typeparam>

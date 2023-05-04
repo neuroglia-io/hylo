@@ -14,13 +14,9 @@ public class AdmissionControl
     /// Initializes a new <see cref="AdmissionControl"/>
     /// </summary>
     /// <param name="serviceProvider">The current <see cref="IServiceProvider"/></param>
-    /// <param name="mutators">An <see cref="IEnumerable{T}"/> containing the services used to mutate resources</param>
-    /// <param name="validators">An <see cref="IEnumerable{T}"/> containing the services used to validate resources</param>
-    public AdmissionControl(IServiceProvider serviceProvider, IEnumerable<IResourceMutator> mutators, IEnumerable<IResourceValidator> validators)
+    public AdmissionControl(IServiceProvider serviceProvider)
     {
         this.ServiceProvider = serviceProvider;
-        this.Mutators = mutators;
-        this.Validators = validators;
     }
 
     /// <summary>
@@ -28,23 +24,21 @@ public class AdmissionControl
     /// </summary>
     protected IServiceProvider ServiceProvider { get; }
 
-    /// <summary>
-    /// Gets an <see cref="IEnumerable{T}"/> containing the services used to mutate resources
-    /// </summary>
-    protected IEnumerable<IResourceMutator> Mutators { get; }
-
-    /// <summary>
-    /// Gets an <see cref="IEnumerable{T}"/> containing the services used to validate resources
-    /// </summary>
-    protected IEnumerable<IResourceValidator> Validators { get; }
-
     /// <inheritdoc/>
-    public virtual async Task<AdmissionReviewResponse> ReviewAsync(Hylo.AdmissionReviewRequest request, CancellationToken cancellationToken = default)
+    public virtual async Task<AdmissionReviewResponse> ReviewAsync(AdmissionReviewRequest request, CancellationToken cancellationToken = default)
     {
+        var originalResource = request.UpdatedState;
         if (request == null) throw new ArgumentNullException(nameof(request));
         var result = await this.MutateAsync(request, cancellationToken).ConfigureAwait(false);
         if (!result.Allowed) return result;
-        return await this.ValidateAsync(request, cancellationToken).ConfigureAwait(false);
+        result = await this.ValidateAsync(request, cancellationToken).ConfigureAwait(false);
+        if (!result.Allowed) return result;
+        Patch? patch = null;
+        if(originalResource != null)
+        {
+            patch = new(PatchType.JsonPatch, JsonPatchHelper.CreateJsonPatchFromDiff(originalResource, request.UpdatedState));
+        }
+        return new(request.Uid, true, patch);
     }
 
     /// <summary>
@@ -58,7 +52,7 @@ public class AdmissionControl
         if (request == null) throw new ArgumentNullException(nameof(request));
         if (request.Operation != Operation.Create && request.Operation != Operation.Replace && request.Operation != Operation.Patch) return new AdmissionReviewResponse(request.Uid, true);
 
-        var mutators = this.Mutators.Where(m => m.AppliesTo(request)).ToList();
+        var mutators = this.ServiceProvider.GetServices<IResourceMutator>().Where(m => m.AppliesTo(request)).ToList();
 
         try
         {
@@ -93,7 +87,7 @@ public class AdmissionControl
     {
         if(request == null) throw new ArgumentNullException(nameof(request));
 
-        var validators = this.Validators.Where(m => m.AppliesTo(request)).ToList();
+        var validators = this.ServiceProvider.GetServices<IResourceValidator>().Where(m => m.AppliesTo(request)).ToList();
         try
         { 
             validators.AddRange(await this.ServiceProvider.GetRequiredService<IRepository>()

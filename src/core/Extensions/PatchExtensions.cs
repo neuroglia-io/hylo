@@ -20,9 +20,9 @@ public static class PatchExtensions
         if (target == null) return default;
         var node = patch.Type switch
         {
-            PatchType.JsonMergePatch => Serializer.Json.SerializeToNode(JsonCons.Utilities.JsonMergePatch.ApplyMergePatch(Serializer.Json.SerializeToElement(target)!.Value, Serializer.Json.SerializeToElement(patch.Document)!.Value)),
-            PatchType.JsonPatch => Serializer.Json.Deserialize<JsonPatch>(Serializer.Json.Serialize(patch.Document))!.Apply(Serializer.Json.SerializeToNode(target)).Result,
-            PatchType.StrategicMergePatch => JsonStrategicMergePatch.ApplyPatch(Serializer.Json.SerializeToNode(target), Serializer.Json.SerializeToNode(patch.Document)),
+            PatchType.JsonMergePatch => Serializer.Json.SerializeToNode(JsonCons.Utilities.JsonMergePatch.ApplyMergePatch(Serializer.Json.SerializeToElement((object)target)!.Value, Serializer.Json.SerializeToElement(patch.Document)!.Value)),
+            PatchType.JsonPatch => Serializer.Json.Deserialize<JsonPatch>(Serializer.Json.Serialize(patch.Document))!.Apply(Serializer.Json.SerializeToNode((object)target)).Result,
+            PatchType.StrategicMergePatch => JsonStrategicMergePatch.ApplyPatch(Serializer.Json.SerializeToNode((object)target), Serializer.Json.SerializeToNode(patch.Document)),
             _ => throw new NotSupportedException($"The specified {nameof(PatchType)} '{patch.Type}' is not supported")
         };
         return Serializer.Json.Deserialize<T>(node!);

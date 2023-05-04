@@ -95,6 +95,7 @@ public class MongoDatabase
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
 
+        //todo: add paging feature
         var resourceDefinition = await this.GetDefinitionAsync(group, plural, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceDefinitionNotFound(new ResourceDefinitionReference(group, version, plural)));
         var items = await this.GetResourcesAsync(group, version, plural, @namespace, labelSelectors, cancellationToken).ToListAsync(cancellationToken).ConfigureAwait(false);
         return new Collection(ApiVersion.Build(group, version), resourceDefinition.Spec.Names.Kind, new() { }, items);
@@ -116,6 +117,7 @@ public class MongoDatabase
                     yield return resource;
                 }
             }
+            yield break;
         }
         var collection = this.GetMongoCollection(group, version, plural, @namespace);
         if (labelSelectors == null || !labelSelectors.Any())
@@ -127,6 +129,7 @@ public class MongoDatabase
         }
         else
         {
+            var query = labelSelectors.ToMongoQuery();
             var cursor = await collection.FindAsync(labelSelectors.ToMongoQuery(), cancellationToken: cancellationToken).ConfigureAwait(false);
             foreach (var resource in (await cursor.ToListAsync(cancellationToken).ConfigureAwait(false)).Select(ReadResourceFromBsonDocument<Resource>))
             {
@@ -174,7 +177,8 @@ public class MongoDatabase
         var updatedResource = patch.ApplyTo(originalResource.ConvertTo<Resource>()!)!;
 
         var jsonPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalResource, updatedResource);
-        jsonPatch = new JsonPatch(jsonPatch.Operations.Where(o => o.Path.Segments.First() == nameof(ISpec.Spec).ToCamelCase()));
+        jsonPatch = new JsonPatch(jsonPatch.Operations.Where(o => (o.Path.Segments[0] == nameof(IMetadata.Metadata).ToCamelCase() && (o.Path.Segments[1] == nameof(ResourceMetadata.Annotations).ToCamelCase()
+             || o.Path.Segments[1] == nameof(ResourceMetadata.Labels).ToCamelCase())) || o.Path.Segments.First() == nameof(ISpec.Spec).ToCamelCase()));
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceReference));
 
         return await this.WriteResourceAsync(jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>()!)!, group, version, plural, true, ResourceWatchEventType.Updated, cancellationToken).ConfigureAwait(false);
@@ -192,7 +196,8 @@ public class MongoDatabase
         var originalResource = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceReference));
 
         var jsonPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalResource, resource);
-        jsonPatch = new JsonPatch(jsonPatch.Operations.Where(o => o.Path.Segments.First() == nameof(ISpec.Spec).ToCamelCase()));
+        jsonPatch = new JsonPatch(jsonPatch.Operations.Where(o => (o.Path.Segments[0] == nameof(IMetadata.Metadata).ToCamelCase() && (o.Path.Segments[1] == nameof(ResourceMetadata.Annotations).ToCamelCase()
+              || o.Path.Segments[1] == nameof(ResourceMetadata.Labels).ToCamelCase())) || o.Path.Segments.First() == nameof(ISpec.Spec).ToCamelCase()));
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceReference));
 
         var updatedResource = jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>()!)!;

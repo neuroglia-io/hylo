@@ -10,7 +10,7 @@ public class ResourceTests
     public void Resource_WithNoMetadata_ShouldFail()
     {
         //act
-        var test = () => new Resource(FakeResourceWithSpecAndStatus.ResourceDefinition, null!);
+        var test = () => new Resource(FakeNamespacedResource.ResourceDefinition, null!);
 
         //assert
         test.Should().Throw<ArgumentException>();
@@ -20,7 +20,7 @@ public class ResourceTests
     public void Resource_WithInvalidName_ShouldFail(string name)
     {
         //act
-        var test = () => new Resource(FakeResourceWithSpecAndStatus.ResourceDefinition, new(name));
+        var test = () => new Resource(FakeNamespacedResource.ResourceDefinition, new(name));
 
         //assert
         test.Should().Throw<ArgumentException>();
@@ -30,7 +30,7 @@ public class ResourceTests
     public void Resource_WithInvalidNamespace_ShouldFail(string @namespace)
     {
         //act
-        var test = () => new Resource(FakeResourceWithSpecAndStatus.ResourceDefinition, new("fake-name", @namespace));
+        var test = () => new Resource(FakeNamespacedResource.ResourceDefinition, new("fake-name", @namespace));
 
         //assert
         test.Should().Throw<ArgumentException>();
@@ -40,7 +40,7 @@ public class ResourceTests
     public void Resource_WithInvalidLabels_ShouldFail(string labelName)
     {
         //act
-        var test = () => new Resource(FakeResourceWithSpecAndStatus.ResourceDefinition, new("fake-name", null, new Dictionary<string, string>() { { labelName, "fake-label-value" } }));
+        var test = () => new Resource(FakeNamespacedResource.ResourceDefinition, new("fake-name", null, new Dictionary<string, string>() { { labelName, "fake-label-value" } }));
 
         //assert
         test.Should().Throw<ArgumentException>();
@@ -50,10 +50,10 @@ public class ResourceTests
     public void Resource_DistinctUntilChanged_ShouldWork()
     {
         //arrange
-        var resource = FakeResourceWithSpecAndStatus.Create("fake-namespace");
+        var resource = FakeNamespacedResource.Create("fake-namespace");
         var resourceClone = resource.Clone()!;
 
-        var observable = new BehaviorSubject<FakeResourceWithSpecAndStatus>(resource);
+        var observable = new BehaviorSubject<FakeNamespacedResource>(resource);
         var changeCount = 0;
         observable.DistinctUntilChanged().Skip(1).Subscribe(r => changeCount++);
 

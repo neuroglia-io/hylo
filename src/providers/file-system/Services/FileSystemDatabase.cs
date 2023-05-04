@@ -161,12 +161,16 @@ public class FileSystemDatabase
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
 
-        var directory = new DirectoryInfo(this.ResolveResourcePath(group, version, plural, @namespace));
-        var kind = this.ResolveResourceKind(group, plural);
+        var directoriesToScan = new List<DirectoryInfo>() { new DirectoryInfo(this.ResolveResourcePath(group, version, plural, @namespace)) };
+        if (string.IsNullOrWhiteSpace(@namespace))
+        {
+            var namespacesDirectory = new DirectoryInfo(Path.Combine(this.ConnectionString, FileSystem.NamespacedResourcesDirectory));
+            if (namespacesDirectory.Exists) directoriesToScan.AddRange(namespacesDirectory.GetDirectories().Select(d => new DirectoryInfo(this.ResolveResourcePath(group, version, plural, d.Name))));
+        }
 
-        if (!directory.Exists) yield break;
-
-        foreach (var file in directory.GetFiles("*.json", SearchOption.AllDirectories))
+        foreach(var file in directoriesToScan
+            .Where(d => d.Exists)
+            .SelectMany(d => d.GetFiles("*.json", SearchOption.AllDirectories)))
         {
             var resource = await this.ReadResourceFromFileAsync(file, cancellationToken).ConfigureAwait(false);
             if (labelSelectors?.Any() == true && !labelSelectors.All(l => l.Selects(resource))) continue;
@@ -193,21 +197,51 @@ public class FileSystemDatabase
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
 
-        var directory = new DirectoryInfo(this.ResolveResourcePath(group, version, plural, @namespace));
+        var skip = 0;
+        var continuationNamespace = @namespace;
+        if (!string.IsNullOrWhiteSpace(continuationToken))
+        {
+            var components = continuationToken.Split(':', StringSplitOptions.RemoveEmptyEntries);
+            switch (components.Length)
+            {
+                case 1:
+                    _ = int.TryParse(components[0], out skip);
+                    break;
+                case 2:
+                    continuationNamespace = components[0];
+                    _ = int.TryParse(components[1], out skip);
+                    break;
+            }
+        }
         var kind = this.ResolveResourceKind(group, plural);
         var collection = new Collection(ApiVersion.Build(group, version), kind, new() { }, Array.Empty<object>());
 
-        if (!directory.Exists) return collection;
-
-        foreach (var file in directory.GetFiles("*.json", SearchOption.AllDirectories))
+        var directoriesToScan = new List<DirectoryInfo>() { new DirectoryInfo(this.ResolveResourcePath(group, version, plural, continuationNamespace)) };
+        if (string.IsNullOrWhiteSpace(@namespace))
         {
-            var resource = await this.ReadResourceFromFileAsync(file, cancellationToken).ConfigureAwait(false);
-            if (labelSelectors?.Any() == true)
+            var namespacesDirectory = new DirectoryInfo(Path.Combine(this.ConnectionString, FileSystem.NamespacedResourcesDirectory));
+            if (namespacesDirectory.Exists) directoriesToScan.AddRange(namespacesDirectory.GetDirectories().Select(d => new DirectoryInfo(this.ResolveResourcePath(group, version, plural, d.Name))));
+        }
+
+        ulong matchCount = 0;
+        ulong namespacedMatchCount = 0;
+        foreach (var directory in directoriesToScan
+            .Where(d => d.Exists))
+        {
+            namespacedMatchCount = 0;
+            foreach (var file in directory.GetFiles("*.json", SearchOption.AllDirectories))
             {
-                var unboxedResource = resource.ConvertTo<Resource>()!;
-                if (!labelSelectors.All(l => l.Selects(unboxedResource))) continue;
-            }
-            collection.Items!.Add(resource);
+                var resource = await this.ReadResourceFromFileAsync(file, cancellationToken).ConfigureAwait(false);
+                if (labelSelectors?.Any() == true && !labelSelectors.All(l => l.Selects(resource))) continue;
+                collection.Items!.Add(resource);
+                matchCount++;
+                namespacedMatchCount++;
+                if (maxResults.HasValue && matchCount >= maxResults)
+                {
+                    collection.Metadata.Continue = string.IsNullOrWhiteSpace(resource.GetNamespace()) ? matchCount.ToString() : $"{resource.GetNamespace()}:{namespacedMatchCount}";
+                    break;
+                }
+            } 
         }
 
         return collection;
@@ -219,7 +253,7 @@ public class FileSystemDatabase
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
 
-        return Task.FromResult<IResourceWatch>(new ResourceWatch(this.ResourceWatchEvents.Where(r => r.Resource.GetGroup() == group && r.Resource.GetVersion() == version && r.Resource.GetNamespace() == @namespace), false));
+        return Task.FromResult<IResourceWatch>(new ResourceWatch(this.ResourceWatchEvents.Where(r => r.Resource.GetGroup() == group && r.Resource.GetVersion() == version && (string.IsNullOrWhiteSpace(@namespace) || r.Resource.GetNamespace() == @namespace)), false));
     }
 
     /// <inheritdoc/>
