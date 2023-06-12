@@ -40,7 +40,7 @@ public class PluginTests
         plugin!.GenerateFakeData().Should().Be(FakeDataGeneratorPluginBootstrapper.InjectedString);
     }
 
-    [Fact(Skip = "Pending the publish of a package using latest plugin types"), Priority(2)]
+    [Fact, Priority(2)]
     public async Task Find_PackageBasedPlugin_Should_Work()
     {
         //arrange
@@ -58,7 +58,7 @@ public class PluginTests
         await manager.StartAsync(default).ConfigureAwait(false);
 
         //act
-        var plugin = await manager.FindPluginAsync<IRepository>().ConfigureAwait(false);
+        var plugin = await manager.FindPluginAsync<IDatabaseProvider>().ConfigureAwait(false);
 
         //assert
         plugin.Should().NotBeNull();

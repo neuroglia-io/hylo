@@ -97,6 +97,7 @@ public static class IDatabaseExtensions
     /// Gets the <see cref="Namespace"/> with the specified name
     /// </summary>
     /// <param name="database">The extended <see cref="IDatabase"/></param>
+    /// <param name="name">The name of the namespace to get</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>The <see cref="Namespace"/> with the specified name, if any</returns>
     public static async Task<Namespace?> GetNamespaceAsync(this IDatabase database, string name, CancellationToken cancellationToken = default)
