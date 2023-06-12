@@ -17,7 +17,7 @@ public class PluginAssemblyLoadContext
     public PluginAssemblyLoadContext(AssemblyDependencyResolver assemblyDependencyResolver)
         : base("PluginAssemblyLoadContext", true)
     {
-        this.AssemblyDependencyResolver = assemblyDependencyResolver;
+        this.AssemblyDependencyResolver = assemblyDependencyResolver ?? throw new ArgumentNullException(nameof(assemblyDependencyResolver));
     }
 
     /// <summary>

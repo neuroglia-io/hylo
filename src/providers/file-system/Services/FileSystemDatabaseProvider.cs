@@ -1,8 +1,6 @@
-﻿using Hylo.Infrastructure.Services;
-using Microsoft.Extensions.Configuration;
+﻿using Hylo.Infrastructure;
+using Hylo.Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace Hylo.Providers.FileSystem.Services;
 
@@ -10,8 +8,9 @@ namespace Hylo.Providers.FileSystem.Services;
 /// Represents a file system based implementation of the <see cref="IDatabaseProvider"/> interface.
 /// </summary>
 /// <remarks>Should only be used for test purposes</remarks>
+[Plugin(typeof(IDatabaseProvider), typeof(FileSystemDatabaseProviderPluginBoostrapper))]
 public class FileSystemDatabaseProvider
-    : IPlugin, IDatabaseProvider
+    : IDatabaseProvider, IDisposable, IAsyncDisposable
 {
 
     bool _disposed;
@@ -19,42 +18,20 @@ public class FileSystemDatabaseProvider
     /// <summary>
     /// Initializes a new <see cref="FileSystemDatabaseProvider"/>
     /// </summary>
-    /// <param name="applicationServices">The current application's services</param>
-    public FileSystemDatabaseProvider(IServiceProvider applicationServices)
+    /// <param name="services">The current <see cref="IServiceProvider"/></param>
+    public FileSystemDatabaseProvider(IServiceProvider services)
     {
-        this.ApplicationServices = applicationServices;
+        this.Services = services;
     }
 
     /// <summary>
-    /// Gets the current application's services
+    /// Gets the current <see cref="IServiceProvider"/>
     /// </summary>
-    protected IServiceProvider ApplicationServices { get; }
-
-    /// <summary>
-    /// Gets the plugin's services
-    /// </summary>
-    protected IServiceProvider? PluginServices { get; set; }
+    protected IServiceProvider Services { get; }
 
     /// <inheritdoc/>
-    public virtual async ValueTask InitializeAsync(CancellationToken cancellationToken = default)
-    {
-        var services = new ServiceCollection();
-        services.AddSingleton(this.ApplicationServices.GetRequiredService<IConfiguration>());
-        services.AddSingleton(this.ApplicationServices.GetRequiredService<ILoggerFactory>());
-        services.AddSingleton<FileSystemDatabase>();
-        this.PluginServices = services.BuildServiceProvider();
-        foreach(var hostedService in this.PluginServices.GetServices<IHostedService>())
-        {
-            await hostedService.StartAsync(cancellationToken).ConfigureAwait(false);
-        }
-    }
+    public virtual IDatabase GetDatabase() => this.Services.GetRequiredService<FileSystemDatabase>();
 
-    /// <inheritdoc/>
-    public virtual IDatabase GetDatabase()
-    {
-        if (this.PluginServices == null) return this.ApplicationServices.GetRequiredService<FileSystemDatabase>();
-        else return this.PluginServices.GetRequiredService<FileSystemDatabase>();
-    }
 
     /// <summary>
     /// Disposes of the <see cref="FileSystemDatabaseProvider"/>
@@ -64,15 +41,8 @@ public class FileSystemDatabaseProvider
     protected virtual async ValueTask DisposeAsync(bool disposing)
     {
         if (this._disposed || !disposing) return;
-        if (this.PluginServices != null)
-        {
-            switch (this.PluginServices)
-            {
-                case IAsyncDisposable asyncDisposable: await asyncDisposable.DisposeAsync().ConfigureAwait(false); break;
-                case IDisposable disposable: disposable.Dispose(); break;
-            }
-        }
         this._disposed = true;
+        await Task.CompletedTask;
     }
 
     /// <inheritdoc/>
@@ -89,13 +59,6 @@ public class FileSystemDatabaseProvider
     protected virtual void Dispose(bool disposing)
     {
         if (this._disposed || !disposing) return;
-        if (this.PluginServices != null)
-        {
-            switch (this.PluginServices)
-            {
-                case IDisposable disposable: disposable.Dispose(); break;
-            }
-        }
         this._disposed = true;
     }
 

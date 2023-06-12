@@ -1,14 +1,15 @@
-﻿using Hylo.Infrastructure.Services;
+﻿using Hylo.Infrastructure;
+using Hylo.Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace Hylo.Providers.Kubernetes.Services;
 
 /// <summary>
 /// Represents the <see href="https://kubernetes.io/">Kubernetes</see> implementation of the <see cref="IDatabaseProvider"/> interface
 /// </summary>
+[Plugin(typeof(IDatabaseProvider), typeof(KubernetesDatabaseProviderPluginBootstrapper))]
 public class KubernetesDatabaseProvider
-    : IPlugin, IDatabaseProvider
+    : IDatabaseProvider, IDisposable, IAsyncDisposable
 {
 
     private bool _disposed;
@@ -16,42 +17,19 @@ public class KubernetesDatabaseProvider
     /// <summary>
     /// Initializes a new <see cref="KubernetesDatabaseProvider"/>
     /// </summary>
-    /// <param name="applicationServices">The current application's services</param>
-    public KubernetesDatabaseProvider(IServiceProvider applicationServices)
+    /// <param name="services">The current <see cref="IServiceProvider"/></param>
+    public KubernetesDatabaseProvider(IServiceProvider services)
     {
-        this.ApplicationServices = applicationServices;
+        this.Services = services;
     }
 
     /// <summary>
-    /// Gets the current application's services
+    /// Gets the current <see cref="IServiceProvider"/>
     /// </summary>
-    protected IServiceProvider ApplicationServices { get; }
-
-    /// <summary>
-    /// Gets the plugin's services
-    /// </summary>
-    protected IServiceProvider? PluginServices { get; set; }
+    protected IServiceProvider Services { get; }
 
     /// <inheritdoc/>
-    public virtual async ValueTask InitializeAsync(CancellationToken cancellationToken = default)
-    {
-        var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddKubernetesClient();
-        services.AddSingleton<KubernetesDatabase>();
-        this.PluginServices = services.BuildServiceProvider();
-        foreach (var hostedService in this.PluginServices.GetServices<IHostedService>())
-        {
-            await hostedService.StartAsync(cancellationToken).ConfigureAwait(false);
-        }
-    }
-
-    /// <inheritdoc/>
-    public virtual IDatabase GetDatabase()
-    {
-        if (this.PluginServices == null) return this.ApplicationServices.GetRequiredService<KubernetesDatabase>();
-        else return this.PluginServices.GetRequiredService<KubernetesDatabase>();
-    }
+    public virtual IDatabase GetDatabase() => this.Services.GetRequiredService<KubernetesDatabase>();
 
     /// <summary>
     /// Disposes of the <see cref="KubernetesDatabaseProvider"/>
@@ -61,12 +39,8 @@ public class KubernetesDatabaseProvider
     protected virtual async ValueTask DisposeAsync(bool disposing)
     {
         if (!disposing || this._disposed) return;
-        switch (this.PluginServices)
-        {
-            case IAsyncDisposable asyncDisposable: await asyncDisposable.DisposeAsync().ConfigureAwait(false); break;
-            case IDisposable disposable: disposable.Dispose(); break;
-        }
         this._disposed = true;
+        await ValueTask.CompletedTask;
     }
 
     /// <inheritdoc/>
@@ -83,7 +57,6 @@ public class KubernetesDatabaseProvider
     protected virtual void Dispose(bool disposing)
     {
         if (!disposing || this._disposed) return;
-        if(this.PluginServices is IDisposable disposable) disposable.Dispose();
         this._disposed = true;
     }
 

@@ -1,14 +1,18 @@
 ﻿namespace Hylo.Infrastructure.Services;
 
 /// <summary>
-/// Defines the fundamentals of a service used to load and manage <see cref="IPlugin"/>s
+/// Defines the fundamentals of a service used to manage <see cref="IPlugin"/>s
 /// </summary>
 public interface IPluginManager
 {
 
     /// <summary>
-    /// Gets an <see cref="IEnumerable{T}"/> containing all loaded <see cref="IPlugin"/>s
+    /// Scans the specified directory for all plugins that define the specified contract
     /// </summary>
-    IEnumerable<IPlugin> Plugins { get; }
+    /// <typeparam name="TContract">The type of the contract to get plugin implementations for</typeparam>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    /// <returns>A new <see cref="IAsyncEnumerable{T}"/>, used to asynchronously enumerate matching plugings</returns>
+    IAsyncEnumerable<TContract> FindPluginsAsync<TContract>(CancellationToken cancellationToken = default)
+        where TContract : class;
 
 }

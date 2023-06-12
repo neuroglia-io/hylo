@@ -1,26 +1,31 @@
-﻿namespace Hylo.Infrastructure.Services;
+﻿using NuGet.Frameworks;
+using NuGet.Packaging;
+using NuGet.Protocol;
+using NuGet.Protocol.Core.Types;
+using System.Collections.Concurrent;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Loader;
+using System.Runtime.Versioning;
+using System.Text.Json;
+
+namespace Hylo.Infrastructure.Services;
 
 /// <summary>
-/// Represents the default implementation of a <see cref="BackgroundService"/> used to load and manage <see cref="IPlugin"/>s
+/// Represents the default implementation of the <see cref="IPluginManager"/> interface
 /// </summary>
 public class PluginManager
-    : BackgroundService, IPluginManager
+    : IHostedService, IPluginManager
 {
-
-    /// <summary>
-    /// Gets the name of an <see cref="IPlugin"/> metadata file
-    /// </summary>
-    public const string PluginMetadataFileName = "plugin.json";
 
     /// <summary>
     /// Initializes a new <see cref="PluginManager"/>
     /// </summary>
     /// <param name="serviceProvider">The current <see cref="IServiceProvider"/></param>
-    /// <param name="loggerFactory">The service used to create <see cref="ILogger"/>s</param>
-    public PluginManager(IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
+    public PluginManager(IServiceProvider serviceProvider)
     {
         this.ServiceProvider = serviceProvider;
-        this.Logger = loggerFactory.CreateLogger(this.GetType());
     }
 
     /// <summary>
@@ -29,141 +34,127 @@ public class PluginManager
     protected IServiceProvider ServiceProvider { get; }
 
     /// <summary>
-    /// Gets the service used to perform logging
+    /// Gets the <see cref="DirectoryInfo"/> to scan for plugins
     /// </summary>
-    protected ILogger Logger { get; }
+    protected DirectoryInfo PluginsDirectory { get; } = new DirectoryInfo(Path.Combine(AppContext.BaseDirectory, "plugins"));
 
     /// <summary>
-    /// Gets an <see cref="SynchronizedCollection{T}"/> containing the <see cref="IPluginController"/>s of all discovered <see cref="IPlugin"/>s
+    /// Gets a <see cref="ConcurrentBag{T}"/>
     /// </summary>
-    public SynchronizedCollection<IPluginController> PluginControllers { get; } = new();
-
-    /// <inheritdoc/>
-    public IEnumerable<IPlugin> Plugins => this.PluginControllers.Where(c => c.Plugin != null).Select(c => c.Plugin!).ToList();
+    protected ConcurrentBag<PluginMetadata> AvailablePlugins { get; } = new();
 
     /// <summary>
-    /// Gets the <see cref="PluginManager"/>'s <see cref="CancellationTokenSource"/>
+    /// Gets the <see cref="PluginManager"/>'s <see cref="System.Threading.CancellationTokenSource"/>
     /// </summary>
     protected CancellationTokenSource CancellationTokenSource { get; private set; } = null!;
 
-    /// <summary>
-    /// Gets the service used to watch the <see cref="IPlugin"/> files
-    /// </summary>
-    protected FileSystemWatcher FileSystemWatcher { get; private set; } = null!;
+    /// <inheritdoc/>
+    public virtual async Task StartAsync(CancellationToken cancellationToken)
+    {
+        this.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        if (!this.PluginsDirectory.Exists) this.PluginsDirectory.Create();
+        var assemblyFiles = this.PluginsDirectory.GetFiles("*.dll", SearchOption.AllDirectories).ToList();
+        foreach (var pluginFile in this.PluginsDirectory.GetFiles("*.plugin.json", SearchOption.AllDirectories))
+        {
+            var json = await File.ReadAllTextAsync(pluginFile.FullName, this.CancellationTokenSource.Token).ConfigureAwait(false);
+            var pluginMetadata = JsonSerializer.Deserialize<PluginMetadata>(json)!;
+            if (!string.IsNullOrWhiteSpace(pluginMetadata.NugetPackage)) await this.DownloadAndExtractNugetPackageAsync(pluginMetadata, this.CancellationTokenSource.Token).ConfigureAwait(false);
+            var assemblyFilePath = pluginMetadata.AssemblyFilePath;
+            if (pluginMetadata.AssemblyFilePath.StartsWith(Path.DirectorySeparatorChar)) assemblyFilePath = Path.Combine(pluginFile.Directory!.FullName, assemblyFilePath);
+            var assemblyFile = new FileInfo(assemblyFilePath);
+            if (!assemblyFile.Exists) throw new FileNotFoundException($"Failed to find the specified plugin assembly '{assemblyFilePath}'");
+            assemblyFiles.Add(assemblyFile);
+        }
+        foreach (var assemblyFile in assemblyFiles)
+        {
+            var runtimeAssemblies = Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll");
+            var defaultAssemblies = AssemblyLoadContext.Default.Assemblies.Select(a => a.Location).Except(runtimeAssemblies);
+            var appAssemblies = new FileInfo(typeof(PluginManager).Assembly.Location).Directory!.GetFiles("*.dll").Select(f => f.FullName).Except(runtimeAssemblies).Except(defaultAssemblies);
+            var assemblies = new List<string>(runtimeAssemblies) { assemblyFile.FullName };
+            assemblies.AddRange(defaultAssemblies);
+            assemblies.AddRange(appAssemblies);
+            var resolver = new PathAssemblyResolver(assemblies.Where(a => !string.IsNullOrWhiteSpace(a)));
+            using var metadataContext = new MetadataLoadContext(resolver);
+            var assembly = metadataContext.LoadFromAssemblyPath(assemblyFile.FullName);
+            foreach (var type in assembly.GetTypes().Where(t => t.IsClass && !t.IsInterface && !t.IsAbstract && !t.IsGenericType))
+            {
+                var pluginAttribute = type.GetCustomAttributesData().FirstOrDefault(a => a.AttributeType.FullName == typeof(PluginAttribute).FullName);
+                if (pluginAttribute == null) continue;
+                var pluginMetadata = PluginMetadata.FromType(type);
+                this.AvailablePlugins.Add(pluginMetadata);
+            }
+        }
+    }
 
     /// <inheritdoc/>
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public async IAsyncEnumerable<TContract> FindPluginsAsync<TContract>([EnumeratorCancellation] CancellationToken cancellationToken = default)
+        where TContract : class
     {
-        this.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
-        var pluginDirectory = new DirectoryInfo(Path.Combine(AppContext.BaseDirectory, "plugins"));
-        if (!pluginDirectory.Exists) pluginDirectory.Create();
-        foreach (var packageFile in pluginDirectory.GetFiles("*.tar.gz"))
+        foreach (var metadata in this.AvailablePlugins.Where(m => m.ContractTypeName == typeof(TContract).FullName!).ToList())
         {
-            await TarGzPackage.ExtractToDirectoryAsync(packageFile.FullName, packageFile.Directory!.FullName, this.CancellationTokenSource.Token).ConfigureAwait(false);
-            packageFile.Delete();
-        }
-        var plugins = await this.FindPluginsAsync(pluginDirectory.FullName);
-        foreach (var plugin in plugins)
-        {
-            this.Logger.LogInformation("Loading plugin '{plugin}'...", plugin.ToString());
-            try
-            {
-                await plugin.LoadAsync(this.CancellationTokenSource.Token);
-                this.Logger.LogInformation("The plugin '{plugin}' has been successfully loaded", plugin.ToString());
-            }
-            catch (Exception ex)
-            {
-                this.Logger.LogWarning("An error occured while loading plugin '{plugin}': {ex}", plugin.ToString(), ex.ToString());
-                continue;
-            }
-        }
-        this.FileSystemWatcher = new(pluginDirectory.FullName, $"*.*")
-        {
-            IncludeSubdirectories = true
-        };
-        this.FileSystemWatcher.Created += this.OnPluginFileCreatedAsync;
-        this.FileSystemWatcher.Deleted += this.OnPluginFileDeletedAsync;
-        this.FileSystemWatcher.EnableRaisingEvents = true;
-    }
-
-    /// <summary>
-    /// Finds all <see cref="IPlugin"/>s in the specified directory
-    /// </summary>
-    /// <param name="directoryPath">The path of the directory to scan for <see cref="IPlugin"/>s</param>
-    /// <returns>A new <see cref="IEnumerable{T}"/> containing <see cref="IPluginController"/>s used to control the <see cref="IPlugin"/>s that have been found</returns>
-    public virtual async Task<IEnumerable<IPluginController>> FindPluginsAsync(string directoryPath)
-    {
-        if (string.IsNullOrWhiteSpace(directoryPath)) throw new ArgumentNullException(nameof(directoryPath));
-        this.Logger.LogInformation("Scanning directory'{directory}' for plugins...", directoryPath);
-        var directory = new DirectoryInfo(directoryPath);
-        if (!directory.Exists) throw new DirectoryNotFoundException($"Failed to find the specified directory '{directoryPath}'");
-        var pluginFiles = directory.GetFiles(PluginMetadataFileName, SearchOption.AllDirectories);
-        this.Logger.LogInformation("Found {results} matching plugin files in directory '{directory}'", pluginFiles.Length, directoryPath);
-        var plugins = new List<IPluginController>(pluginFiles.Length);
-        foreach (var pluginFile in pluginFiles)
-        {
-            plugins.Add(await this.FindPluginAsync(pluginFile.FullName));
-        }
-        this.Logger.LogInformation("{pluginCount} plugins have been found in '{directory}' directory", plugins.Count, directoryPath);
-        return plugins;
-    }
-
-    /// <summary>
-    /// Finds the <see cref="IPlugin"/> at the specified file path
-    /// </summary>
-    /// <param name="metadataFilePath">The file path of the <see cref="IPlugin"/> to find</param>
-    /// <returns>A new <see cref="IPluginController"/></returns>
-    public virtual Task<IPluginController> FindPluginAsync(string metadataFilePath)
-    {
-        if (string.IsNullOrWhiteSpace(metadataFilePath)) throw new ArgumentNullException(nameof(metadataFilePath));
-        var pluginController = this.PluginControllers.FirstOrDefault(p => p.MetadataFilePath == metadataFilePath);
-        if (pluginController != null) return Task.FromResult(pluginController);
-        var file = new FileInfo(metadataFilePath);
-        if (!file.Exists) throw new DirectoryNotFoundException($"Failed to find the specified file '{metadataFilePath}'");
-        if (file.Name != PluginMetadataFileName) throw new Exception($"The specified file '{metadataFilePath}' is not a valid plugin metadata file");
-        var pluginMetadata = Serializer.Json.Deserialize<PluginMetadata>(File.ReadAllText(file.FullName))!;
-        pluginController = ActivatorUtilities.CreateInstance<PluginController>(this.ServiceProvider, pluginMetadata, metadataFilePath);
-        pluginController.Disposed += (sender, e) => this.PluginControllers.Remove((IPluginController)sender!);
-        this.PluginControllers.Add(pluginController);
-        return Task.FromResult(pluginController);
-    }
-
-    /// <summary>
-    /// Handles the creation of a new <see cref="IPlugin"/> file
-    /// </summary>
-    /// <param name="sender">The service used to watch the <see cref="IPlugin"/> files</param>
-    /// <param name="e">The <see cref="FileSystemEventArgs"/> to handle</param>
-    protected virtual async void OnPluginFileCreatedAsync(object sender, FileSystemEventArgs e)
-    {
-        if (e.FullPath.EndsWith(".tar.gz"))
-        {
-            var packageFile = new FileInfo(e.FullPath);
-            do
-            {
-                await Task.Delay(10).ConfigureAwait(false);
-            }
-            while (packageFile.IsLocked());
-            using var packageFileStream = packageFile.OpenRead();
-            await TarGzPackage.ExtractToDirectoryAsync(packageFile.FullName, packageFile.Directory!.FullName).ConfigureAwait(false);
-            await packageFileStream.DisposeAsync().ConfigureAwait(false);
-            await this.FindPluginsAsync(packageFile.Directory!.FullName).ConfigureAwait(false);
-            packageFile.Delete();
-        }
-        else if (e.FullPath == "plugin.json")
-        {
-            await this.FindPluginAsync(e.FullPath).ConfigureAwait(false);
+            var plugin = new Plugin(this.ServiceProvider, metadata);
+            yield return await plugin.LoadAsync<TContract>(cancellationToken).ConfigureAwait(false);
         }
     }
 
     /// <summary>
-    /// Handles the deletion of a new <see cref="IPlugin"/> file
+    /// Downloads and extracts the specified Nuget package
     /// </summary>
-    /// <param name="sender">The service used to watch the <see cref="IPlugin"/> files</param>
-    /// <param name="e">The <see cref="FileSystemEventArgs"/> to handle</param>
-    protected virtual async void OnPluginFileDeletedAsync(object sender, FileSystemEventArgs e)
+    /// <param name="metadata">The metadata of the plugin based on the Nuget package to download and extract</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    /// <returns>A new awaitable <see cref="ValueTask"/></returns>
+    protected virtual async ValueTask DownloadAndExtractNugetPackageAsync(PluginMetadata metadata, CancellationToken cancellationToken)
     {
-        var pluginController = this.PluginControllers.FirstOrDefault(p => p.MetadataFilePath == e.FullPath);
-        if (pluginController != null) await pluginController.DisposeAsync().ConfigureAwait(false);
+        if (metadata == null) throw new ArgumentNullException(nameof(metadata));
+        if(string.IsNullOrWhiteSpace(metadata.NugetPackage)) throw new ArgumentNullException(nameof(metadata.NugetPackage));
+        var components = metadata.NugetPackage.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var packageSource = components.Length == 1 ? "https://api.nuget.org/v3/index.json" : components.First();
+        var packageId = components.Last();
+
+        components = packageId.Split(':', StringSplitOptions.RemoveEmptyEntries);
+        packageId = components[0];
+        var packageVersion = components.Length > 1 ? components[1] : null;
+        var repository = NuGet.Protocol.Core.Types.Repository.Factory.GetCoreV3(packageSource);
+        var cache = new SourceCacheContext();
+        var packageSearchResource = await repository.GetResourceAsync<PackageSearchResource>().ConfigureAwait(false);
+        var findPackageByIdResource = await repository.GetResourceAsync<FindPackageByIdResource>().ConfigureAwait(false);
+        var searchFilter = new SearchFilter(includePrerelease: true);
+        var results = await packageSearchResource.SearchAsync(packageId, searchFilter, 0, 100, NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
+        var result = results.FirstOrDefault() ?? throw new NullReferenceException($"Failed to find nuget package with id '{packageId}' in source '{packageSource}'");
+        var versions = await result.GetVersionsAsync().ConfigureAwait(false);
+        var version = string.IsNullOrWhiteSpace(packageVersion) ? versions.OrderByDescending(v => v.Version.Version).First() : versions.FirstOrDefault(v => v.Version.Version.ToString() == packageVersion) ?? throw new NullReferenceException($"Failed to find version '{packageVersion}' of nuget package '{packageId}' in source '{packageSource}'");
+        var packageFileName = Path.Combine(this.PluginsDirectory.FullName, $"{result.Identity.Id}.{version.Version}.nupkg");
+        var packageOutputDirectory = Path.Combine(new FileInfo(metadata.AssemblyFilePath).Directory!.FullName);
+        Stream packageStream;
+        if (File.Exists(packageFileName))
+        {
+            packageStream = File.OpenRead(packageFileName);
+        }
+        else
+        {
+            packageStream = File.Open(packageFileName, FileMode.Create);
+            await findPackageByIdResource.CopyNupkgToStreamAsync(result.Identity.Id, version.Version, packageStream, cache, NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
+            await packageStream.FlushAsync(cancellationToken).ConfigureAwait(false);
+            packageStream.Position = 0;
+        }
+        using var packageReader = new PackageArchiveReader(packageStream);
+        var currentFramework = NuGetFramework.Parse(typeof(PluginManager).Assembly.GetCustomAttribute<TargetFrameworkAttribute>()?.FrameworkName);
+        var libItems = await packageReader.GetLibItemsAsync(cancellationToken).ConfigureAwait(false);
+        var framework = libItems
+            .Where(f => DefaultCompatibilityProvider.Instance.IsCompatible(currentFramework, f.TargetFramework))
+            .Last();
+        foreach (var item in framework.Items)
+        {
+            var outputFile = Path.Combine(packageOutputDirectory, item.Split('/').Last());
+            packageReader.ExtractFile(item, outputFile, NuGet.Common.NullLogger.Instance);
+        }
+        await packageStream.DisposeAsync().ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
     }
 
 }

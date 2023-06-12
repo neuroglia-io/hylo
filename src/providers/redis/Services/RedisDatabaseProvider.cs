@@ -1,16 +1,15 @@
 ﻿using Hylo.Infrastructure;
 using Hylo.Infrastructure.Services;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace Hylo.Providers.Redis.Services;
 
 /// <summary>
 /// Represents a <see href="https://redis.io/">Redis</see> implementation of the <see cref="IDatabaseProvider"/> interface
 /// </summary>
+[Plugin(typeof(IDatabaseProvider), typeof(RedisDatabaseProviderPluginBootstrapper))]
 public class RedisDatabaseProvider
-    : IPlugin, IDatabaseProvider
+    : IDatabaseProvider
 {
 
     private bool _disposed;
@@ -33,20 +32,6 @@ public class RedisDatabaseProvider
     /// Gets the plugin's services
     /// </summary>
     protected IServiceProvider? PluginServices { get; set; }
-
-    /// <inheritdoc/>
-    public virtual async ValueTask InitializeAsync(CancellationToken cancellationToken = default)
-    {
-        var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddStackExchangeRedis(this.ApplicationServices.GetRequiredService<IConfiguration>().GetConnectionString(RedisDatabase.ConnectionStringName)!);
-        services.AddSingleton<RedisDatabase>();
-        this.PluginServices = services.BuildServiceProvider();
-        foreach (var hostedService in this.PluginServices.GetServices<IHostedService>())
-        {
-            await hostedService.StartAsync(cancellationToken).ConfigureAwait(false);
-        }
-    }
 
     /// <inheritdoc/>
     public virtual IDatabase GetDatabase()

@@ -24,7 +24,7 @@ public class PluginDatabaseProvider
     /// <inheritdoc/>
     public IDatabase GetDatabase()
     {
-        var plugin = this.PluginManager.Plugins.OfType<IDatabaseProvider>().FirstOrDefault() ?? throw new NullReferenceException("Failed to find a database provider plugin");
+        var plugin = this.PluginManager.FindPluginAsync<IDatabaseProvider>().GetAwaiter().GetResult() ?? throw new NullReferenceException("Failed to find a database provider plugin");
         return plugin.GetDatabase();
     }
 

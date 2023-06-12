@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Reflection;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using YamlDotNet.Serialization;
 
@@ -9,73 +7,90 @@ namespace Hylo.Infrastructure;
 /// <summary>
 /// Represents an object used to describe a plugin
 /// </summary>
-[DataContract]
 public class PluginMetadata
 {
 
     /// <summary>
-    /// Gets the plugin's name
+    /// Initializes a new <see cref="PluginMetadata"/>
     /// </summary>
-    [Required, MinLength(1)]
-    [DataMember(Order = 1, Name = "name"), JsonPropertyOrder(1), JsonPropertyName("name"), YamlMember(Order = 1, Alias = "name")]
-    public virtual string Name { get; set; } = null!;
+    public PluginMetadata() { }
 
     /// <summary>
-    /// Gets the plugin's description
+    /// Initializes a new <see cref="PluginMetadata"/>
     /// </summary>
-    [DataMember(Order = 2, Name = "description"), JsonPropertyOrder(2), JsonPropertyName("description"), YamlMember(Order = 2, Alias = "description")]
-    public virtual string? Description { get; set; }
+    /// <param name="assemblyFilePath">The path to the plugin assembly file</param>
+    /// <param name="typeName">The full name of the plugin type</param>
+    /// <param name="contractTypeName">The full name of the plugin's contract type. If not set, should be resolved by reflection</param>
+    /// <param name="bootstrapperTypeName">The name of the plugin's bootstrapper type, if any</param>
+    /// <param name="sharedAssemblies">A list containing the assemblies shared between the configured plugin and its host</param>
+    /// <param name="nugetPackage">A reference to the plugin's nuget package, if any. If set, the plugin manager should download and extract the plugin's package to the plugins directory before loading it</param>
+    public PluginMetadata(string assemblyFilePath, string typeName, string? contractTypeName = null, string? bootstrapperTypeName = null, IEnumerable<string>? sharedAssemblies = null, string? nugetPackage = null)
+    {
+        if (string.IsNullOrWhiteSpace(assemblyFilePath)) throw new ArgumentNullException(nameof(assemblyFilePath));
+        if (string.IsNullOrWhiteSpace(typeName)) throw new ArgumentNullException(nameof(typeName));
+        this.AssemblyFilePath = assemblyFilePath;
+        this.TypeName = typeName;
+        this.ContractTypeName = contractTypeName;
+        this.BootstrapperTypeName = bootstrapperTypeName;
+        this.SharedAssemblies = sharedAssemblies?.ToList();
+        this.NugetPackage = nugetPackage;
+    }
 
     /// <summary>
-    /// Gets the plugin's authors
+    /// Gets the path to the plugin assembly file
     /// </summary>
-    [DataMember(Order = 3, Name = "authors"), JsonPropertyOrder(3), JsonPropertyName("authors"), YamlMember(Order = 3, Alias = "authors")]
-    public virtual string? Authors { get; set; }
+    [DataMember(Order = 1, Name = "assemblyFilePath", IsRequired = true), JsonPropertyOrder(1), JsonPropertyName("assemblyFilePath"), YamlMember(Order = 1, Alias = "assemblyFilePath")]
+    public virtual string AssemblyFilePath { get; set; } = null!;
 
     /// <summary>
-    /// Gets the plugin's copyright
+    /// Gets the full name of the plugin type
     /// </summary>
-    [DataMember(Order = 4, Name = "copyright"), JsonPropertyOrder(4), JsonPropertyName("copyright"), YamlMember(Order = 4, Alias = "copyright")]
-    public virtual string? Copyright { get; set; }
+    [DataMember(Order = 2, Name = "typeName", IsRequired = true), JsonPropertyOrder(2), JsonPropertyName("typeName"), YamlMember(Order = 2, Alias = "typeName")]
+    public virtual string TypeName { get; set; } = null!;
 
     /// <summary>
-    /// Gets a <see cref="List{T}"/> containing the plugin's tags
+    /// Gets the full name of the plugin's contract type
     /// </summary>
-    [DataMember(Order = 5, Name = "tags"), JsonPropertyOrder(5), JsonPropertyName("tags"), YamlMember(Order = 5, Alias = "tags")]
-    public virtual List<string>? Tags { get; set; }
+    [DataMember(Order = 3, Name = "contractTypeName"), JsonPropertyOrder(3), JsonPropertyName("contractTypeName"), YamlMember(Order = 3, Alias = "contractTypeName")]
+    public virtual string? ContractTypeName { get; set; }
 
     /// <summary>
-    /// Gets the plugin's license file <see cref="Uri"/>
+    /// Gets the name of the plugin's bootstrapper type, if any
     /// </summary>
-    [DataMember(Order = 6, Name = "licenseUri"), JsonPropertyOrder(6), JsonPropertyName("licenseUri"), YamlMember(Order = 6, Alias = "licenseUri")]
-    public virtual Uri? LicenseUri { get; set; }
+    [DataMember(Order = 4, Name = "bootstrapperTypeName"), JsonPropertyOrder(4), JsonPropertyName("bootstrapperTypeName"), YamlMember(Order = 4, Alias = "bootstrapperTypeName")]
+    public virtual string? BootstrapperTypeName { get; set; }
 
     /// <summary>
-    /// Gets the plugin's readme file <see cref="Uri"/>
+    /// Gets/sets a list containing the assemblies shared between the configured plugin and its host
     /// </summary>
-    [DataMember(Order = 7, Name = "readmeUri"), JsonPropertyOrder(7), JsonPropertyName("readmeUri"), YamlMember(Order = 7, Alias = "readmeUri")]
-    public virtual Uri? ReadmeUri { get; set; }
+    [DataMember(Order = 5, Name = "sharedAssemblies"), JsonPropertyOrder(5), JsonPropertyName("sharedAssemblies"), YamlMember(Order = 5, Alias = "sharedAssemblies")]
+    public virtual List<string>? SharedAssemblies { get; set; }
 
     /// <summary>
-    /// Gets the plugin's website <see cref="Uri"/>
+    /// Gets/sets a reference to the plugin's nuget package, if any. If set, the plugin manager should download and extract the plugin's package to the plugins directory before loading it
     /// </summary>
-    [DataMember(Order = 8, Name = "websiteUri"), JsonPropertyOrder(8), JsonPropertyName("websiteUri"), YamlMember(Order = 8, Alias = "websiteUri")]
-    public virtual Uri? WebsiteUri { get; set; }
+    [DataMember(Order = 6, Name = "nugetPackage"), JsonPropertyOrder(6), JsonPropertyName("nugetPackage"), YamlMember(Order = 6, Alias = "nugetPackage")]
+    public virtual string? NugetPackage { get; set; }
 
     /// <summary>
-    /// Gets the plugin's repository <see cref="Uri"/>
+    /// Gets/sets a key/value mapping of the plugin metadata's extensions, if any
     /// </summary>
-    [DataMember(Order = 9, Name = "repositoryUri"), JsonPropertyOrder(9), JsonPropertyName("repositoryUri"), YamlMember(Order = 9, Alias = "repositoryUri")]
-    public virtual Uri? RepositoryUri { get; set; }
+    [DataMember(Order = 99, Name = "extensionData"), JsonExtensionData]
+    public virtual IDictionary<string, object>? ExtensionData { get; set; }
 
     /// <summary>
-    /// Gets the plugin's <see cref="Assembly"/> file name
+    /// Creates <see cref="PluginMetadata"/> from the specified type
     /// </summary>
-    [Required, MinLength(1)]
-    [DataMember(Order = 10, Name = "assemblyFile"), JsonPropertyOrder(10), JsonPropertyName("assemblyFile"), YamlMember(Order = 10, Alias = "assemblyFile")]
-    public virtual string AssemblyFileName { get; set; } = null!;
-
-    /// <inheritdoc/>
-    public override string ToString() =>  this.Name;
+    /// <param name="pluginType">The non-generic, non-abstract plugin class type</param>
+    /// <returns>A new <see cref="PluginMetadata"/> used to describe the specified plugin type</returns>
+    public static PluginMetadata FromType(Type pluginType)
+    {
+        if (pluginType == null) throw new ArgumentNullException(nameof(pluginType));
+        if (!pluginType.IsClass || pluginType.IsInterface || pluginType.IsAbstract || pluginType.IsGenericType) throw new ArgumentException("The plugin type must be a non-abstract, non-generic class", nameof(pluginType));
+        var pluginAttribute = pluginType.GetCustomAttributesData().FirstOrDefault(a => a.AttributeType.FullName == typeof(PluginAttribute).FullName);
+        var contractType = ((Type?)pluginAttribute?.ConstructorArguments[0].Value)?.FullName;
+        var bootstrapperType = pluginAttribute?.ConstructorArguments.Count > 1 ? ((Type?)pluginAttribute?.ConstructorArguments[1].Value)?.FullName : null;
+        return new(pluginType.Assembly.Location, pluginType.FullName!, contractType, bootstrapperType);
+    }
 
 }
