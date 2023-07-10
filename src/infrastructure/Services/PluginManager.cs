@@ -54,7 +54,9 @@ public class PluginManager
         this.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         if (!this.PluginsDirectory.Exists) this.PluginsDirectory.Create();
         var assemblyFiles = this.PluginsDirectory.GetFiles("*.dll", SearchOption.AllDirectories).ToList();
-        foreach (var pluginFile in this.PluginsDirectory.GetFiles("*.plugin.json", SearchOption.AllDirectories))
+        var files = this.PluginsDirectory.GetFiles("*.plugin.json", SearchOption.AllDirectories);
+        files.AddRange(this.PluginsDirectory.GetFiles("plugin.json", SearchOption.AllDirectories));
+        foreach (var pluginFile in files)
         {
             var json = await File.ReadAllTextAsync(pluginFile.FullName, this.CancellationTokenSource.Token).ConfigureAwait(false);
             var pluginMetadata = JsonSerializer.Deserialize<PluginMetadata>(json)!;
@@ -122,7 +124,7 @@ public class PluginManager
         var results = await packageSearchResource.SearchAsync(packageId, searchFilter, 0, 100, NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
         var result = results.FirstOrDefault() ?? throw new NullReferenceException($"Failed to find nuget package with id '{packageId}' in source '{packageSource}'");
         var versions = await result.GetVersionsAsync().ConfigureAwait(false);
-        var version = string.IsNullOrWhiteSpace(packageVersion) ? versions.OrderByDescending(v => v.Version.Version).First() : versions.FirstOrDefault(v => v.Version.Version.ToString() == packageVersion) ?? throw new NullReferenceException($"Failed to find version '{packageVersion}' of nuget package '{packageId}' in source '{packageSource}'");
+        var version = string.IsNullOrWhiteSpace(packageVersion) ? versions.OrderByDescending(v => v.Version.Version).First() : versions.FirstOrDefault(v => v.Version.Version.ToString(3) == packageVersion) ?? throw new NullReferenceException($"Failed to find version '{packageVersion}' of nuget package '{packageId}' in source '{packageSource}'");
         var packageFileName = Path.Combine(this.PluginsDirectory.FullName, $"{result.Identity.Id}.{version.Version}.nupkg");
         var packageOutputDirectory = Path.Combine(new FileInfo(metadata.AssemblyFilePath).Directory!.FullName);
         Stream packageStream;

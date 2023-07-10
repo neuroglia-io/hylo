@@ -21,6 +21,11 @@ public class DatabaseInitializer
     /// </summary>
     protected IDatabaseProvider DatabaseProvider { get; }
 
+    /// <summary>
+    /// Gets the current <see cref="IDatabase"/>
+    /// </summary>
+    protected IDatabase Database => this.DatabaseProvider.GetDatabase();
+
     /// <inheritdoc/>
     public virtual Task StartAsync(CancellationToken stoppingToken) => this.InitializeAsync(stoppingToken);
 
@@ -30,7 +35,7 @@ public class DatabaseInitializer
     /// <inheritdoc/>
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        if (await this.DatabaseProvider.GetDatabase().InitializeAsync(cancellationToken).ConfigureAwait(false)) await this.SeedAsync(cancellationToken).ConfigureAwait(false);
+        if (await this.Database.InitializeAsync(cancellationToken).ConfigureAwait(false)) await this.SeedAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
