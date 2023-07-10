@@ -90,6 +90,14 @@ public static partial class Serializer
         public static JsonElement? SerializeToElement<T>(T graph) => JsonSerializer.SerializeToElement(graph, DefaultOptions);
 
         /// <summary>
+        /// Serializes the specified object into a new <see cref="JsonDocument"/>
+        /// </summary>
+        /// <typeparam name="T">The type of object to serialize</typeparam>
+        /// <param name="graph">The object to serialize</param>
+        /// <returns>A new <see cref="JsonDocument"/></returns>
+        public static JsonDocument? SerializeToDocument<T>(T graph) => JsonSerializer.SerializeToDocument(graph, DefaultOptions);
+
+        /// <summary>
         /// Serializes an object to the specified <see cref="Stream"/>
         /// </summary>
         /// <typeparam name="T">The type of the object to serialize</typeparam>

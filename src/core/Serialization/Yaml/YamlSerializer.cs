@@ -114,6 +114,14 @@ public static partial class Serializer
         public static object? Deserialize(TextReader reader, Type type) => Deserializer.Deserialize(reader, type);
 
         /// <summary>
+        /// Deserializes the specified YAML input
+        /// </summary>
+        /// <typeparam name="T">The type to deserialize the specified YAML into</typeparam>
+        /// <param name="buffer">The UTF8 encoded YAML input</param>
+        /// <returns>The deserialized value</returns>
+        public static T? Deserialize<T>(ReadOnlySpan<byte> buffer) => Deserializer.Deserialize<T>(Encoding.UTF8.GetString(buffer));
+
+        /// <summary>
         /// Converts the specified JSON input into YAML
         /// </summary>
         /// <param name="json">The JSON input to convert</param>

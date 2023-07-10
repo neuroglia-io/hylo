@@ -26,6 +26,15 @@ public static class IServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Adds and configures Hylo services
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to configure</param>
+    /// <param name="configuration">The current <see cref="IConfiguration"/></param>
+    /// <param name="setup">An <see cref="Action{T}"/> used to configure Hylo</param>
+    /// <returns>The configured <see cref="IServiceCollection"/></returns>
+    public static IServiceCollection AddHylo(this IServiceCollection services, IConfiguration configuration) => services.AddHylo(configuration, builder => { });
+
+    /// <summary>
     /// Adds and configures a new <see cref="IResourceController{TResource}"/> to control <see cref="IResource"/>s of the specified type
     /// </summary>
     /// <typeparam name="TResource">The type of <see cref="IResource"/> to control</typeparam>

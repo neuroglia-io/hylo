@@ -10,33 +10,27 @@ public class DatabaseInitializer
     /// <summary>
     /// Initializes a new <see cref="DatabaseInitializer"/>
     /// </summary>
-    /// <param name="database">The <see cref="IDatabase"/> to initialize</param>
-    public DatabaseInitializer(IDatabase database)
+    /// <param name="databaseProvider">The service used to provide the <see cref="IDatabase"/> to initialize</param>
+    public DatabaseInitializer(IDatabaseProvider databaseProvider)
     {
-        this.Database = database;
+        this.DatabaseProvider = databaseProvider;
     }
 
     /// <summary>
-    /// Gets the <see cref="IDatabase"/> to initialize
+    /// Gets the service used to provide the <see cref="IDatabase"/> to initialize
     /// </summary>
-    protected IDatabase Database { get; }
+    protected IDatabaseProvider DatabaseProvider { get; }
 
     /// <inheritdoc/>
-    public virtual Task StartAsync(CancellationToken stoppingToken)
-    {
-        return this.InitializeAsync(stoppingToken);
-    }
+    public virtual Task StartAsync(CancellationToken stoppingToken) => this.InitializeAsync(stoppingToken);
 
     /// <inheritdoc/>
-    public virtual Task StopAsync(CancellationToken stoppingToken)
-    {
-        return Task.CompletedTask;
-    }
+    public virtual Task StopAsync(CancellationToken stoppingToken) => Task.CompletedTask;
 
     /// <inheritdoc/>
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        if (await this.Database.InitializeAsync(cancellationToken).ConfigureAwait(false)) await this.SeedAsync(cancellationToken).ConfigureAwait(false);
+        if (await this.DatabaseProvider.GetDatabase().InitializeAsync(cancellationToken).ConfigureAwait(false)) await this.SeedAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

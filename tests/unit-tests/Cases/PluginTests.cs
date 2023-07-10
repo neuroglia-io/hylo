@@ -4,6 +4,7 @@ using Hylo.Providers.FileSystem.Services;
 using Hylo.UnitTests.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Hylo.UnitTests.Cases;
 
@@ -62,6 +63,28 @@ public class PluginTests
 
         //assert
         plugin.Should().NotBeNull();
+    }
+
+    [Fact, Priority(3)]
+    public async Task Inject_PluginBasedDatabaseProvider_Should_Work()
+    {
+        //arrange
+        var configuration = new ConfigurationBuilder().Build();
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddLogging();
+        services.AddHylo(configuration);
+
+        //act
+        using var provider = services.BuildServiceProvider();
+        foreach (var hostedService in provider.GetServices<IHostedService>())
+        {
+            await hostedService.StartAsync(default).ConfigureAwait(false);
+        }
+
+        //assert
+        var action = () => provider.GetRequiredService<IDatabaseProvider>();
+        action.Should().NotThrow();
     }
 
     void IDisposable.Dispose()

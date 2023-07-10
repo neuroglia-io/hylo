@@ -1,7 +1,6 @@
 ﻿using Hylo.Api.Application.Commands.Resources.Generic;
 using Hylo.Api.Application.Queries.Resources.Generic;
 using System.Net;
-using System.Text.RegularExpressions;
 
 namespace Hylo.Api.Http;
 

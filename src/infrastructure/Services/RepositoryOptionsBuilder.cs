@@ -200,8 +200,6 @@ public class RepositoryOptionsBuilder
         this.Services.TryAddSingleton(typeof(IDatabaseInitializer), this.DatabaseInitializerType);
         if (typeof(IDatabaseInitializer).IsAssignableFrom(this.DatabaseInitializerType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IDatabaseInitializer>());
 
-        this.Services.TryAddSingleton(provider => provider.GetRequiredService<IDatabaseProvider>().GetDatabase());
-
         this.Services.AddSingleton<IResourceMutator, DefaultResourceValidator>();
 
         this.Services.TryAddSingleton(Microsoft.Extensions.Options.Options.Create(this.Options));

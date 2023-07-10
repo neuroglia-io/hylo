@@ -19,15 +19,15 @@ public class Repository
     /// <param name="userInfoProvider">The service used to provide information about users</param>
     /// <param name="admissionControl">The service used to control admission of resource operations</param>
     /// <param name="versionControl">The service used to control versioning of admitted resources</param>
-    /// <param name="database">The service used to read and write the resource</param>
+    /// <param name="databaseProvider">The service used to provide a database implementation</param>
     /// <param name="options">The service used to access the current <see cref="ResourceRepositoryOptions"/></param>
-    public Repository(ILoggerFactory loggerFactory, IUserInfoProvider userInfoProvider, IAdmissionControl admissionControl, IVersionControl versionControl, IDatabase database, IOptions<ResourceRepositoryOptions> options)
+    public Repository(ILoggerFactory loggerFactory, IUserInfoProvider userInfoProvider, IAdmissionControl admissionControl, IVersionControl versionControl, IDatabaseProvider databaseProvider, IOptions<ResourceRepositoryOptions> options)
     {
         this.Logger = loggerFactory.CreateLogger(this.GetType());
         this.UserInfoProvider = userInfoProvider;
         this.AdmissionControl = admissionControl;
         this.VersionControl = versionControl;
-        this.Database = database;
+        this.Database = databaseProvider.GetDatabase();
         this.Options = options.Value;
     }
 
