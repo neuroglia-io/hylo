@@ -39,21 +39,21 @@ public record Resource
     /// Gets the resource's API version
     /// </summary>
     [Required]
-    [DataMember(Order = -999, Name = "apiVersion", IsRequired = true), JsonPropertyOrder(-999), JsonPropertyName("apiVersion"), YamlMember(Order = -999, Alias = "apiVersion")]
+    [DataMember(Order = 1, Name = "apiVersion", IsRequired = true), JsonPropertyOrder(1), JsonPropertyName("apiVersion"), YamlMember(Order = 1, Alias = "apiVersion")]
     public virtual string ApiVersion { get; set; } = null!;
 
     /// <summary>
     /// Gets the resource's kind
     /// </summary>
     [Required]
-    [DataMember(Order = -998, Name = "kind"), JsonPropertyOrder(-998), JsonPropertyName("kind"), YamlMember(Order = -998, Alias = "kind")]
+    [DataMember(Order = 2, Name = "kind"), JsonPropertyOrder(2), JsonPropertyName("kind"), YamlMember(Order = 2, Alias = "kind")]
     public virtual string Kind { get; set; } = null!;
 
     /// <summary>
     /// Gets/sets the object that describes the resource
     /// </summary>
     [Required]
-    [DataMember(Order = -997, Name = "metadata", IsRequired = true), JsonPropertyOrder(-997), JsonPropertyName("metadata"), YamlMember(Order = -997, Alias = "metadata")]
+    [DataMember(Order = 3, Name = "metadata", IsRequired = true), JsonPropertyOrder(3), JsonPropertyName("metadata"), YamlMember(Order = 3, Alias = "metadata")]
     public virtual ResourceMetadata Metadata { get; set; } = null!;
 
     object IMetadata.Metadata => this.Metadata;
@@ -107,7 +107,7 @@ public record Resource<TSpec>
     /// <summary>
     /// Gets/sets the object used to define and configure the resource
     /// </summary>
-    [DataMember(Order = -996, Name = "spec"), JsonPropertyOrder(-996), JsonPropertyName("spec"), YamlMember(Order = -996, Alias = "spec")]
+    [DataMember(Order = 4, Name = "spec"), JsonPropertyOrder(4), JsonPropertyName("spec"), YamlMember(Order = 4, Alias = "spec")]
     public virtual TSpec Spec { get; set; } = null!;
 
     object ISpec.Spec => this.Spec;
@@ -153,7 +153,7 @@ public record Resource<TSpec, TStatus>
     /// <summary>
     /// Gets/sets an object that describes the resource's status, if any
     /// </summary>
-    [DataMember(Order = -995, Name = "status"), JsonPropertyOrder(-995), JsonPropertyName("status"), YamlMember(Order = -995, Alias = "status")]
+    [DataMember(Order = 5, Name = "status"), JsonPropertyOrder(5), JsonPropertyName("status"), YamlMember(Order = 5, Alias = "status")]
     public virtual TStatus? Status { get; set; }
 
     object? IStatus.Status => this.Status;
