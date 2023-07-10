@@ -5,7 +5,7 @@
 /// </summary>
 /// <typeparam name="TResource">The type of <see cref="IResource"/>s to list</typeparam>
 public class ListResourcesQuery<TResource>
-    : IQuery<Hylo.ICollection<TResource>>
+    : IQuery<ICollection<TResource>>
     where TResource : class, IResource, new()
 {
 

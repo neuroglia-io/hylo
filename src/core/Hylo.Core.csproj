@@ -18,6 +18,7 @@
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<Title>$(AssemblyName)</Title>
 	<Description>Contains Hylo fundamentals, such as core resources and services</Description>
+	<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
