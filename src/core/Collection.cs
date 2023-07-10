@@ -39,21 +39,21 @@ public record Collection
     /// Gets the collection's API version
     /// </summary>
     [Required]
-    [DataMember(Order = -999, Name = "apiVersion", IsRequired = true), JsonPropertyOrder(-999), JsonPropertyName("apiVersion"), YamlMember(Order = -999, Alias = "apiVersion")]
+    [DataMember(Order = 1, Name = "apiVersion", IsRequired = true), JsonPropertyOrder(1), JsonPropertyName("apiVersion"), YamlMember(Order = 1, Alias = "apiVersion")]
     public virtual string ApiVersion { get; set; } = null!;
 
     /// <summary>
     /// Gets the collection's kind
     /// </summary>
     [Required]
-    [DataMember(Order = -998, Name = "kind"), JsonPropertyOrder(-998), JsonPropertyName("kind"), YamlMember(Order = -998, Alias = "kind")]
+    [DataMember(Order = 2, Name = "kind"), JsonPropertyOrder(2), JsonPropertyName("kind"), YamlMember(Order = 2, Alias = "kind")]
     public virtual string Kind { get; set; } = null!;
 
     /// <summary>
     /// Gets/sets the object that describes the collection
     /// </summary>
     [Required]
-    [DataMember(Order = -997, Name = "metadata", IsRequired = true), JsonPropertyOrder(-997), JsonPropertyName("metadata"), YamlMember(Order = -997, Alias = "metadata")]
+    [DataMember(Order = 3, Name = "metadata", IsRequired = true), JsonPropertyOrder(3), JsonPropertyName("metadata"), YamlMember(Order = 3, Alias = "metadata")]
     public virtual CollectionMetadata Metadata { get; set; } = null!;
 
     CollectionMetadata IMetadata<CollectionMetadata>.Metadata => this.Metadata;
@@ -61,7 +61,7 @@ public record Collection
     object IMetadata.Metadata => this.Metadata;
 
     /// <inheritdoc/>
-    [DataMember(Order = -996, Name = "items", IsRequired = true), JsonPropertyOrder(-996), JsonPropertyName("items"), YamlMember(Order = -996, Alias = "items")]
+    [DataMember(Order = 4, Name = "items", IsRequired = true), JsonPropertyOrder(4), JsonPropertyName("items"), YamlMember(Order = 4, Alias = "items")]
     public virtual EquatableList<object>? Items { get; set; }
 
     /// <inheritdoc/>
@@ -102,21 +102,21 @@ public class Collection<TObject>
     /// Gets the collection's API version
     /// </summary>
     [Required]
-    [DataMember(Order = -999, Name = "apiVersion", IsRequired = true), JsonPropertyOrder(-999), JsonPropertyName("apiVersion"), YamlMember(Order = -999, Alias = "apiVersion")]
+    [DataMember(Order = 1, Name = "apiVersion", IsRequired = true), JsonPropertyOrder(1), JsonPropertyName("apiVersion"), YamlMember(Order = 1, Alias = "apiVersion")]
     public virtual string ApiVersion { get; set; } = null!;
 
     /// <summary>
     /// Gets the collection's kind
     /// </summary>
     [Required]
-    [DataMember(Order = -998, Name = "kind"), JsonPropertyOrder(-998), JsonPropertyName("kind"), YamlMember(Order = -998, Alias = "kind")]
+    [DataMember(Order = 2, Name = "kind"), JsonPropertyOrder(2), JsonPropertyName("kind"), YamlMember(Order = 2, Alias = "kind")]
     public virtual string Kind { get; set; } = null!;
 
     /// <summary>
     /// Gets/sets the object that describes the collection
     /// </summary>
     [Required]
-    [DataMember(Order = -997, Name = "metadata", IsRequired = true), JsonPropertyOrder(-997), JsonPropertyName("metadata"), YamlMember(Order = -997, Alias = "metadata")]
+    [DataMember(Order = 3, Name = "metadata", IsRequired = true), JsonPropertyOrder(3), JsonPropertyName("metadata"), YamlMember(Order = 3, Alias = "metadata")]
     public virtual CollectionMetadata Metadata { get; set; } = null!;
 
     CollectionMetadata IMetadata<CollectionMetadata>.Metadata => this.Metadata;
@@ -124,7 +124,7 @@ public class Collection<TObject>
     object IMetadata.Metadata => this.Metadata;
 
     /// <inheritdoc/>
-    [DataMember(Order = -996, Name = "items", IsRequired = true), JsonPropertyOrder(-996), JsonPropertyName("items"), YamlMember(Order = -996, Alias = "items")]
+    [DataMember(Order = 4, Name = "items", IsRequired = true), JsonPropertyOrder(4), JsonPropertyName("items"), YamlMember(Order = 4, Alias = "items")]
     public virtual EquatableList<TObject>? Items { get; set; }
 
     EquatableList<object>? ICollection.Items => this.Items?.OfType<object>().WithValueSemantics();
