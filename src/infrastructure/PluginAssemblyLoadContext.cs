@@ -24,16 +24,7 @@ public class PluginAssemblyLoadContext
     /// Initializes a new <see cref="PluginAssemblyLoadContext"/>
     /// </summary>
     /// <param name="path">The path of the plugin <see cref="Assembly"/> to load</param>
-    public PluginAssemblyLoadContext(string path)
-        : this(new AssemblyDependencyResolver(path))
-    {
-        var directory = new DirectoryInfo(Path.GetDirectoryName(path)!);
-        foreach (var assemblyFile in directory.GetFiles("*.dll"))
-        {
-            var assemblyName = new AssemblyName(Path.GetFileNameWithoutExtension(assemblyFile.FullName)!);
-            if (Default.Assemblies.Any(a => a.GetName().Name == assemblyName.Name)) assemblyFile.Delete();
-        }
-    }
+    public PluginAssemblyLoadContext(string path) : this(new AssemblyDependencyResolver(path)) { }
 
     /// <summary>
     /// Gets the service used to resolve assembly dependencies
@@ -43,7 +34,7 @@ public class PluginAssemblyLoadContext
     /// <inheritdoc/>
     protected override Assembly? Load(AssemblyName assemblyName)
     {
-        var assembly = Default.Assemblies.FirstOrDefault(a => a.FullName == assemblyName.FullName);
+        var assembly = Default.Assemblies.FirstOrDefault(a => a.GetName().Name == assemblyName.Name && a.GetName().Version >= assemblyName.Version);
         if (assembly != null) return assembly;
         var assemblyPath = this.AssemblyDependencyResolver.ResolveAssemblyToPath(assemblyName);
         if (string.IsNullOrWhiteSpace(assemblyPath)) return null;
