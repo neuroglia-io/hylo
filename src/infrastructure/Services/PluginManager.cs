@@ -1,7 +1,10 @@
-﻿using NuGet.Frameworks;
+﻿using NuGet.Configuration;
+using NuGet.Frameworks;
 using NuGet.Packaging;
+using NuGet.Packaging.Core;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
+using NuGet.Versioning;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -60,7 +63,7 @@ public class PluginManager
         {
             var json = await File.ReadAllTextAsync(pluginFile.FullName, this.CancellationTokenSource.Token).ConfigureAwait(false);
             var pluginMetadata = JsonSerializer.Deserialize<PluginMetadata>(json)!;
-            if (!string.IsNullOrWhiteSpace(pluginMetadata.NugetPackage)) await this.DownloadAndExtractNugetPackageAsync(pluginMetadata, this.CancellationTokenSource.Token).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(pluginMetadata.NugetPackage)) await this.DownloadAndExtractNugetPackageAsync(pluginFile, pluginMetadata, this.CancellationTokenSource.Token).ConfigureAwait(false);
             var assemblyFilePath = pluginMetadata.AssemblyFilePath;
             if (pluginMetadata.AssemblyFilePath.StartsWith(Path.DirectorySeparatorChar)) assemblyFilePath = Path.Combine(pluginFile.Directory!.FullName, assemblyFilePath);
             var assemblyFile = new FileInfo(assemblyFilePath);
@@ -102,55 +105,27 @@ public class PluginManager
     /// <summary>
     /// Downloads and extracts the specified Nuget package
     /// </summary>
+    /// <param name="file">The plugin file</param>
     /// <param name="metadata">The metadata of the plugin based on the Nuget package to download and extract</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>A new awaitable <see cref="ValueTask"/></returns>
-    protected virtual async ValueTask DownloadAndExtractNugetPackageAsync(PluginMetadata metadata, CancellationToken cancellationToken)
+    protected virtual async ValueTask DownloadAndExtractNugetPackageAsync(FileInfo file, PluginMetadata metadata, CancellationToken cancellationToken)
     {
+        if (file == null) throw new ArgumentNullException(nameof(file));
         if (metadata == null) throw new ArgumentNullException(nameof(metadata));
         if(string.IsNullOrWhiteSpace(metadata.NugetPackage)) throw new ArgumentNullException(nameof(metadata.NugetPackage));
+
         var components = metadata.NugetPackage.Split('/', StringSplitOptions.RemoveEmptyEntries);
         var packageSource = components.Length == 1 ? "https://api.nuget.org/v3/index.json" : components.First();
         var packageId = components.Last();
 
         components = packageId.Split(':', StringSplitOptions.RemoveEmptyEntries);
         packageId = components[0];
-        var packageVersion = components.Length > 1 ? components[1] : null;
+        var packageVersion = components.Length > 1 ? NuGetVersion.Parse(components[1]) : null;
         var repository = NuGet.Protocol.Core.Types.Repository.Factory.GetCoreV3(packageSource);
         var cache = new SourceCacheContext();
-        var packageSearchResource = await repository.GetResourceAsync<PackageSearchResource>().ConfigureAwait(false);
-        var findPackageByIdResource = await repository.GetResourceAsync<FindPackageByIdResource>().ConfigureAwait(false);
-        var searchFilter = new SearchFilter(includePrerelease: true);
-        var results = await packageSearchResource.SearchAsync(packageId, searchFilter, 0, 100, NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
-        var result = results.FirstOrDefault() ?? throw new NullReferenceException($"Failed to find nuget package with id '{packageId}' in source '{packageSource}'");
-        var versions = await result.GetVersionsAsync().ConfigureAwait(false);
-        var version = string.IsNullOrWhiteSpace(packageVersion) ? versions.OrderByDescending(v => v.Version.Version).First() : versions.FirstOrDefault(v => v.Version.Version.ToString(3) == packageVersion) ?? throw new NullReferenceException($"Failed to find version '{packageVersion}' of nuget package '{packageId}' in source '{packageSource}'");
-        var packageFileName = Path.Combine(this.PluginsDirectory.FullName, $"{result.Identity.Id}.{version.Version}.nupkg");
-        var packageOutputDirectory = Path.Combine(new FileInfo(metadata.AssemblyFilePath).Directory!.FullName);
-        Stream packageStream;
-        if (File.Exists(packageFileName))
-        {
-            packageStream = File.OpenRead(packageFileName);
-        }
-        else
-        {
-            packageStream = File.Open(packageFileName, FileMode.Create);
-            await findPackageByIdResource.CopyNupkgToStreamAsync(result.Identity.Id, version.Version, packageStream, cache, NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
-            await packageStream.FlushAsync(cancellationToken).ConfigureAwait(false);
-            packageStream.Position = 0;
-        }
-        using var packageReader = new PackageArchiveReader(packageStream);
-        var currentFramework = NuGetFramework.Parse(typeof(PluginManager).Assembly.GetCustomAttribute<TargetFrameworkAttribute>()?.FrameworkName);
-        var libItems = await packageReader.GetLibItemsAsync(cancellationToken).ConfigureAwait(false);
-        var framework = libItems
-            .Where(f => DefaultCompatibilityProvider.Instance.IsCompatible(currentFramework, f.TargetFramework))
-            .Last();
-        foreach (var item in framework.Items)
-        {
-            var outputFile = Path.Combine(packageOutputDirectory, item.Split('/').Last());
-            packageReader.ExtractFile(item, outputFile, NuGet.Common.NullLogger.Instance);
-        }
-        await packageStream.DisposeAsync().ConfigureAwait(false);
+
+        await repository.DownloadAndExtractPackageAsync(packageId, packageVersion, file.Directory!, cache, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>

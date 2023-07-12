@@ -5,6 +5,12 @@ using Hylo.UnitTests.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NuGet.Protocol.Core.Types;
+using NuGet.Protocol;
+using NuGet.Packaging.Core;
+using NuGet.Versioning;
+using System.IO;
+using NuGet.Packaging;
 
 namespace Hylo.UnitTests.Cases;
 
@@ -35,10 +41,12 @@ public class PluginTests
 
         //act
         var plugin = await manager.FindPluginAsync<IFakeDataGenerator>().ConfigureAwait(false);
+        var fakeData = plugin?.GenerateFakeData();
 
         //assert
         plugin.Should().NotBeNull();
         plugin!.GenerateFakeData().Should().Be(FakeDataGeneratorPluginBootstrapper.InjectedString);
+        fakeData.Should().NotBeNull();
     }
 
     [Fact, Priority(2)]
@@ -60,9 +68,11 @@ public class PluginTests
 
         //act
         var plugin = await manager.FindPluginAsync<IDatabaseProvider>().ConfigureAwait(false);
+        var database = plugin?.GetDatabase();
 
         //assert
         plugin.Should().NotBeNull();
+        database.Should().NotBeNull();
     }
 
     [Fact, Priority(3)]

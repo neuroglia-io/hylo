@@ -28,11 +28,11 @@
 
   <ItemGroup>
     <PackageReference Include="JsonCons.Utilities" Version="1.0.0" />
-    <PackageReference Include="JsonPatch.Net" Version="2.0.6" />
-    <PackageReference Include="JsonSchema.Net" Version="4.1.0" />
-    <PackageReference Include="MediatR" Version="12.0.1" />
-    <PackageReference Include="System.Reactive.Linq" Version="5.0.0" />
-    <PackageReference Include="YamlDotNet" Version="13.1.0" />
+    <PackageReference Include="JsonPatch.Net" Version="2.1.0" />
+    <PackageReference Include="JsonSchema.Net" Version="4.1.6" />
+    <PackageReference Include="MediatR" Version="12.1.1" />
+    <PackageReference Include="System.Reactive.Linq" Version="6.0.0" />
+    <PackageReference Include="YamlDotNet" Version="13.1.1" />
   </ItemGroup>
 
   <ItemGroup>
