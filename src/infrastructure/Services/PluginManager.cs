@@ -4,6 +4,7 @@ using NuGet.Packaging;
 using NuGet.Packaging.Core;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
+using NuGet.Protocol.Plugins;
 using NuGet.Versioning;
 using System.Collections.Concurrent;
 using System.Reflection;
@@ -65,7 +66,7 @@ public class PluginManager
             var pluginMetadata = JsonSerializer.Deserialize<PluginMetadata>(json)!;
             if (!string.IsNullOrWhiteSpace(pluginMetadata.NugetPackage)) await this.DownloadAndExtractNugetPackageAsync(pluginFile, pluginMetadata, this.CancellationTokenSource.Token).ConfigureAwait(false);
             var assemblyFilePath = pluginMetadata.AssemblyFilePath;
-            if (!Path.IsPathRooted(assemblyFilePath)) assemblyFilePath = Path.Combine(pluginFile.Directory!.FullName, assemblyFilePath);
+            if (!Path.IsPathRooted(assemblyFilePath)) assemblyFilePath = Path.GetFullPath(assemblyFilePath, pluginFile.Directory!.FullName);
             var assemblyFile = new FileInfo(assemblyFilePath);
             if (!assemblyFile.Exists) throw new FileNotFoundException($"Failed to find the specified plugin assembly '{assemblyFilePath}'");
             assemblyFiles.Add(assemblyFile);
@@ -86,7 +87,7 @@ public class PluginManager
                 var pluginAttribute = type.GetCustomAttributesData().FirstOrDefault(a => a.AttributeType.FullName == typeof(PluginAttribute).FullName);
                 if (pluginAttribute == null) continue;
                 var pluginMetadata = PluginMetadata.FromType(type);
-                if (!Path.IsPathRooted(pluginMetadata.AssemblyFilePath)) pluginMetadata.AssemblyFilePath = Path.Combine(assemblyFile.DirectoryName!, pluginMetadata.AssemblyFilePath);
+                if (!Path.IsPathRooted(pluginMetadata.AssemblyFilePath)) pluginMetadata.AssemblyFilePath = Path.GetFullPath(pluginMetadata.AssemblyFilePath, assemblyFile.DirectoryName!);
                 this.AvailablePlugins.Add(pluginMetadata);
             }
         }

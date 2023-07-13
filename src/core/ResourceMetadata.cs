@@ -74,7 +74,7 @@ public record ResourceMetadata
     /// Gets/sets a value that represents the resource's spec version
     /// </summary>
     [DataMember(Order = 7, Name = "resourceVersion"), JsonPropertyOrder(7), JsonPropertyName("resourceVersion"), YamlMember(Order = 7, Alias = "resourceVersion")]
-    public virtual string ResourceVersion { get; set; } = null!;
+    public virtual string? ResourceVersion { get; set; }
 
     /// <inheritdoc/>
     [DataMember(Order = 999, Name = "extensionData"), JsonExtensionData]
