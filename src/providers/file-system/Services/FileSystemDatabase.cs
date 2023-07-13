@@ -1,6 +1,7 @@
 ﻿using Hylo.Infrastructure.Services;
 using Hylo.Resources;
 using Hylo.Resources.Definitions;
+using Json.Patch;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -149,7 +150,7 @@ public class FileSystemDatabase
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
 
-        return this.WriteResourceToFileAsync(resource, group, version, plural, @namespace, null, cancellationToken);
+        return this.WriteResourceToFileAsync(Operation.Create, resource, group, version, plural, @namespace, null, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -271,7 +272,7 @@ public class FileSystemDatabase
         var diffPatch = JsonPatchHelper.CreateJsonPatchFromDiff(resource, patchedResource);
         if (!diffPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceRef));
 
-        return await this.WriteResourceToFileAsync(patchedResource, group, version, plural, @namespace, null, cancellationToken).ConfigureAwait(false);
+        return await this.WriteResourceToFileAsync(Operation.Patch, patchedResource, group, version, plural, @namespace, null, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -287,7 +288,7 @@ public class FileSystemDatabase
         var diffPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalState, resource);
         if (!diffPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceRef));
 
-        return await this.WriteResourceToFileAsync(resource, group, version, plural, @namespace, null, cancellationToken).ConfigureAwait(false);
+        return await this.WriteResourceToFileAsync(Operation.Replace, resource, group, version, plural, @namespace, null, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -305,7 +306,7 @@ public class FileSystemDatabase
         var diffPatch = JsonPatchHelper.CreateJsonPatchFromDiff(resource, patchedResource);
         if (!diffPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceRef));
 
-        return await this.WriteResourceToFileAsync(patchedResource, group, version, plural, @namespace, subResource, cancellationToken).ConfigureAwait(false);
+        return await this.WriteResourceToFileAsync(Operation.Patch, patchedResource, group, version, plural, @namespace, subResource, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -321,7 +322,7 @@ public class FileSystemDatabase
         var diffPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalState, resource);
         if (!diffPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceRef));
 
-        return await this.WriteResourceToFileAsync(resource, group, version, plural, @namespace, subResource, cancellationToken).ConfigureAwait(false);
+        return await this.WriteResourceToFileAsync(Operation.Replace, resource, group, version, plural, @namespace, subResource, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -401,6 +402,7 @@ public class FileSystemDatabase
     /// <summary>
     /// Serializes the specified <see cref="IResource"/> to a file
     /// </summary>
+    /// <param name="operation">The type of operation to perfrom on the specified <see cref="IResource"/></param>
     /// <param name="resource">The <see cref="IResource"/> to serialize</param>
     /// <param name="group">The API group the <see cref="IResource"/> to serialize belongs to</param>
     /// <param name="version">The version of the <see cref="IResource"/> to serialize</param>
@@ -409,7 +411,7 @@ public class FileSystemDatabase
     /// <param name="subResource">The sub resource to serialize</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>The serialized <see cref="IResource"/></returns>
-    public virtual async Task<IResource> WriteResourceToFileAsync(IResource resource, string group, string version, string plural, string? @namespace = null, string? subResource = null, CancellationToken cancellationToken = default)
+    public virtual async Task<IResource> WriteResourceToFileAsync(Operation operation, IResource resource, string group, string version, string plural, string? @namespace = null, string? subResource = null, CancellationToken cancellationToken = default)
     {
         if (resource == null) throw new ArgumentNullException(nameof(resource));
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
@@ -423,9 +425,10 @@ public class FileSystemDatabase
 
         var resourceNode = Serializer.Json.SerializeToNode<object>(resource)!.AsObject();
         resourceNode.Remove(nameof(IMetadata.Metadata).ToCamelCase());
-        resource.Metadata.ResourceVersion = string.Format("{0:X}", Serializer.Json.Serialize(resourceNode).GetHashCode());
 
+        if (operation == Operation.Create) resource.Metadata.CreationTimestamp = DateTimeOffset.Now;
         if (string.IsNullOrWhiteSpace(subResource)) resource.Metadata.Generation++;
+        resource.Metadata.ResourceVersion = string.Format("{0:X}", Serializer.Json.Serialize(resourceNode).GetHashCode());
 
         using var stream = await file.OpenWriteAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
         stream.SetLength(0);

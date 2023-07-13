@@ -14,7 +14,6 @@ public static class MongoContainer
     public static IContainer Build()
     {
         if (Container != null) return Container;
-        using var outputConsumer = Consume.RedirectStdoutAndStderrToStream(new MemoryStream(), new MemoryStream());
         Container = new ContainerBuilder()
             .WithName($"mongo-{Guid.NewGuid():N}")
             .WithImage("mongo:6.0.3")
@@ -34,7 +33,6 @@ public static class MongoContainer
                     "/data/replica.key"
                 )
             .WithPortBinding(PublicPort, true)
-            .WithOutputConsumer(outputConsumer)
             .WithWaitStrategy(Wait
                 .ForUnixContainer()
                 .UntilPortIsAvailable(PublicPort))

@@ -21,7 +21,7 @@ public class RedisDatabase
     /// </summary>
     public const string ConnectionStringName = "redis";
     const string ClusterResourcePrefix = "cluster.";
-    static readonly RedisChannel WatchEventChannel = new RedisChannel("watch-events", RedisChannel.PatternMode.Literal);
+    static readonly RedisChannel WatchEventChannel = new("watch-events", RedisChannel.PatternMode.Literal);
 
     bool _disposed;
 
@@ -188,7 +188,7 @@ public class RedisDatabase
 
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceReference));
         var updatedResource = jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>()!)!;
-        if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new HyloException(ProblemDetails.ResourceOptimisticConcurrencyCheckFailed(resourceReference, resource.Metadata.ResourceVersion, originalResource.Metadata.ResourceVersion));
+        if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new HyloException(ProblemDetails.ResourceOptimisticConcurrencyCheckFailed(resourceReference, resource.Metadata.ResourceVersion!, originalResource.Metadata.ResourceVersion!));
 
         return await this.WriteResourceAsync(group, version, plural, updatedResource, true, ResourceWatchEventType.Updated, cancellationToken).ConfigureAwait(false);
     }
@@ -229,7 +229,7 @@ public class RedisDatabase
 
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified((ResourceReference)originalResource!));
         var updatedResource = jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>()!)!;
-        if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new HyloException(ProblemDetails.ResourceOptimisticConcurrencyCheckFailed(resourceReference, resource.Metadata.ResourceVersion, originalResource.Metadata.ResourceVersion));
+        if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new HyloException(ProblemDetails.ResourceOptimisticConcurrencyCheckFailed(resourceReference, resource.Metadata.ResourceVersion!, originalResource.Metadata.ResourceVersion!));
 
         return await this.WriteResourceAsync(group, version, plural, updatedResource, false, ResourceWatchEventType.Updated, cancellationToken).ConfigureAwait(false); ;
     }
@@ -377,6 +377,7 @@ public class RedisDatabase
         var resourceNode = Serializer.Json.SerializeToNode<object>(resource)!.AsObject();
         resourceNode.Remove(nameof(IMetadata.Metadata).ToCamelCase());
         var json = Serializer.Json.Serialize(resourceNode);
+        if (operationType == ResourceWatchEventType.Created) resource.Metadata.CreationTimestamp = DateTimeOffset.Now;
         if (specHasChanged) resource.Metadata.Generation++;
         resource.Metadata.ResourceVersion = string.Format("{0:X}", json.GetHashCode());
         transactions.Add(new()

@@ -14,12 +14,10 @@ public static class RedisContainer
     public static IContainer Build()
     {
         if (Container != null) return Container;
-        using var outputConsumer = Consume.RedirectStdoutAndStderrToStream(new MemoryStream(), new MemoryStream());
         Container = new ContainerBuilder()
             .WithName($"redis-{Guid.NewGuid():N}")
             .WithImage("redis")
             .WithPortBinding(PublicPort, true)
-            .WithOutputConsumer(outputConsumer)
             .WithWaitStrategy(Wait
                 .ForUnixContainer()
                 .UntilPortIsAvailable(PublicPort)

@@ -201,7 +201,7 @@ public class MongoDatabase
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceReference));
 
         var updatedResource = jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>()!)!;
-        if (originalResource.Metadata.ResourceVersion != resource.Metadata.ResourceVersion) throw new HyloException(ProblemDetails.ResourceOptimisticConcurrencyCheckFailed(resourceReference, resource.Metadata.ResourceVersion, originalResource.Metadata.ResourceVersion));
+        if (originalResource.Metadata.ResourceVersion != resource.Metadata.ResourceVersion) throw new HyloException(ProblemDetails.ResourceOptimisticConcurrencyCheckFailed(resourceReference, resource.Metadata.ResourceVersion!, originalResource.Metadata.ResourceVersion!));
 
         return await this.WriteResourceAsync(updatedResource, group, version, plural, true, ResourceWatchEventType.Updated, cancellationToken).ConfigureAwait(false);
     }
@@ -240,7 +240,7 @@ public class MongoDatabase
         if (!jsonPatch.Operations.Any()) throw new HyloException(ProblemDetails.ResourceNotModified(resourceReference));
 
         var updatedResource = jsonPatch.ApplyTo(originalResource.ConvertTo<Resource>())!;
-        if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new HyloException(ProblemDetails.ResourceOptimisticConcurrencyCheckFailed(resourceReference, resource.Metadata.ResourceVersion, originalResource.Metadata.ResourceVersion));
+        if (originalResource.Metadata.ResourceVersion != resource.ConvertTo<Resource>()!.Metadata.ResourceVersion) throw new HyloException(ProblemDetails.ResourceOptimisticConcurrencyCheckFailed(resourceReference, resource.Metadata.ResourceVersion!, originalResource.Metadata.ResourceVersion!));
 
         return await this.WriteResourceAsync(updatedResource, group, version, plural, false, ResourceWatchEventType.Updated, cancellationToken).ConfigureAwait(false); ;
     }
@@ -280,6 +280,7 @@ public class MongoDatabase
         var resourceNode = Serializer.Json.SerializeToNode<object>(resource)!.AsObject();
         resourceNode.Remove(nameof(IMetadata.Metadata).ToCamelCase());
         var json = Serializer.Json.Serialize(resourceNode);
+        if (operationType == ResourceWatchEventType.Created) resource.Metadata.CreationTimestamp = DateTimeOffset.Now;
         if (specHasChanged) resource.Metadata.Generation++;
         resource.Metadata.ResourceVersion = string.Format("{0:X}", json.GetHashCode());
 
