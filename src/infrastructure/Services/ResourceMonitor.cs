@@ -4,7 +4,7 @@
 /// Represents the default implementation of the <see cref="IResourceMonitor"/> interface
 /// </summary>
 public class ResourceMonitor
-    : BackgroundService, IResourceMonitor
+    : IResourceMonitor, IDisposable, IAsyncDisposable
 {
 
     bool _disposed;
@@ -20,6 +20,10 @@ public class ResourceMonitor
         this.ResourceWatch = resourceWatch;
         this.Resource = resource;
         this.LeaveOpen = leaveOpen;
+        this.CancellationTokenSource = new();
+        this.ResourceEvents = this.ResourceWatch.Where(r => r.Resource.GetName() == this.Resource.GetName() && r.Resource.GetNamespace() == this.Resource.GetNamespace());
+        this.ResourceEvents.Where(e => e.Type == ResourceWatchEventType.Updated).Select(e => e.Resource).Subscribe(this.OnResourceUpdated, this.CancellationTokenSource.Token);
+        this.ResourceEvents.Where(e => e.Type == ResourceWatchEventType.Deleted).Select(e => e.Resource).Subscribe(this.OnResourceDeleted, this.CancellationTokenSource.Token);
     }
 
     /// <summary>
@@ -35,27 +39,17 @@ public class ResourceMonitor
     /// <summary>
     /// Gets the <see cref="ResourceMonitor"/>'s <see cref="System.Threading.CancellationTokenSource"/>
     /// </summary>
-    protected CancellationTokenSource CancellationTokenSource { get; private set; } = null!;
+    protected CancellationTokenSource CancellationTokenSource { get; }
 
     /// <summary>
     /// Gets the <see cref="IObservable{T}"/> used to watch the <see cref="IResourceWatchEvent"/>s produced by the monitored <see cref="IResource"/>
     /// </summary>
-    protected IObservable<IResourceWatchEvent> ResourceEvents { get; private set; } = null!;
+    protected IObservable<IResourceWatchEvent> ResourceEvents { get; }
 
     /// <summary>
     /// Gets the current state of the monitored <see cref="IResource"/>
     /// </summary>
-    public IResource Resource { get; private set; } = null!;
-
-    /// <inheritdoc/>
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        this.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
-        this.ResourceEvents = this.ResourceWatch.Where(r => r.Resource.GetName() == this.Resource.GetName() && r.Resource.GetNamespace() == this.Resource.GetNamespace());
-        this.ResourceEvents.Where(e => e.Type == ResourceWatchEventType.Updated).Select(e => e.Resource).Subscribe(this.OnResourceUpdated, this.CancellationTokenSource.Token);
-        this.ResourceEvents.Where(e => e.Type == ResourceWatchEventType.Deleted).Select(e => e.Resource).Subscribe(this.OnResourceDeleted, this.CancellationTokenSource.Token);
-        return Task.CompletedTask;
-    }
+    public IResource Resource { get; private set; }
 
     /// <inheritdoc/>
     public virtual IDisposable Subscribe(IObserver<IResourceWatchEvent> observer)
@@ -115,7 +109,7 @@ public class ResourceMonitor
     }
 
     /// <inheritdoc/>
-    public override void Dispose()
+    public void Dispose()
     {
         this.Dispose(true);
         GC.SuppressFinalize(this);
@@ -128,7 +122,7 @@ public class ResourceMonitor
 /// </summary>
 /// <typeparam name="TResource">The type of <see cref="IResource"/> to monitor</typeparam>
 public class ResourceMonitor<TResource>
-    : BackgroundService, IResourceMonitor<TResource>
+    :  IResourceMonitor<TResource>, IDisposable, IAsyncDisposable
     where TResource : class, IResource, new()
 {
 
@@ -145,6 +139,10 @@ public class ResourceMonitor<TResource>
         this.ResourceWatch = resourceWatch;
         this.Resource = resource;
         this.LeaveOpen = leaveOpen;
+        this.CancellationTokenSource = new();
+        this.ResourceEvents = this.ResourceWatch.Where(r => r.Resource.GetName() == this.Resource.GetName() && r.Resource.GetNamespace() == this.Resource.GetNamespace());
+        this.ResourceEvents.Where(e => e.Type == ResourceWatchEventType.Updated).Select(e => e.Resource).Subscribe(this.OnResourceUpdated, this.CancellationTokenSource.Token);
+        this.ResourceEvents.Where(e => e.Type == ResourceWatchEventType.Deleted).Select(e => e.Resource).Subscribe(this.OnResourceDeleted, this.CancellationTokenSource.Token);
     }
 
     /// <summary>
@@ -160,27 +158,17 @@ public class ResourceMonitor<TResource>
     /// <summary>
     /// Gets the <see cref="ResourceMonitor"/>'s <see cref="System.Threading.CancellationTokenSource"/>
     /// </summary>
-    protected CancellationTokenSource CancellationTokenSource { get; private set; } = null!;
+    protected CancellationTokenSource CancellationTokenSource { get; }
 
     /// <summary>
     /// Gets the <see cref="IObservable{T}"/> used to watch the <see cref="IResourceWatchEvent"/>s produced by the monitored <see cref="IResource"/>
     /// </summary>
-    protected IObservable<IResourceWatchEvent<TResource>> ResourceEvents { get; private set; } = null!;
+    protected IObservable<IResourceWatchEvent<TResource>> ResourceEvents { get; }
 
     /// <summary>
     /// Gets the current state of the monitored <see cref="IResource"/>
     /// </summary>
     public TResource Resource { get; private set; } = null!;
-
-    /// <inheritdoc/>
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        this.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
-        this.ResourceEvents = this.ResourceWatch.Where(r => r.Resource.GetName() == this.Resource.GetName() && r.Resource.GetNamespace() == this.Resource.GetNamespace());
-        this.ResourceEvents.Where(e => e.Type == ResourceWatchEventType.Updated).Select(e => e.Resource).Subscribe(this.OnResourceUpdated, this.CancellationTokenSource.Token);
-        this.ResourceEvents.Where(e => e.Type == ResourceWatchEventType.Deleted).Select(e => e.Resource).Subscribe(this.OnResourceDeleted, this.CancellationTokenSource.Token);
-        return Task.CompletedTask;
-    }
 
     /// <inheritdoc/>
     public virtual IDisposable Subscribe(IObserver<IResourceWatchEvent<TResource>> observer)
@@ -240,7 +228,7 @@ public class ResourceMonitor<TResource>
     }
 
     /// <inheritdoc/>
-    public override void Dispose()
+    public void Dispose()
     {
         this.Dispose(true);
         GC.SuppressFinalize(this);
