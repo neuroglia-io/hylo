@@ -177,28 +177,28 @@ public class RepositoryOptionsBuilder
     public virtual void Build()
     {
         this.Services.TryAddSingleton(typeof(IUserAccessor), this.UserAccessorType);
-        if (typeof(IHostedService).IsAssignableFrom(this.UserAccessorType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IUserAccessor>());
+        if (typeof(IHostedService).IsAssignableFrom(this.UserAccessorType)) this.Services.Add(new(typeof(IHostedService), provider => provider.GetRequiredService<IUserAccessor>(), ServiceLifetime.Singleton));
 
         this.Services.TryAddSingleton(typeof(IUserInfoProvider), this.UserInfoProviderType);
-        if (typeof(IHostedService).IsAssignableFrom(this.UserInfoProviderType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IUserInfoProvider>());
+        if (typeof(IHostedService).IsAssignableFrom(this.UserInfoProviderType)) this.Services.Add(new(typeof(IHostedService), provider => (IHostedService)provider.GetRequiredService<IUserInfoProvider>(), ServiceLifetime.Singleton));
 
         this.Services.TryAddSingleton(typeof(IPluginManager), this.PluginManagerType);
-        if (typeof(IHostedService).IsAssignableFrom(this.PluginManagerType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IPluginManager>());
+        if (typeof(IHostedService).IsAssignableFrom(this.PluginManagerType)) this.Services.Insert(0, new(typeof(IHostedService), provider => provider.GetRequiredService<IPluginManager>(), ServiceLifetime.Singleton));
 
         this.Services.TryAddSingleton(typeof(IAdmissionControl), this.AdmissionControlType);
-        if (typeof(IHostedService).IsAssignableFrom(this.AdmissionControlType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IAdmissionControl>());
+        if (typeof(IHostedService).IsAssignableFrom(this.AdmissionControlType)) this.Services.Add(new(typeof(IHostedService), provider => (IHostedService)provider.GetRequiredService<IAdmissionControl>(), ServiceLifetime.Singleton));
 
         this.Services.TryAddSingleton(typeof(IVersionControl), this.VersionControlType);
-        if (typeof(IHostedService).IsAssignableFrom(this.VersionControlType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IVersionControl>());
+        if (typeof(IHostedService).IsAssignableFrom(this.VersionControlType)) this.Services.Add(new(typeof(IHostedService), provider => (IHostedService)provider.GetRequiredService<IVersionControl>(), ServiceLifetime.Singleton));
 
         this.Services.TryAddSingleton(typeof(IDatabaseProvider), this.DatabaseProviderType);
-        if (typeof(IHostedService).IsAssignableFrom(this.DatabaseProviderType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IDatabaseProvider>());
+        if (typeof(IHostedService).IsAssignableFrom(this.DatabaseProviderType)) this.Services.Add(new(typeof(IHostedService), provider => (IHostedService)provider.GetRequiredService<IDatabaseProvider>(), ServiceLifetime.Singleton));
 
         this.Services.TryAddSingleton(typeof(IRepository), this.RepositoryType);
-        if (typeof(IHostedService).IsAssignableFrom(this.RepositoryType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IRepository>());
+        if (typeof(IHostedService).IsAssignableFrom(this.RepositoryType)) this.Services.Add(new(typeof(IHostedService), provider => (IHostedService)provider.GetRequiredService<IRepository>(), ServiceLifetime.Singleton));
 
         this.Services.TryAddSingleton(typeof(IDatabaseInitializer), this.DatabaseInitializerType);
-        if (typeof(IDatabaseInitializer).IsAssignableFrom(this.DatabaseInitializerType)) this.Services.AddSingleton(provider => (IHostedService)provider.GetRequiredService<IDatabaseInitializer>());
+        if (typeof(IDatabaseInitializer).IsAssignableFrom(this.DatabaseInitializerType)) this.Services.Add(new(typeof(IHostedService), provider => (IHostedService)provider.GetRequiredService<IDatabaseInitializer>(), ServiceLifetime.Singleton));
 
         this.Services.AddSingleton<IResourceMutator, DefaultResourceValidator>();
 

@@ -27,7 +27,7 @@ public class Repository
         this.UserInfoProvider = userInfoProvider;
         this.AdmissionControl = admissionControl;
         this.VersionControl = versionControl;
-        this.Database = databaseProvider.GetDatabase();
+        this.DatabaseProvider = databaseProvider;
         this.Options = options.Value;
     }
 
@@ -52,9 +52,9 @@ public class Repository
     protected IVersionControl VersionControl { get; }
 
     /// <summary>
-    /// Gets the service used to read and write the resource
+    /// Gets the service used to provide a database implementation
     /// </summary>
-    protected IDatabase Database { get; }
+    protected IDatabaseProvider DatabaseProvider { get; }
 
     /// <summary>
     /// Gets the current <see cref="ResourceRepositoryOptions"/>
@@ -84,32 +84,32 @@ public class Repository
             if (resource.ApiVersion != storageVersion.Name) storageResource = await this.VersionControl.ConvertToStorageVersionAsync(new(resourceReference, resourceDefinition, storageResource), cancellationToken).ConfigureAwait(false);
         }
 
-        storageResource = await this.Database.CreateResourceAsync(storageResource, group, version, plural, resource.GetNamespace(), dryRun, cancellationToken).ConfigureAwait(false);
+        storageResource = await this.DatabaseProvider.GetDatabase().CreateResourceAsync(storageResource, group, version, plural, resource.GetNamespace(), dryRun, cancellationToken).ConfigureAwait(false);
         return storageResource;
     }
 
     /// <inheritdoc/>
     public virtual Task<IResource?> GetAsync(string group, string version, string plural, string name, string? @namespace = null, CancellationToken cancellationToken = default)
     {
-        return this.Database.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken);
+        return this.DatabaseProvider.GetDatabase().GetResourceAsync(group, version, plural, name, @namespace, cancellationToken);
     }
 
     /// <inheritdoc/>
     public virtual IAsyncEnumerable<IResource> GetAllAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, CancellationToken cancellationToken = default)
     {
-        return this.Database.GetResourcesAsync(group, version, plural, @namespace, labelSelectors, cancellationToken);
+        return this.DatabaseProvider.GetDatabase().GetResourcesAsync(group, version, plural, @namespace, labelSelectors, cancellationToken);
     }
 
     /// <inheritdoc/>
     public virtual Task<ICollection> ListAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, ulong? maxResults = null, string? continuationToken = null, CancellationToken cancellationToken = default)
     {
-        return this.Database.ListResourcesAsync(group, version, plural, @namespace, labelSelectors, maxResults, continuationToken, cancellationToken);
+        return this.DatabaseProvider.GetDatabase().ListResourcesAsync(group, version, plural, @namespace, labelSelectors, maxResults, continuationToken, cancellationToken);
     }
 
     /// <inheritdoc/>
     public virtual Task<IResourceWatch> WatchAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, CancellationToken cancellationToken = default)
     {
-        return this.Database.WatchResourcesAsync(group, version, plural, @namespace, labelSelectors, cancellationToken);
+        return this.DatabaseProvider.GetDatabase().WatchResourcesAsync(group, version, plural, @namespace, labelSelectors, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -133,7 +133,7 @@ public class Repository
         if (storageResource.ApiVersion != storageVersion.Name) storageResource = await this.VersionControl.ConvertToStorageVersionAsync(new(resourceReference, resourceDefinition, storageResource), cancellationToken).ConfigureAwait(false);
         storageResource.Metadata.ResourceVersion = resource.Metadata.ResourceVersion;
 
-        storageResource = await this.Database.ReplaceResourceAsync(storageResource, group, version, plural, resource.GetName(), resource.GetNamespace(), dryRun, cancellationToken).ConfigureAwait(false);
+        storageResource = await this.DatabaseProvider.GetDatabase().ReplaceResourceAsync(storageResource, group, version, plural, resource.GetName(), resource.GetNamespace(), dryRun, cancellationToken).ConfigureAwait(false);
 
         return storageResource;
     }
@@ -158,7 +158,7 @@ public class Repository
         if (diffPatch.Operations.Any(o => o.Path.Segments[0] == nameof(Resource.Metadata).ToCamelCase() ? o.Path.Segments[1] != nameof(ResourceMetadata.Labels).ToCamelCase() && o.Path.Segments[1] != nameof(ResourceMetadata.Annotations).ToCamelCase() : o.Path.Segments.First() != "spec")) 
             throw new HyloException(ProblemDetails.InvalidResourcePatch(resourceReference));
 
-        return await this.Database.PatchResourceAsync(patchToApply, group, version, plural,  name, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
+        return await this.DatabaseProvider.GetDatabase().PatchResourceAsync(patchToApply, group, version, plural,  name, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -182,7 +182,7 @@ public class Repository
         if (storageResource.ApiVersion != storageVersion.Name) storageResource = await this.VersionControl.ConvertToStorageVersionAsync(new(resourceReference, resourceDefinition, storageResource), cancellationToken).ConfigureAwait(false);
         storageResource.Metadata.ResourceVersion = resource.Metadata.ResourceVersion;
 
-        storageResource = await this.Database.ReplaceSubResourceAsync(storageResource, group, version, plural, resource.GetName(), subResource, resource.GetNamespace(), dryRun, cancellationToken).ConfigureAwait(false);
+        storageResource = await this.DatabaseProvider.GetDatabase().ReplaceSubResourceAsync(storageResource, group, version, plural, resource.GetName(), subResource, resource.GetNamespace(), dryRun, cancellationToken).ConfigureAwait(false);
 
         return storageResource;
     }
@@ -206,7 +206,7 @@ public class Repository
         var diffPatch = JsonPatchHelper.CreateJsonPatchFromDiff(originalResource, patchedResource);
         if (diffPatch.Operations.Any(o => o.Path.Segments.First() != subResource)) throw new HyloException(ProblemDetails.InvalidSubResourcePatch(resourceReference));
 
-        return await this.Database.PatchSubResourceAsync(patchToApply, group, version, plural, name, subResource, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
+        return await this.DatabaseProvider.GetDatabase().PatchSubResourceAsync(patchToApply, group, version, plural, name, subResource, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -222,7 +222,7 @@ public class Repository
         var result = await this.AdmissionControl.ReviewAsync(new(Guid.NewGuid().ToShortString(), Operation.Delete, resourceReference, null, null, null, originalResource, this.UserInfoProvider.GetCurrentUser(), dryRun), cancellationToken).ConfigureAwait(false);
         if (!result.Allowed) throw new HyloException(ProblemDetails.ResourceAdmissionFailed(Operation.Delete, resourceReference, result.Problem?.Errors?.ToArray()!));
 
-        await this.Database.DeleteResourceAsync(group, version, plural, name, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
+        await this.DatabaseProvider.GetDatabase().DeleteResourceAsync(group, version, plural, name, @namespace, dryRun, cancellationToken).ConfigureAwait(false);
 
         return originalResource;
     }

@@ -25,11 +25,24 @@ public abstract class ResourceApiController<TResource>
     /// <returns>A new <see cref="IActionResult"/></returns>
     [HttpPost]
     [ProducesResponseType(typeof(Resource), (int)HttpStatusCode.Created)]
-    [ProducesErrorResponseType(typeof(Hylo.ProblemDetails))]
+    [ProducesErrorResponseType(typeof(ProblemDetails))]
     public async Task<IActionResult> CreateResource([FromBody] TResource resource, bool dryRun = false, CancellationToken cancellationToken = default)
     {
         if (!this.ModelState.IsValid) return this.ValidationProblem(this.ModelState);
         return this.Process(await this.Mediator.Send(new CreateResourceCommand<TResource>(resource, dryRun), cancellationToken).ConfigureAwait(false));
+    }
+
+    /// <summary>
+    /// Gets the definition of the managed resources
+    /// </summary>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    /// <returns>A new <see cref="IActionResult"/></returns>
+    [HttpGet("definition")]
+    [ProducesResponseType(typeof(ResourceDefinition), (int)HttpStatusCode.OK)]
+    [ProducesErrorResponseType(typeof(ProblemDetails))]
+    public virtual async Task<IActionResult> GetResourceDefinition(CancellationToken cancellationToken = default)
+    {
+        return this.Process(await this.Mediator.Send(new GetResourceDefinitionQuery<TResource>(), cancellationToken).ConfigureAwait(false));
     }
 
     /// <summary>
@@ -40,7 +53,7 @@ public abstract class ResourceApiController<TResource>
     /// <returns>A new <see cref="IActionResult"/></returns>
     [HttpGet]
     [ProducesResponseType(typeof(IAsyncEnumerable<Resource>), (int)HttpStatusCode.OK)]
-    [ProducesErrorResponseType(typeof(Hylo.ProblemDetails))]
+    [ProducesErrorResponseType(typeof(ProblemDetails))]
     public virtual async Task<IActionResult> GetClusterResources(string? labelSelector = null, CancellationToken cancellationToken = default)
     {
         if (!this.TryParseLabelSelectors(labelSelector, out var labelSelectors)) return this.InvalidLabelSelector(labelSelector!);
@@ -57,7 +70,7 @@ public abstract class ResourceApiController<TResource>
     /// <returns>A new <see cref="IActionResult"/></returns>
     [HttpGet("list")]
     [ProducesResponseType(typeof(Collection<Resource>), (int)HttpStatusCode.OK)]
-    [ProducesErrorResponseType(typeof(Hylo.ProblemDetails))]
+    [ProducesErrorResponseType(typeof(ProblemDetails))]
     public virtual async Task<IActionResult> ListClusterResources(string? labelSelector = null, ulong? maxResults = null, string? continuationToken = null, CancellationToken cancellationToken = default)
     {
         if (!this.TryParseLabelSelectors(labelSelector, out var labelSelectors)) return this.InvalidLabelSelector(labelSelector!);
@@ -72,7 +85,7 @@ public abstract class ResourceApiController<TResource>
     /// <returns>A new <see cref="IActionResult"/></returns>
     [HttpGet("watch")]
     [ProducesResponseType(typeof(IAsyncEnumerable<Resource>), (int)HttpStatusCode.OK)]
-    [ProducesErrorResponseType(typeof(Hylo.ProblemDetails))]
+    [ProducesErrorResponseType(typeof(ProblemDetails))]
     public virtual async Task<IActionResult> WatchClusterResources(string? labelSelector = null, CancellationToken cancellationToken = default)
     {
         if (!this.TryParseLabelSelectors(labelSelector, out var labelSelectors)) return this.InvalidLabelSelector(labelSelector!);
@@ -91,7 +104,7 @@ public abstract class ResourceApiController<TResource>
     /// <returns>A new <see cref="IActionResult"/></returns>
     [HttpPut]
     [ProducesResponseType(typeof(IAsyncEnumerable<Resource>), (int)HttpStatusCode.OK)]
-    [ProducesErrorResponseType(typeof(Hylo.ProblemDetails))]
+    [ProducesErrorResponseType(typeof(ProblemDetails))]
     public virtual async Task<IActionResult> ReplaceResource(TResource resource, bool dryRun = false, CancellationToken cancellationToken = default)
     {
         if (!this.ModelState.IsValid) return this.ValidationProblem(this.ModelState);

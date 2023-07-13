@@ -1,4 +1,5 @@
 ﻿using Hylo.Api.Application.Commands.Resources.Generic;
+using Hylo.Api.Application.Queries.Resources.Generic;
 using System.Net;
 
 namespace Hylo.Api.Http;
@@ -14,6 +15,20 @@ public abstract class ClusterResourceApiController<TResource>
 
     /// <inheritdoc/>
     protected ClusterResourceApiController(IMediator mediator) : base(mediator) { }
+
+    /// <summary>
+    /// Gets the specified cluster resourced
+    /// </summary>
+    /// <param name="name">The name of the resource to get</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    /// <returns>A new <see cref="IActionResult"/></returns>
+    [HttpGet("{name}")]
+    [ProducesResponseType(typeof(IAsyncEnumerable<Resource>), (int)HttpStatusCode.OK)]
+    [ProducesErrorResponseType(typeof(ProblemDetails))]
+    public virtual async Task<IActionResult> GetClusterResource(string name, CancellationToken cancellationToken = default)
+    {
+        return this.Process(await this.Mediator.Send(new GetResourceQuery<TResource>(name, null), cancellationToken).ConfigureAwait(false));
+    }
 
     /// <summary>
     /// Patches the specified resource

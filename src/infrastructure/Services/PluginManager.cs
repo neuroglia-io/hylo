@@ -57,7 +57,7 @@ public class PluginManager
         this.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         if (!this.PluginsDirectory.Exists) this.PluginsDirectory.Create();
         var assemblyFiles = this.PluginsDirectory.GetFiles("*.dll", SearchOption.AllDirectories).ToList();
-        var files = this.PluginsDirectory.GetFiles("*.plugin.json", SearchOption.AllDirectories);
+        var files = this.PluginsDirectory.GetFiles("*.plugin.json", SearchOption.AllDirectories).ToList();
         files.AddRange(this.PluginsDirectory.GetFiles("plugin.json", SearchOption.AllDirectories));
         foreach (var pluginFile in files)
         {
@@ -65,7 +65,7 @@ public class PluginManager
             var pluginMetadata = JsonSerializer.Deserialize<PluginMetadata>(json)!;
             if (!string.IsNullOrWhiteSpace(pluginMetadata.NugetPackage)) await this.DownloadAndExtractNugetPackageAsync(pluginFile, pluginMetadata, this.CancellationTokenSource.Token).ConfigureAwait(false);
             var assemblyFilePath = pluginMetadata.AssemblyFilePath;
-            if (pluginMetadata.AssemblyFilePath.StartsWith(Path.DirectorySeparatorChar)) assemblyFilePath = Path.Combine(pluginFile.Directory!.FullName, assemblyFilePath);
+            if (!Path.IsPathRooted(assemblyFilePath)) assemblyFilePath = Path.Combine(pluginFile.Directory!.FullName, assemblyFilePath);
             var assemblyFile = new FileInfo(assemblyFilePath);
             if (!assemblyFile.Exists) throw new FileNotFoundException($"Failed to find the specified plugin assembly '{assemblyFilePath}'");
             assemblyFiles.Add(assemblyFile);
@@ -86,6 +86,7 @@ public class PluginManager
                 var pluginAttribute = type.GetCustomAttributesData().FirstOrDefault(a => a.AttributeType.FullName == typeof(PluginAttribute).FullName);
                 if (pluginAttribute == null) continue;
                 var pluginMetadata = PluginMetadata.FromType(type);
+                if (!Path.IsPathRooted(pluginMetadata.AssemblyFilePath)) pluginMetadata.AssemblyFilePath = Path.Combine(assemblyFile.DirectoryName!, pluginMetadata.AssemblyFilePath);
                 this.AvailablePlugins.Add(pluginMetadata);
             }
         }

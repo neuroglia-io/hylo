@@ -21,11 +21,14 @@ public class PluginDatabaseProvider
     /// </summary>
     protected IPluginManager PluginManager { get; }
 
+    private IDatabase? _database;
     /// <inheritdoc/>
     public IDatabase GetDatabase()
     {
+        if(this._database != null) return this._database;
         var plugin = this.PluginManager.FindPluginAsync<IDatabaseProvider>().GetAwaiter().GetResult() ?? throw new NullReferenceException("Failed to find a database provider plugin");
-        return plugin.GetDatabase();
+        this._database = plugin.GetDatabase();
+        return this._database;
     }
 
 }

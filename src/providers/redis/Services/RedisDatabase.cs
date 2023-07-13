@@ -21,7 +21,7 @@ public class RedisDatabase
     /// </summary>
     public const string ConnectionStringName = "redis";
     const string ClusterResourcePrefix = "cluster.";
-    static readonly RedisChannel WatchEventChannel = "watch-events";
+    static readonly RedisChannel WatchEventChannel = new RedisChannel("watch-events", RedisChannel.PatternMode.Literal);
 
     bool _disposed;
 
@@ -262,6 +262,13 @@ public class RedisDatabase
         {
             OnCommit = () => this.Database.KeyDeleteAsync(key)
         });
+        if (resource.IsNamespaced())
+        {
+            transactions.Add(new()
+            {
+                OnCommit = () => this.Database.HashDeleteAsync(namespaceIndexKey, namespaceIndexEntryKey)
+            });
+        }
 
         var json = Serializer.Json.Serialize(new ResourceWatchEvent(ResourceWatchEventType.Deleted, resource.ConvertTo<Resource>()!));
         transactions.Add(new()

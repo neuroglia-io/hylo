@@ -96,8 +96,7 @@ public class ResourceController<TResource>
             var cacheKey = this.GetResourceCacheKey(resource.GetName(), resource.GetNamespace());
             if (this.Resources.TryGetValue(cacheKey, out var cachedState) && cachedState != null)
             {
-                if (cachedState.Metadata.ResourceVersion == resource.Metadata.ResourceVersion) continue;
-                await this.OnResourceUpdatedAsync(cachedState, cancellationToken).ConfigureAwait(false);
+                if (cachedState.Metadata.ResourceVersion != resource.Metadata.ResourceVersion) await this.OnResourceUpdatedAsync(cachedState, cancellationToken).ConfigureAwait(false);
             }
             else
             {
