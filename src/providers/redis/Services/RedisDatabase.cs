@@ -245,25 +245,25 @@ public class RedisDatabase
         var resourceReference = new ResourceReference(new(group, version, plural), name, @namespace);
         var resource = await this.GetResourceAsync(group, version, plural, name, @namespace, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceNotFound(resourceReference));
         var key = this.BuildResourceKey(group, version, plural, name, @namespace);
-        var namespaceIndexKey = this.BuildResourceByNamespaceIndexKey(@namespace);
-        var namespaceIndexEntryKey = name;
+        var definitionIndexKey = this.BuildResourceByDefinitionIndexKey(group, plural);
+        var definitionIndexEntryKey = this.BuildResourceByDefinitionIndexEntryKey(resource.GetName(), resource.GetNamespace());
 
-        var transactions = new List<Transaction>();
-
-        if (!string.IsNullOrWhiteSpace(@namespace))
+        var transactions = new List<Transaction>
         {
-            transactions.Add(new()
+            new()
             {
-                OnCommit = () => this.Database.HashDeleteAsync(namespaceIndexKey, namespaceIndexEntryKey)
-            });
-        }
+                OnCommit = () => this.Database.KeyDeleteAsync(key)
+            },
+            new()
+            {
+                OnCommit = () => this.Database.HashDeleteAsync(definitionIndexKey, definitionIndexEntryKey)
+            }
+        };
 
-        transactions.Add(new()
-        {
-            OnCommit = () => this.Database.KeyDeleteAsync(key)
-        });
         if (resource.IsNamespaced())
         {
+            var namespaceIndexKey = this.BuildResourceByNamespaceIndexKey(@namespace);
+            var namespaceIndexEntryKey = name;
             transactions.Add(new()
             {
                 OnCommit = () => this.Database.HashDeleteAsync(namespaceIndexKey, namespaceIndexEntryKey)
