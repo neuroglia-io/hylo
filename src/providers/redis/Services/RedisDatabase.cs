@@ -4,6 +4,7 @@ using Hylo.Resources.Definitions;
 using Json.Patch;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Runtime.CompilerServices;
 
@@ -144,12 +145,15 @@ public class RedisDatabase
     }
 
     /// <inheritdoc/>
-    public virtual Task<IResourceWatch> WatchResourcesAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, CancellationToken cancellationToken = default)
+    public virtual async Task<IResourceWatch> WatchResourcesAsync(string group, string version, string plural, string? @namespace = null, IEnumerable<LabelSelector>? labelSelectors = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(group)) throw new ArgumentNullException(nameof(group));
         if (string.IsNullOrWhiteSpace(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
-        return Task.FromResult<IResourceWatch>(new ResourceWatch(this.ResourceWatchEvents, false));
+        var resourceDefinition = await this.GetDefinitionAsync(group, plural, cancellationToken).ConfigureAwait(false) ?? throw new HyloException(ProblemDetails.ResourceDefinitionNotFound(new ResourceDefinitionReference(group, version, plural)));
+        var observable = this.ResourceWatchEvents.Where(e => e.Resource.GetGroup() == group && e.Resource.GetVersion() == version && e.Resource.Kind == resourceDefinition.Spec.Names.Kind && e.Resource.GetNamespace() == @namespace);
+        if (labelSelectors?.Any() == true) observable = observable.Where(e => labelSelectors.All(s => s.Selects(e.Resource)));
+        return new ResourceWatch(observable, false);
     }
 
     /// <inheritdoc/>
