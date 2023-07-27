@@ -11,6 +11,7 @@ using NuGet.Packaging.Core;
 using NuGet.Versioning;
 using System.IO;
 using NuGet.Packaging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Hylo.UnitTests.Cases;
 
@@ -36,7 +37,7 @@ public class PluginTests
         services.AddSingleton<IConfiguration>(configuration);
         services.AddLogging();
         using var serviceProvider = services.BuildServiceProvider();
-        var manager = new PluginManager(serviceProvider);
+        var manager = new PluginManager(serviceProvider, new NullLoggerFactory());
         await manager.StartAsync(default).ConfigureAwait(false);
 
         //act
@@ -63,7 +64,7 @@ public class PluginTests
         services.AddSingleton<IConfiguration>(configuration);
         services.AddLogging();
         using var serviceProvider = services.BuildServiceProvider();
-        var manager = new PluginManager(serviceProvider);
+        var manager = new PluginManager(serviceProvider, new NullLoggerFactory());
         await manager.StartAsync(default).ConfigureAwait(false);
 
         //act

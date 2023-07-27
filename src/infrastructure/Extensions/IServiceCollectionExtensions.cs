@@ -33,7 +33,6 @@ public static class IServiceCollectionExtensions
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection"/> to configure</param>
     /// <param name="configuration">The current <see cref="IConfiguration"/></param>
-    /// <param name="setup">An <see cref="Action{T}"/> used to configure Hylo</param>
     /// <returns>The configured <see cref="IServiceCollection"/></returns>
     public static IServiceCollection AddHylo(this IServiceCollection services, IConfiguration configuration) => services.AddHylo(configuration, builder => { });
 
@@ -47,7 +46,7 @@ public static class IServiceCollectionExtensions
     public static IServiceCollection AddResourceController<TResource>(this IServiceCollection services, Action<ResourceControllerOptions<TResource>>? setup = null)
         where TResource : class, IResource, new()
     {
-        if (setup == null) setup = options => { };
+        setup ??= options => { };
         services.Configure(setup);
         services.TryAddSingleton<ResourceController<TResource>>();
         services.TryAddSingleton<IResourceController<TResource>>(provider => provider.GetRequiredService<ResourceController<TResource>>());

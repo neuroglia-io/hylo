@@ -137,8 +137,7 @@ public class PluginManager
         var packageId = components.Last();
         components = packageId.Split(':', StringSplitOptions.RemoveEmptyEntries);
         packageId = components[0];
-        var packageVersion = components.Length > 1 ? NuGetVersion.Parse(components[1]) : null;
-        if(packageVersion == null) packageVersion = await repository.GetPackageLatestVersionAsync(packageId, cancellationToken).ConfigureAwait(false);
+        var packageVersion = (components.Length > 1 ? NuGetVersion.Parse(components[1]) : null) ?? await repository.GetPackageLatestVersionAsync(packageId, cancellationToken).ConfigureAwait(false);
         var package = new PackageIdentity(packageId, packageVersion);
 
         var packageMetadataFile = new FileInfo(Path.Combine(metadataFile.Directory!.FullName, $"{Path.GetFileNameWithoutExtension(metadataFile.Name)}.package.json"));
