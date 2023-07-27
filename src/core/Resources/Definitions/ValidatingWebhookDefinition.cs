@@ -34,8 +34,13 @@ public record ValidatingWebhookDefinition
     public static HashSet<string> ResourceShortNames { get; set; } = new() { "vwh" };
 
     /// <summary>
+    /// Gets the definition of <see cref="ValidatingWebhookDefinition"/>s
+    /// </summary>
+    public static new ResourceDefinition Instance { get; set; } = Serializer.Yaml.Deserialize<ResourceDefinition>(EmbeddedResources.ReadToEnd(EmbeddedResources.Assets.Definitions.ValidatingWebhook))!;
+
+    /// <summary>
     /// Initializes a new <see cref="ValidatingWebhookDefinition"/>
     /// </summary>
-    public ValidatingWebhookDefinition() : base(new ResourceDefinitionSpec(ResourceScope.Cluster, ResourceGroup, new(ResourceSingular, ResourcePlural, ResourceKind, ResourceShortNames), new ResourceDefinitionVersion(ResourceVersion, new()))) { }
+    public ValidatingWebhookDefinition() : base(Instance.Spec) { }
 
 }

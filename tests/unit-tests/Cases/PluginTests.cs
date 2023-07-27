@@ -5,12 +5,6 @@ using Hylo.UnitTests.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using NuGet.Protocol.Core.Types;
-using NuGet.Protocol;
-using NuGet.Packaging.Core;
-using NuGet.Versioning;
-using System.IO;
-using NuGet.Packaging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Hylo.UnitTests.Cases;

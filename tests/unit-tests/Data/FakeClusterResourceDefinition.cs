@@ -37,7 +37,17 @@ internal record FakeClusterResourceDefinition
         }
       }
     },
-    "status":{}
+    "status":{
+      "type": "object",
+      "properties":{
+        "fakeProperty1":{
+          "type": "string"
+        },
+        "fakeProperty2":{
+          "type": "number"
+        }
+      }
+    }
   }
 }
 """);
