@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace Hylo;
+﻿namespace Hylo;
 
 /// <summary>
 /// Represents an object used to describe a resource

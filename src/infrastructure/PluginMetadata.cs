@@ -7,6 +7,7 @@ namespace Hylo.Infrastructure;
 /// <summary>
 /// Represents an object used to describe a plugin
 /// </summary>
+[DataContract]
 public class PluginMetadata
 {
 

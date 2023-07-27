@@ -1,5 +1,7 @@
-﻿using NuGet.Frameworks;
+﻿using NuGet.Common;
+using NuGet.Frameworks;
 using NuGet.Packaging;
+using NuGet.Packaging.Core;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 using System.Reflection;
@@ -19,16 +21,14 @@ public static class SourceRepositoryExtensions
     /// Downloads and extracts the specified nuget package and all its dependencies
     /// </summary>
     /// <param name="repository">The extended <see cref="SourceRepository"/></param>
-    /// <param name="id">The id of the package to download</param>
-    /// <param name="version">The version of the package to download, if any. If null, the latest package version will be retrieved</param>
+    /// <param name="package">The identity of the package to download</param>
     /// <param name="outputDirectory">The directory to download and extract the package to</param>
     /// <param name="cache">The <see cref="SourceCacheContext"/> to use</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
     /// <returns>A new awaitable <see cref="ValueTask"/></returns>
-    public static async ValueTask DownloadAndExtractPackageAsync(this SourceRepository repository, string id, NuGetVersion? version, DirectoryInfo outputDirectory, SourceCacheContext cache, CancellationToken cancellationToken = default)
+    public static async ValueTask DownloadAndExtractPackageAsync(this SourceRepository repository, PackageIdentity package, DirectoryInfo outputDirectory, SourceCacheContext cache, CancellationToken cancellationToken = default)
     {
-        version ??= await repository.GetPackageLatestVersionAsync(id, cancellationToken).ConfigureAwait(false);
-        var packageFileName = Path.Combine(outputDirectory.FullName, $"{id}.{version.Version}.nupkg");
+        var packageFileName = Path.Combine(outputDirectory.FullName, $"{package.Id}.{package.Version.OriginalVersion}.nupkg");
         Stream packageStream;
         if (File.Exists(packageFileName))
         {
@@ -38,17 +38,11 @@ public static class SourceRepositoryExtensions
         {
             packageStream = File.Open(packageFileName, FileMode.Create);
             var findPackageById = await repository.GetResourceAsync<FindPackageByIdResource>().ConfigureAwait(false);
-            await findPackageById.CopyNupkgToStreamAsync(id, version, packageStream, cache, NuGet.Common.NullLogger.Instance, cancellationToken).ConfigureAwait(false);
+            await findPackageById.CopyNupkgToStreamAsync(package.Id, package.Version, packageStream, cache, NullLogger.Instance, cancellationToken).ConfigureAwait(false);
             await packageStream.FlushAsync(cancellationToken).ConfigureAwait(false);
             packageStream.Position = 0;
         }
         using var packageReader = new PackageArchiveReader(packageStream);
-        var dependencies = await packageReader.GetPackageDependenciesAsync(cancellationToken).ConfigureAwait(false);
-        foreach (var dependency in dependencies.Where(f => DefaultCompatibilityProvider.Instance.IsCompatible(CurrentFramework, f.TargetFramework)).SelectMany(dg => dg.Packages).Distinct().Where(p => !p.Id.StartsWith("System.")))
-        {
-            var targetVersion = dependency.VersionRange.HasUpperBound ? dependency.VersionRange.MaxVersion : dependency.VersionRange.HasLowerBound ? dependency.VersionRange.MinVersion : null;
-            await repository.DownloadAndExtractPackageAsync(dependency.Id, targetVersion, outputDirectory, cache, cancellationToken).ConfigureAwait(false);
-        }
         var libItems = await packageReader.GetLibItemsAsync(cancellationToken).ConfigureAwait(false);
         var framework = libItems.Where(f => DefaultCompatibilityProvider.Instance.IsCompatible(CurrentFramework, f.TargetFramework)).LastOrDefault();
         if (framework != null)
@@ -56,10 +50,11 @@ public static class SourceRepositoryExtensions
             foreach (var item in framework.Items)
             {
                 var outputFile = Path.Combine(outputDirectory.FullName, item.Split('/').Last());
-                packageReader.ExtractFile(item, outputFile, NuGet.Common.NullLogger.Instance);
+                packageReader.ExtractFile(item, outputFile, NullLogger.Instance);
             }
         }
         await packageStream.DisposeAsync().ConfigureAwait(false);
+        File.Delete(packageFileName);
     }
 
     /// <summary>
@@ -79,6 +74,28 @@ public static class SourceRepositoryExtensions
         var versions = await searchResult.GetVersionsAsync().ConfigureAwait(false);
         var versionInfo = versions.OrderByDescending(v => v.Version.Version).First();
         return new(versionInfo.Version);
+    }
+
+    /// <summary>
+    /// Lists all the dependencies of the specified package
+    /// </summary>
+    /// <param name="repository">The extended <see cref="SourceRepository"/></param>
+    /// <param name="package">The identity of the package to list the dependencies of</param>
+    /// <param name="cache">The current <see cref="SourceCacheContext"/></param>
+    /// <param name="recursive">A boolean indicating whether or not to list the packages recursively</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/></param>
+    /// <returns>A new <see cref="List{T}"/> containing the dependencies of the specified package</returns>
+    public static async ValueTask<List<PackageDependency>> ListPackageDependenciesAsync(this SourceRepository repository, PackageIdentity package, SourceCacheContext cache, bool recursive = true, CancellationToken cancellationToken = default)
+    {
+        var dependencyResolver = await repository.GetResourceAsync<DependencyInfoResource>().ConfigureAwait(false);
+        var dependencyTree = await dependencyResolver.ResolvePackage(package, CurrentFramework, cache, new NullLogger(), default);
+        var dependencies = new List<PackageDependency>(dependencyTree.Dependencies);
+        foreach (var dependency in dependencyTree.Dependencies)
+        {
+            var version = dependency.VersionRange.HasUpperBound ? dependency.VersionRange.MaxVersion : dependency.VersionRange.MinVersion;
+            dependencies.AddRange(await repository.ListPackageDependenciesAsync(new(dependency.Id, version), cache, recursive, cancellationToken).ConfigureAwait(false));
+        }
+        return dependencies.GroupBy(d => d.Id).Where(g => !g.Key.StartsWith("System.")).Select(g => g.OrderByDescending(d => d.VersionRange.HasUpperBound ? d.VersionRange.MaxVersion : d.VersionRange.MinVersion).First()).ToList();
     }
 
 }
