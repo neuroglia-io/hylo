@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 
 namespace Hylo.Providers.Kubernetes.Services;
 
@@ -76,7 +77,7 @@ public class KubernetesDatabase
         else if (resource.IsNamespaced()) storageResource = (await this.Kubernetes.CreateNamespacedCustomObjectAsync(resource, group, version, @namespace, plural, dryRun: dryRun ? "All" : null, cancellationToken: cancellationToken).ConfigureAwait(false)).ConvertTo<Resource>()!;
         else storageResource = (await this.Kubernetes.CreateClusterCustomObjectAsync(resource, group, version, plural, dryRun: dryRun ? "All" : null, cancellationToken: cancellationToken).ConfigureAwait(false)).ConvertTo<Resource>()!;
 
-        if (resource is IStatus status && status.Status != null)
+        if ((resource is IStatus status && status.Status != null) || resource.ExtensionData?.TryGetValue(nameof(IStatus.Status).ToCamelCase(), out _) == true)
         {
             resource.Metadata.ResourceVersion = storageResource.Metadata.ResourceVersion;
             storageResource = (await this.ReplaceSubResourceAsync(resource, group, version, plural, storageResource.GetName(), "status", @namespace, dryRun, cancellationToken).ConfigureAwait(false)).ConvertTo<Resource>()!;
@@ -90,7 +91,7 @@ public class KubernetesDatabase
     {
         if (string.IsNullOrEmpty(version)) throw new ArgumentNullException(nameof(version));
         if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(plural));
-        if (string.IsNullOrWhiteSpace(plural)) throw new ArgumentNullException(nameof(name));
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
 
         try
         {

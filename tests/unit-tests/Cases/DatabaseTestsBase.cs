@@ -594,7 +594,7 @@ public abstract class DatabaseTestsBase
              .ConfigureAwait(false);
         var updatedResource = resource.Clone()!;
         if (updatedResource.Metadata.Labels == null) updatedResource.Metadata.Labels = new Dictionary<string, string>();
-        updatedResource.Metadata.Labels.Add("fake-label-1", "fake label value 1");
+        updatedResource.Metadata.Labels.Add("fake-label-1", "fake-label-value-1");
         if (updatedResource.Metadata.Annotations == null) updatedResource.Metadata.Annotations = new Dictionary<string, string>();
         updatedResource.Metadata.Annotations.Add("fake-annotation-1", "fake annotation value 1");
         var jsonPatch = JsonPatchHelper.CreateJsonPatchFromDiff(resource, updatedResource);
@@ -623,7 +623,7 @@ public abstract class DatabaseTestsBase
              .ConfigureAwait(false);
         var updatedResource = resource.Clone()!;
         if (updatedResource.Metadata.Labels == null) updatedResource.Metadata.Labels = new Dictionary<string, string>();
-        updatedResource.Metadata.Labels.Add("fake-label-1", "fake label value 1");
+        updatedResource.Metadata.Labels.Add("fake-label-1", "fake-label-value-1");
         if (updatedResource.Metadata.Annotations == null) updatedResource.Metadata.Annotations = new Dictionary<string, string>();
         updatedResource.Metadata.Annotations.Add("fake-annotation-1", "fake annotation value 1");
         var jsonPatch = JsonPatchHelper.CreateJsonPatchFromDiff(resource, updatedResource);

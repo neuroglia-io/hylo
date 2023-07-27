@@ -34,7 +34,7 @@ public record Namespace
     /// <summary>
     /// Gets the <see cref="Namespace"/>'s resource type.
     /// </summary>
-    public static readonly ResourceDefinitionInfo ResourceDefinition = new NamespaceDefinition()!;
+    public static readonly ResourceDefinitionInfo ResourceDefinition = new(ResourceGroup, ResourceVersion, ResourcePlural, ResourceKind);
 
     /// <summary>
     /// Initializes a new <see cref="Namespace"/>

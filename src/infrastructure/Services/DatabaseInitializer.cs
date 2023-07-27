@@ -10,11 +10,18 @@ public class DatabaseInitializer
     /// <summary>
     /// Initializes a new <see cref="DatabaseInitializer"/>
     /// </summary>
+    /// <param name="loggerFactory">The service used to create <see cref="ILogger"/>s</param>
     /// <param name="databaseProvider">The service used to provide the <see cref="IDatabase"/> to initialize</param>
-    public DatabaseInitializer(IDatabaseProvider databaseProvider)
+    public DatabaseInitializer(ILoggerFactory loggerFactory, IDatabaseProvider databaseProvider)
     {
+        this.Logger = loggerFactory.CreateLogger(this.GetType());
         this.DatabaseProvider = databaseProvider;
     }
+
+    /// <summary>
+    /// Gets the service used to perform logging
+    /// </summary>
+    protected ILogger Logger { get; }
 
     /// <summary>
     /// Gets the service used to provide the <see cref="IDatabase"/> to initialize
@@ -35,7 +42,21 @@ public class DatabaseInitializer
     /// <inheritdoc/>
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        if (await this.Database.InitializeAsync(cancellationToken).ConfigureAwait(false)) await this.SeedAsync(cancellationToken).ConfigureAwait(false);
+        this.Logger.LogDebug("Initializing resource database...");
+        if (await this.Database.InitializeAsync(cancellationToken).ConfigureAwait(false))
+        {
+            this.Logger.LogDebug("Seeding resource database...");
+            try
+            {
+                await this.SeedAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch(Exception ex)
+            {
+                this.Logger.LogError("An error occured while seeding the resource database: {ex}", ex);
+            }
+            this.Logger.LogDebug("Resource database has been seeded");
+        }
+        this.Logger.LogDebug("Resource database has been successfully initialized");
     }
 
     /// <summary>

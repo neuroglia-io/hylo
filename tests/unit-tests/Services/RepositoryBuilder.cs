@@ -79,7 +79,7 @@ public class RepositoryBuilder
         {
             if (disposing)
             {
-                this.ServiceProvider.Dispose();
+                this.ServiceProvider?.Dispose();
             }
             this._disposed = true;
         }

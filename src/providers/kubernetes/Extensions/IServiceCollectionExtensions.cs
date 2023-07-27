@@ -16,6 +16,7 @@ public static class IServiceCollectionExtensions
     /// <returns>The configured <see cref="IServiceCollection"/></returns>
     public static IServiceCollection AddKubernetesClient(this IServiceCollection services)
     {
+        var config = ApplicationInfo.RunsInKubernetes ? KubernetesClientConfiguration.InClusterConfig() : KubernetesClientConfiguration.BuildConfigFromConfigFile();
         services.AddSingleton(provider => new k8s.Kubernetes(ApplicationInfo.RunsInKubernetes ? KubernetesClientConfiguration.InClusterConfig() : KubernetesClientConfiguration.BuildConfigFromConfigFile()));
         return services;
     }
