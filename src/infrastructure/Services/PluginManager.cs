@@ -61,10 +61,12 @@ public class PluginManager
         this.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         this.Logger.LogDebug("Scanning for plugin files in '{pluginsDirectory}'...", this.PluginsDirectory.FullName);
         if (!this.PluginsDirectory.Exists) this.PluginsDirectory.Create();
-        var assemblyFiles = this.PluginsDirectory.GetFiles("*.dll", SearchOption.AllDirectories).ToList();
         var files = this.PluginsDirectory.GetFiles("*.plugin.json", SearchOption.AllDirectories).ToList();
         files.AddRange(this.PluginsDirectory.GetFiles("plugin.json", SearchOption.AllDirectories));
         this.Logger.LogDebug("{pluginCount} plugin metadata files have been found", files.Count);
+        var runtimeAssemblies = Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll");
+        var defaultAssemblies = AssemblyLoadContext.Default.Assemblies.Select(a => a.Location).Except(runtimeAssemblies);
+        var appAssemblies = new FileInfo(typeof(PluginManager).Assembly.Location).Directory!.GetFiles("*.dll").Select(f => f.FullName).Except(runtimeAssemblies).Except(defaultAssemblies);
         foreach (var pluginFile in files)
         {
             var json = await File.ReadAllTextAsync(pluginFile.FullName, this.CancellationTokenSource.Token).ConfigureAwait(false);
@@ -74,17 +76,7 @@ public class PluginManager
             if (!Path.IsPathRooted(assemblyFilePath)) assemblyFilePath = Path.GetFullPath(assemblyFilePath, pluginFile.Directory!.FullName);
             var assemblyFile = new FileInfo(assemblyFilePath);
             if (!assemblyFile.Exists) throw new FileNotFoundException($"Failed to find the specified plugin assembly '{assemblyFilePath}'");
-            if (!assemblyFiles.Any(f => f.FullName == assemblyFile.FullName)) assemblyFiles.Add(assemblyFile);
-        }
-        foreach(var assemblyFile in this.PluginsDirectory.GetFiles("*.dll", SearchOption.AllDirectories).ToList())
-        {
-            if (!assemblyFiles.Any(f => f.FullName == assemblyFile.FullName)) assemblyFiles.Add(assemblyFile);
-        }
-        var runtimeAssemblies = Directory.GetFiles(RuntimeEnvironment.GetRuntimeDirectory(), "*.dll");
-        var defaultAssemblies = AssemblyLoadContext.Default.Assemblies.Select(a => a.Location).Except(runtimeAssemblies);
-        var appAssemblies = new FileInfo(typeof(PluginManager).Assembly.Location).Directory!.GetFiles("*.dll").Select(f => f.FullName).Except(runtimeAssemblies).Except(defaultAssemblies);
-        foreach (var assemblyFile in assemblyFiles)
-        {
+            var assemblyFiles = assemblyFile.Directory!.GetFiles("*.dll", SearchOption.AllDirectories).ToList();
             var assemblies = new List<string>(runtimeAssemblies) { assemblyFile.FullName };
             assemblies.AddRange(defaultAssemblies);
             assemblies.AddRange(appAssemblies);
@@ -95,7 +87,7 @@ public class PluginManager
             {
                 var pluginAttribute = type.GetCustomAttributesData().FirstOrDefault(a => a.AttributeType.FullName == typeof(PluginAttribute).FullName);
                 if (pluginAttribute == null) continue;
-                var pluginMetadata = PluginMetadata.FromType(type);
+                pluginMetadata = PluginMetadata.FromType(type); //todo: check original metadata first
                 if (!Path.IsPathRooted(pluginMetadata.AssemblyFilePath)) pluginMetadata.AssemblyFilePath = Path.GetFullPath(pluginMetadata.AssemblyFilePath, assemblyFile.DirectoryName!);
                 this.AvailablePlugins.Add(pluginMetadata);
             }
