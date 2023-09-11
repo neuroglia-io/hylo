@@ -14,6 +14,6 @@ public static class ApplicationInfo
     /// <summary>
     /// Indicates whether or not the application is running in Kubernetes
     /// </summary>
-    public static readonly bool RunsInKubernetes = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_HOST "));
+    public static readonly bool RunsInKubernetes = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_HOST"));
 
 }
