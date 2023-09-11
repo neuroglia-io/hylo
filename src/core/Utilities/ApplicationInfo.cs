@@ -9,11 +9,11 @@ public static class ApplicationInfo
     /// <summary>
     /// Indicates whether or not the application is running in Docker
     /// </summary>
-    public static readonly bool RunsInDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+    public static readonly bool RunsInDocker = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"));
 
     /// <summary>
     /// Indicates whether or not the application is running in Kubernetes
     /// </summary>
-    public static readonly bool RunsInKubernetes = Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_HOST ") == "true";
+    public static readonly bool RunsInKubernetes = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_HOST "));
 
 }
