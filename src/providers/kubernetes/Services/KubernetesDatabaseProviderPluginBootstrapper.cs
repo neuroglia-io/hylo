@@ -1,4 +1,6 @@
 ﻿using Hylo.Infrastructure.Services;
+using Hylo.Resources.Definitions;
+using k8s.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Hylo.Providers.Kubernetes.Services;
@@ -16,6 +18,17 @@ public class KubernetesDatabaseProviderPluginBootstrapper
         services.AddLogging();
         services.AddKubernetesClient();
         services.AddSingleton<KubernetesDatabase>();
+        services.AddSingleton<KubernetesDatabase>();
+
+        ResourceDefinition.ResourceGroup = V1CustomResourceDefinition.KubeGroup;
+        ResourceDefinition.ResourceVersion = V1CustomResourceDefinition.KubeApiVersion;
+        ResourceDefinition.ResourcePlural = V1CustomResourceDefinition.KubePluralName;
+        ResourceDefinition.ResourceKind = V1CustomResourceDefinition.KubeKind;
+
+        NamespaceDefinition.ResourceGroup = V1Namespace.KubeGroup;
+        NamespaceDefinition.ResourceVersion = V1Namespace.KubeApiVersion;
+        NamespaceDefinition.ResourcePlural = V1Namespace.KubePluralName;
+        NamespaceDefinition.ResourceKind = V1Namespace.KubeKind;
     }
 
 }

@@ -50,18 +50,18 @@ public class KubernetesDatabase
     /// <inheritdoc/>
     public virtual async Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
     {
-        var initialized = true;
+        var shouldInitialize = true;
         try
         {
-            initialized = await this.GetDefinitionAsync<MutatingWebhook>(this.CancellationTokenSource.Token).ConfigureAwait(false) == null;
+            shouldInitialize = await this.GetDefinitionAsync<MutatingWebhook>(this.CancellationTokenSource.Token).ConfigureAwait(false) == null;
         }
         catch { }
-        if (initialized)
+        if (shouldInitialize)
         {
             await this.CreateResourceAsync(new MutatingWebhookDefinition(), false, this.CancellationTokenSource.Token).ConfigureAwait(false);
             await this.CreateResourceAsync(new ValidatingWebhookDefinition(), false, this.CancellationTokenSource.Token).ConfigureAwait(false);
         }
-        return initialized;
+        return shouldInitialize;
     }
 
     /// <inheritdoc/>
